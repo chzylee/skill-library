@@ -18,6 +18,7 @@ on its own without the rest.
 | **write-enforcement** | Installs a PreToolUse hook that enforces a Writing Standard's mechanical floor at the moment a page is written (advisory by default; strict opt-in). Target-agnostic — Notion today, retargets to Obsidian/Confluence. | [README](write-enforcement/README.md) |
 | **register-page** | Register or refresh one page in a Page Index (registry of homes): reads the opener, classifies its mode, drafts "what lands here", and upserts the row (dedup by URL). | [README](register-page/README.md) |
 | **persona-builder** | Build or revise a persona in your Persona Library via a hiring-interview dialogue — schema-v1 rows with a paste-ready, consumer-agnostic profile block; AI proposes and writes, you rule. Creates the library from the v1 schema if you don't have one. | [README](persona-builder/README.md) |
+| **persona-assume** | Assume a persona from your Persona Library — resolves your registry, finds it by name, and adopts its Profile block as the active stance (or hands the block to a subagent). Human-invoked; asks which mode; you stay the judge. The loader half of the `persona-*` pair. | [README](persona-assume/README.md) |
 
 ## Install one skill
 
