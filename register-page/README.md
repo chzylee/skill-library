@@ -2,10 +2,6 @@
 
 Register or refresh one page in the **Page Index** — the Recording Standard's registry of homes — so its **mode** and **status** are glanceable and routing stays deterministic. Idempotent: re-running refreshes the row instead of duplicating it.
 
-## What it does
-
-Give it everything needed to check a page (a Notion URL/ID, or pasted content plus title/URL). It reads the opener, classifies the mode by the five-mode taxonomy, drafts a "what lands here" line, and **upserts** a Page Index row (dedup by page URL). It writes only to the index — never the target page.
-
 ## Install
 
 **Claude Code (personal):**
@@ -18,6 +14,10 @@ Windows / PowerShell:
 git clone https://github.com/chzylee/skill-library.git
 Copy-Item -Recurse skill-library\register-page $HOME\.claude\skills\register-page
 ```
+
+## What it does
+
+Give it everything needed to check a page (a Notion URL/ID, or pasted content plus title/URL). It reads the opener, classifies the mode by the five-mode taxonomy, drafts a "what lands here" line, and **upserts** a Page Index row (dedup by page URL). It writes only to the index — never the target page.
 
 ## Invoke
 

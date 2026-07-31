@@ -8,22 +8,6 @@ Installs and keeps fresh the **Recording Standard enforcement copy** on a machin
 install the recording standard
 ```
 
-## What it does
-
-The canonical Recording Standard lives in Notion. This skill carries the **enforcement copy**
-(the terse, machine-facing version) and installs it two ways:
-
-1. **A marked, dated block in `~/.claude/CLAUDE.md`.** Delimited by
-   `<!-- RECORDING-STANDARD vYYYY-MM-DD START -->` … `END -->` markers so it can be upserted
-   idempotently — re-running replaces the block in place and leaves the rest of the file untouched.
-2. **A SessionStart hook** (`hooks/recording-standard-check.ps1` on Windows,
-   `hooks/recording-standard-check.sh` on macOS/Linux) that reads the block's version at the start
-   of every session and prints a warning if the block is **missing** or **older** than the version
-   this skill ships. It never blocks or errors a session — it only nags on drift.
-
-When the standard changes, the enforcement copy here is re-cut with a new version date; re-run the
-skill on each machine to upgrade. Machines that haven't upgraded start seeing the "stale" warning.
-
 ## Install
 
 ### Claude Code (personal)
@@ -52,6 +36,22 @@ the machine setup.
 Upload `dist/recording-standard.skill` via **Settings → Customize → Skills**, or present it in a
 claude.ai chat and click **Save skill**. (Desktop has no `~/.claude` hook wiring — the block/hook
 install is a Claude Code feature.)
+
+## What it does
+
+The canonical Recording Standard lives in Notion. This skill carries the **enforcement copy**
+(the terse, machine-facing version) and installs it two ways:
+
+1. **A marked, dated block in `~/.claude/CLAUDE.md`.** Delimited by
+   `<!-- RECORDING-STANDARD vYYYY-MM-DD START -->` … `END -->` markers so it can be upserted
+   idempotently — re-running replaces the block in place and leaves the rest of the file untouched.
+2. **A SessionStart hook** (`hooks/recording-standard-check.ps1` on Windows,
+   `hooks/recording-standard-check.sh` on macOS/Linux) that reads the block's version at the start
+   of every session and prints a warning if the block is **missing** or **older** than the version
+   this skill ships. It never blocks or errors a session — it only nags on drift.
+
+When the standard changes, the enforcement copy here is re-cut with a new version date; re-run the
+skill on each machine to upgrade. Machines that haven't upgraded start seeing the "stale" warning.
 
 ## Invoke
 
