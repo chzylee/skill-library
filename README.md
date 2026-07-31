@@ -19,6 +19,7 @@ on its own without the rest.
 | **register-page** | Register or refresh one page in a Page Index (registry of homes): reads the opener, classifies its mode, drafts "what lands here", and upserts the row (dedup by URL). | [README](register-page/README.md) |
 | **persona-builder** | Build or revise a persona in your Persona Library via a hiring-interview dialogue — schema-v1 rows with a paste-ready, consumer-agnostic profile block; AI proposes and writes, you rule. Creates the library from the v1 schema if you don't have one. | [README](persona-builder/README.md) |
 | **legible** | A logical first-time reader walks your writing part by part and signs off on legibility — validates the structure, then verifies each part does its job and validates the wording where a reader stumbles; you rule every change. Three modes by reader rigor (Sonnet default, +Haiku stress reader). | [README](legible/README.md) |
+| **persona-assume** | Assume a persona from your Persona Library — resolves your registry, finds it by name, and adopts its Profile block as the active stance (or hands the block to a subagent). Human-invoked; asks which mode; you stay the judge. The loader half of the `persona-*` pair. | [README](persona-assume/README.md) |
 
 ## Install one skill
 
