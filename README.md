@@ -67,6 +67,8 @@ duplicate copies answering to the same name.
 | **[sharpen](sharpen/README.md)** | Mark a rough request with `sharpen` → it rewrites the prompt properly, runs it, and reports what it most needed and least trusts. | Anyone who fires off rough prompts and wants the better version run automatically. | ✅ Fully |
 | **[legible](legible/README.md)** | A first-time reader walks your writing part by part and signs off on its legibility — or says exactly where it doesn't read clearly. You rule on every change. | Anyone about to share a doc, post, or README and wondering "is this actually clear?" | ✅ Fully |
 | **[content-starter](content-starter/README.md)** | Coaches a vague content idea into a ready-to-write outline through a real back-and-forth. You keep the voice; it does the scaffolding. | People who write posts or scripts and stall at the start. | ✅ Fully |
+| **[ratify](ratify/README.md)** | The ratification protocol for decision gates: you state your expectation *before* seeing the recommendation, the gap becomes the discussion, and every decision is logged as predicted / surprised / no-opinion. Kills rubber-stamping. | Anyone approving AI recommendations who wants their "yes" to mean something. | ✅ Pairs with `ratify-configure` |
+| **[ratify-configure](ratify-configure/README.md)** | Settings console for ratify's local decision telemetry — view your numbers, keep recording, or turn it off. | ratify users. | ⚠️ Companion to `ratify` |
 | **[recording-standard](recording-standard/README.md)** | Installs and keeps fresh my Recording Standard's enforcement block in `~/.claude/CLAUDE.md`, plus a session-start staleness warning. | Users of my Recording Standard documentation system. | ⚠️ Part of the Recording Standard set |
 | **[write-enforcement](write-enforcement/README.md)** | A write-time hook that lints pages against a writing standard as they're written (advisory by default). Targets Notion today; retargetable. | People with a written standard who want it enforced at write time, not remembered. | ⚠️ Pairs with a writing standard |
 | **[register-page](register-page/README.md)** | Registers or refreshes one page in a Page Index (a registry of where things live), classifying its mode and upserting the row. | Users of my Recording Standard's Page Index in Notion. | ⚠️ Part of the Recording Standard set |
@@ -149,6 +151,10 @@ Note: a `SKILL.md` description containing a bare `: ` must be single-quoted in Y
   `~/.claude/CLAUDE.md` / `settings.json`); their READMEs show exactly what gets written.
 - **register-page** — needs a Notion connection (MCP) and a Page Index database to write to;
   most useful alongside the Recording Standard system.
+- **ratify** — records one enums-only line per decision to a local file
+  (`~/.claude/ship-pipeline/…` — a historical path name; ratify grew up inside my
+  [Ship Pipeline](https://github.com/chzylee/ship-pipeline) build process, which now depends on it
+  from here). Nothing is ever transmitted; `/ratify-configure` shows, keeps, or disables it.
 
 </details>
 

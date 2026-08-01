@@ -8,6 +8,8 @@
     "./content-starter",
     "./sharpen",
     "./legible",
+    "./ratify",
+    "./ratify-configure",
     "./recording-standard",
     "./write-enforcement",
     "./register-page"
