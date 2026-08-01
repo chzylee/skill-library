@@ -67,7 +67,7 @@ duplicate copies answering to the same name.
 | **[sharpen](sharpen/README.md)** | Mark a rough request with `sharpen` → it rewrites the prompt properly, runs it, and reports what it most needed and least trusts. | Anyone who fires off rough prompts and wants the better version run automatically. | ✅ Fully |
 | **[legible](legible/README.md)** | A first-time reader walks your writing part by part and signs off on its legibility — or says exactly where it doesn't read clearly. You rule on every change. | Anyone about to share a doc, post, or README and wondering "is this actually clear?" | ✅ Fully |
 | **[content-starter](content-starter/README.md)** | Coaches a vague content idea into a ready-to-write outline through a real back-and-forth. You keep the voice; it does the scaffolding. | People who write posts or scripts and stall at the start. | ✅ Fully |
-| **[ratify](ratify/README.md)** | The ratification protocol for decision gates: you state your expectation *before* seeing the recommendation, the gap becomes the discussion, and every decision is logged as predicted / surprised / no-opinion. Kills rubber-stamping. | Anyone approving AI recommendations who wants their "yes" to mean something. | ✅ Pairs with `ratify-configure` |
+| **[ratify](ratify/README.md)** | The ratification protocol for decision gates: you state your expectation *before* seeing the recommendation, the gap becomes the discussion, and every decision is logged as predicted / surprised / no-opinion. Kills rubber-stamping. [See the proof card](https://chzylee.github.io/skill-library/ratify/). | Anyone approving AI recommendations who wants their "yes" to mean something. | ✅ Pairs with `ratify-configure` |
 | **[ratify-configure](ratify-configure/README.md)** | Settings console for ratify's local decision telemetry — view your numbers, keep recording, or turn it off. | ratify users. | ⚠️ Companion to `ratify` |
 | **[recording-standard](recording-standard/README.md)** | Installs and keeps fresh my Recording Standard's enforcement block in `~/.claude/CLAUDE.md`, plus a session-start staleness warning. | Users of my Recording Standard documentation system. | ⚠️ Part of the Recording Standard set |
 | **[write-enforcement](write-enforcement/README.md)** | A write-time hook that lints pages against a writing standard as they're written (advisory by default). Targets Notion today; retargetable. | People with a written standard who want it enforced at write time, not remembered. | ⚠️ Pairs with a writing standard |
@@ -116,6 +116,7 @@ skill-library/
 │   ├── marketplace.json
 │   └── plugin.json
 ├── dist/                  ← per-skill .skill bundles for one-click desktop install
+├── docs/                  ← GitHub Pages site: one page per skill (docs/<skill>/)
 └── <skill>/               ← one self-contained skill per folder
     ├── README.md          ← what it is · install · invoke · requirements
     ├── SKILL.md           ← the skill itself
