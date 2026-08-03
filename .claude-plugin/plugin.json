@@ -1,0 +1,17 @@
+{
+  "name": "skill-library",
+  "description": "Noah's standalone, general-purpose Claude skills — writing, prompting, and workspace-hygiene tools shared as-is. Skills live as self-contained folders at the repo root; this manifest lists each one explicitly.",
+  "author": {
+    "name": "Noah Lee"
+  },
+  "skills": [
+    "./content-starter",
+    "./sharpen",
+    "./legible",
+    "./ratify",
+    "./ratify-configure",
+    "./recording-standard",
+    "./write-enforcement",
+    "./register-page"
+  ]
+}

@@ -10,18 +10,6 @@ and where it's *least confident*.
 sharpen draft a launch email for the new pricing tier
 ```
 
-## What it does
-
-1. **Optimize** — rewrites your rough request into a sharper prompt: goal in one line; scope,
-   constraints, and success criteria explicit; ambiguity resolved from context instead of asking.
-   Shown under a short "Sharpened prompt" heading.
-2. **Run** — executes the sharpened prompt and produces the actual deliverable.
-3. **Reflect** — ends with two short sections: **Most needed** (missing facts/decisions) and
-   **Least confident** (guesses, thin evidence, or where the approach might be wrong).
-
-It triggers only when you mark a request with the `sharpen` hook (`sharpen`, `sharpen:`,
-`sharpen this`, etc.) — never on ordinary unmarked requests.
-
 ## Install
 
 ### Claude Code (personal)
@@ -45,6 +33,18 @@ into that project's `.claude/skills/`.
 
 Upload `dist/sharpen.skill` via **Settings → Customize → Skills**, or present it in a claude.ai
 chat and click **Save skill**.
+
+## What it does
+
+1. **Optimize** — rewrites your rough request into a sharper prompt: goal in one line; scope,
+   constraints, and success criteria explicit; ambiguity resolved from context instead of asking.
+   Shown under a short "Sharpened prompt" heading.
+2. **Run** — executes the sharpened prompt and produces the actual deliverable.
+3. **Reflect** — ends with two short sections: **Most needed** (missing facts/decisions) and
+   **Least confident** (guesses, thin evidence, or where the approach might be wrong).
+
+It triggers only when you mark a request with the `sharpen` hook (`sharpen`, `sharpen:`,
+`sharpen this`, etc.) — never on ordinary unmarked requests.
 
 ## License
 

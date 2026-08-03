@@ -1,0 +1,14 @@
+{
+  "name": "noah-skill-library",
+  "owner": {
+    "name": "Noah Lee"
+  },
+  "description": "Noah's standalone, general-purpose Claude skills — writing, prompting, and workspace-hygiene tools shared as-is. Each skill also installs individually; the plugin is the everything-at-once path.",
+  "plugins": [
+    {
+      "name": "skill-library",
+      "source": "./",
+      "description": "All skill-library skills as one plugin: content-starter, sharpen, legible, ratify (+ratify-configure), recording-standard, write-enforcement, register-page."
+    }
+  ]
+}

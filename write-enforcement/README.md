@@ -9,31 +9,6 @@ is *applied* at write time, not just carried in fading context.
 install write enforcement
 ```
 
-## What it does
-
-When a guarded write fires (the Notion `notion-create-pages` / `notion-update-page` tools by
-default), the hook:
-
-1. **Re-surfaces the Writing Standard reminder** — overview-first, structure over prose,
-   cite-or-flag, teammate-engineer voice (no jargon), current-state only, collapsible default.
-2. **Flags likely violations** of four checkable rules:
-   - **Mode declaration** missing from the top of the page.
-   - **Collapsible headers** absent on a long doc (4+ headings, zero `<details>`).
-   - **Banned coined jargon** (starter list: `carve-out`, `gap-read`, `cohort`; extends over time).
-   - **Inline change-notes** (`changed on …`, `(was: …)`, `updated after …`) in a deliverable.
-
-The full check spec is in [`references/mechanical-floor.md`](references/mechanical-floor.md).
-
-## Advisory by default, strict is opt-in
-
-- **Advisory (default) — non-blocking.** The hook NEVER hard-blocks or crashes a write; a broken
-  gate would disrupt every session. It surfaces the reminder + flags as advisory context (via the
-  PreToolUse `additionalContext` channel, so Claude sees it) and lets the write proceed. On any
-  error it exits 0 silently — fail open, always.
-- **Strict / block-on-violation — opt-in.** Set `WRITE_ENFORCEMENT_STRICT=1` and the hook emits a
-  `deny` decision when a violation is flagged, blocking the write until it's fixed. Parse errors
-  still fail open even in strict mode.
-
 ## Install
 
 ### Claude Code (personal)
@@ -61,6 +36,31 @@ without clobbering your existing hooks.
 
 This skill installs a Claude Code hook, so it targets Claude Code, not the desktop app. (A
 packaged `.skill` bundle, if built into `dist/`, is for portability only.)
+
+## What it does
+
+When a guarded write fires (the Notion `notion-create-pages` / `notion-update-page` tools by
+default), the hook:
+
+1. **Re-surfaces the Writing Standard reminder** — overview-first, structure over prose,
+   cite-or-flag, teammate-engineer voice (no jargon), current-state only, collapsible default.
+2. **Flags likely violations** of four checkable rules:
+   - **Mode declaration** missing from the top of the page.
+   - **Collapsible headers** absent on a long doc (4+ headings, zero `<details>`).
+   - **Banned coined jargon** (starter list: `carve-out`, `gap-read`, `cohort`; extends over time).
+   - **Inline change-notes** (`changed on …`, `(was: …)`, `updated after …`) in a deliverable.
+
+The full check spec is in [`references/mechanical-floor.md`](references/mechanical-floor.md).
+
+## Advisory by default, strict is opt-in
+
+- **Advisory (default) — non-blocking.** The hook NEVER hard-blocks or crashes a write; a broken
+  gate would disrupt every session. It surfaces the reminder + flags as advisory context (via the
+  PreToolUse `additionalContext` channel, so Claude sees it) and lets the write proceed. On any
+  error it exits 0 silently — fail open, always.
+- **Strict / block-on-violation — opt-in.** Set `WRITE_ENFORCEMENT_STRICT=1` and the hook emits a
+  `deny` decision when a violation is flagged, blocking the write until it's fixed. Parse errors
+  still fail open even in strict mode.
 
 ## Invoke
 
