@@ -37,6 +37,11 @@
   button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
   button.danger { color:var(--bad); border-color:var(--bad); }
   button:disabled { opacity:.45; cursor:default; }
+  a.guide {
+    font-size:13px; color:var(--dim); text-decoration:none; padding:6px 10px;
+    border:1px solid var(--line); border-radius:7px; white-space:nowrap;
+  }
+  a.guide:hover { color:var(--ink); border-color:var(--dim); }
 
   .wrap { display:grid; grid-template-columns:minmax(280px,360px) 1fr; height:calc(100vh - 53px); }
   .side { border-right:1px solid var(--line); overflow-y:auto; background:var(--panel); }
@@ -120,6 +125,7 @@
   <span class="root" id="root"></span>
   <span class="spacer"></span>
   <span class="status" id="status"></span>
+  <a class="guide" href="/faq" target="_blank" rel="noopener">Guide</a>
   <button class="primary" id="done">Finish &amp; close</button>
 </header>
 
@@ -243,43 +249,43 @@ function issues() {
     }
     if (!s.pathResolved) {
       out.push({ store: s, kind: 'unresolved',
-        text: 'Orphaned store — its project directory no longer exists',
-        sub: '<code>' + esc(s.projectPath) + '</code> — the project was renamed, moved, or deleted. The store keeps the old path forever, so its '
-          + s.records.length + ' memor' + (s.records.length === 1 ? 'y is' : 'ies are') + ' unreachable from anywhere. Send it to the right directory, or remove it.' });
+        text: 'Notes filed under a folder that no longer exists',
+        sub: '<code>' + esc(s.projectPath) + '</code> — this project folder was renamed, moved, or deleted, and its '
+          + s.records.length + ' note' + (s.records.length === 1 ? '' : 's') + ' stayed behind under the old address, where Claude never looks. Nothing is lost. If the project still exists, <b>Re-home</b> the notes to its new location; if not, <b>Remove</b> them (they go to trash, recoverable). Unsure — leave it; it’s harmless.' });
     }
     if (s.indexKind === 'non-index') {
-      out.push({ store: s, kind: 'non-index', text: '<code>MEMORY.md</code> is not a memory index',
-        sub: esc(s.projectPath) + ' — it holds prose, not <code>- [Title](file.md)</code> lines. Nothing in this store loads at session start.' });
+      out.push({ store: s, kind: 'non-index', text: 'The contents page (<code>MEMORY.md</code>) is not a contents page',
+        sub: esc(s.projectPath) + ' — it has been overwritten with other text, so none of this project’s notes can load. Claude here is running on empty and nothing else would tell you.' });
     }
     if (s.indexKind === 'missing' && s.records.length) {
-      out.push({ store: s, kind: 'missing', text: 'No <code>MEMORY.md</code> at all',
-        sub: esc(s.projectPath) + ' — ' + s.records.length + ' memory file(s) exist but none can load.' });
+      out.push({ store: s, kind: 'missing', text: 'Notes exist but there is no contents page',
+        sub: esc(s.projectPath) + ' — ' + s.records.length + ' note(s) exist, but without a contents page (<code>MEMORY.md</code>) none of them ever load.' });
     }
     for (const o of s.orphans) {
-      out.push({ store: s, kind: 'orphan', target: o.target, text: 'Orphan index line → <code>' + esc(o.target) + '</code>',
-        sub: esc(s.projectPath) + ' — the line still asserts this memory every session, but the file is gone.',
+      out.push({ store: s, kind: 'orphan', target: o.target, text: 'The contents page lists a note that no longer exists → <code>' + esc(o.target) + '</code>',
+        sub: esc(s.projectPath) + ' — every session is still told this note exists, but the file behind it is gone.',
         act: { label: 'Remove line', action: 'drop-orphan', payload: { target: o.target } } });
     }
     for (const d of (s.duplicates || [])) {
-      out.push({ store: s, kind: 'duplicate', target: d.target, text: 'Duplicate index lines → <code>' + esc(d.target) + '</code>',
-        sub: esc(s.projectPath) + ' — ' + d.count + ' lines point at the same file. Only the first is maintained on save; the rest drift.',
+      out.push({ store: s, kind: 'duplicate', target: d.target, text: 'The contents page lists the same note more than once → <code>' + esc(d.target) + '</code>',
+        sub: esc(s.projectPath) + ' — ' + d.count + ' lines point at the same note. Only the first is kept up to date; the extras drift out of sync.',
         act: { label: 'Remove duplicates', action: 'drop-duplicate', payload: { target: d.target } } });
     }
     for (const r of s.records) {
       if (r.flags.includes('unindexed')) {
-        out.push({ store: s, kind: 'unindexed', text: 'Unindexed → <code>' + esc(r.file) + '</code>',
-          sub: esc(s.projectPath) + ' — the file exists but has no index line, so it never loads.',
+        out.push({ store: s, kind: 'unindexed', text: 'A note missing from the contents page → <code>' + esc(r.file) + '</code>',
+          sub: esc(s.projectPath) + ' — the note exists, but it isn’t listed, so Claude never sees it.',
           act: { label: 'Add index line', action: 'add-index', payload: { target: r.file, title: r.name || r.file.replace(/\.md$/, ''), hook: r.description } } });
       }
       if (r.flags.includes('name-divergence')) {
-        out.push({ store: s, kind: 'divergence', text: 'Name divergence → <code>' + esc(r.file) + '</code>',
-          sub: 'frontmatter <code>name: ' + esc(r.name) + '</code> ≠ filename stem <code>' + esc(r.file.replace(/\.md$/, '')) + '</code>. Wiki-links break silently.',
+        out.push({ store: s, kind: 'divergence', text: 'A note whose internal name doesn’t match its filename → <code>' + esc(r.file) + '</code>',
+          sub: 'inside the note it calls itself <code>' + esc(r.name) + '</code>, but the file is <code>' + esc(r.file.replace(/\.md$/, '')) + '</code>. Cross-references between notes use the internal name, so they quietly fail.',
           act: { label: 'Align name to file', action: 'align-name', payload: { target: r.file } } });
       }
     }
     if (s.budget.over) {
-      out.push({ store: s, kind: 'budget', text: 'Index over budget',
-        sub: esc(s.projectPath) + ' — ' + s.budget.lines + '/' + s.budget.capLines + ' lines, ' + Math.round(s.budget.bytes / 1024) + '/25 KB. Exceeding the cap errors and forces a rewrite.' });
+      out.push({ store: s, kind: 'budget', text: 'The contents page is too big',
+        sub: esc(s.projectPath) + ' — ' + s.budget.lines + '/' + s.budget.capLines + ' lines, ' + Math.round(s.budget.bytes / 1024) + '/25 KB. Past the limit, it may not load completely at session start.' });
     }
   }
   return out;
@@ -318,12 +324,12 @@ function renderOverview() {
       : '<div class="status">Every index line resolves to a file, every file has an index line, and names match filenames.</div>')
     + '</div>'
     + '<div class="banner"><h3>What Claude can remember about you</h3>'
-    + '<div class="issue"><div class="txt"><b>' + recs.length + '</b> memories across <b>' + data.stores.length + '</b> stores'
-    + '<small>Memory is partitioned per project directory. There is no global store — this view is the union.</small></div></div>'
+    + '<div class="issue"><div class="txt"><b>' + recs.length + '</b> memories across <b>' + data.stores.length + '</b> projects'
+    + '<small>Notes are kept separately per project folder. There is no single global pile — this page shows all of them together.</small></div></div>'
     + '<div class="issue"><div class="txt"><b>' + proj + '</b> of type <code>project</code>'
-    + '<small>World-state facts. These are the ones that go quietly wrong when reality moves — like a date that changed.</small></div></div>'
+    + '<small>Facts about the world. These are the ones that go quietly wrong when reality moves — like a date that changed.</small></div></div>'
     + '<div class="issue"><div class="txt"><b>' + undated + '</b> undated'
-    + '<small>No declared <code>modified:</code> field. Age can only be inferred from the file mtime, which any tool can bump.</small></div></div>'
+    + '<small>These notes don’t say when they were written. The date shown is the file’s last-changed time — an inference, not a record.</small></div></div>'
     + '</div>'
     + '<div class="status">Pick a memory on the left to read or edit it.</div>';
 

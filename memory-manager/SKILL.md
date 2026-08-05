@@ -37,6 +37,10 @@ It prints markers to stdout:
 
 Flags: `--root <dir>` (default `~/.claude/projects`), `--port`, `--timeout <sec>`, `--no-open`.
 
+A plain-language user guide ships with the skill as `faq.html` and is served at `/faq` while
+the tool runs — the **Guide** link in the header opens it. It works offline, carries no token,
+and holds no memories. Point a confused user there rather than explaining the storage model.
+
 **When it exits, read the summary block and report it to the user.** You need to — the
 `MEMORY.md` loaded into your own context at session start is stale the moment anything is
 edited or deleted, and you have no other way to know what changed.
@@ -50,8 +54,11 @@ records are in play.
 Memories live at `~/.claude/projects/<encoded-cwd>/memory/*.md`, one directory per project.
 **There is no global store** — the cross-store union is the point of the tool.
 
-Only `MEMORY.md`, the per-store index, loads at session start (capped at 200 lines / 25 KB).
-Individual memory files load on demand. Two consequences drive the whole design:
+Only `MEMORY.md`, the per-store index, loads at session start, and only for the store matching
+the session's working directory. Individual memory files load on demand. The index cap the
+budget meter uses — 200 lines / 25 KB — came from the original brief and has **not** been
+independently verified; don't restate it to a user as established fact. Two consequences drive
+the whole design:
 
 - A file with **no index line is invisible** — it will never surface.
 - A **stale index line keeps asserting** a memory even after the file is gone.

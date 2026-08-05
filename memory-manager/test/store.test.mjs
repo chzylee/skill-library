@@ -6,6 +6,7 @@ import {
   mkdirSync, existsSync, readFileSync, readdirSync, realpathSync, symlinkSync, chmodSync, writeFileSync,
 } from 'node:fs';
 import { join, basename } from 'node:path';
+import http from 'node:http';
 import { makeTmp, write, cleanup, startServer, api } from './helpers.mjs';
 
 const enc = (s) => s.replace(/[^a-zA-Z0-9]/g, '-');
@@ -401,4 +402,32 @@ test('nothing under .trash ever scans, even a memory-shaped tree; a .trash FILE 
   assert.equal(r.status, 400);
   assert.match(r.body.error, /not a directory/);
   assert.ok(existsSync(join(g.root, g.orphan, 'memory', 'alpha.md')), 'store untouched');
+});
+
+test('the guide ships with the skill and is served locally', async (t) => {
+  const base = makeTmp('mm-faq-');
+  const root = join(base, 'projects');
+  mkdirSync(root, { recursive: true });
+  const srv = await startServer(root);
+  t.after(() => { srv.child.kill(); cleanup(base); });
+
+  const res = await fetch(`${srv.origin}/faq`);
+  assert.equal(res.status, 200, 'guide is reachable with no token — it holds no memories');
+  const html = await res.text();
+  assert.match(html, /When would this be wrong\?/, 'the honest-limits section is present');
+  assert.ok(!/<link rel="stylesheet"/.test(html), 'self-contained: no external stylesheet to fetch');
+  assert.ok(!html.includes(srv.token), 'the guide must never carry the session token');
+
+  // Same loopback rule as everything else. Raw http.request, not fetch — undici
+  // silently drops a Host header, so a fetch-based check would pass vacuously.
+  const port = Number(new URL(srv.origin).port);
+  const status = await new Promise((resolve, reject) => {
+    const req = http.request(
+      { host: '127.0.0.1', port, path: '/faq', headers: { Host: 'evil.example' } },
+      (r) => { r.resume(); resolve(r.statusCode); },
+    );
+    req.on('error', reject);
+    req.end();
+  });
+  assert.equal(status, 403, 'non-loopback Host rejected');
 });

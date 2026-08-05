@@ -55,6 +55,13 @@ When you click **Finish & close**, the tool reports back an itemized summary of 
 changed, and Claude relays it. That matters: after you edit anything, the memory index Claude
 loaded at the start of the session is out of date, and the summary is how it finds out.
 
+## The guide
+
+A plain-language FAQ ships with the skill. Click **Guide** in the header while the tool is
+open, or read it at [chzylee.github.io/skill-library/memory-manager/](https://chzylee.github.io/skill-library/memory-manager/).
+It explains what the notes are, what happens when you rename a project, what's safe, and —
+in its last section — when this tool would be wrong.
+
 ## What you'll see
 
 **Every memory, grouped by project**, with a filter box across all of them. Each one shows its
@@ -76,7 +83,7 @@ actually loads:
 | Orphan index line | The line still asserts a memory whose file is gone |
 | Unindexed file | The file exists but never loads — it's invisible |
 | Name divergence | Internal `[[links]]` between memories break silently |
-| Index over budget | Past the size cap, the whole index errors out |
+| Index over budget | The contents page may be too long to load completely |
 | `MEMORY.md` isn't an index | That store's memory system is dead, silently |
 
 Each has a one-click fix — **that you approve.** The tool never rewrites your index on its own.

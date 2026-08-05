@@ -777,6 +777,17 @@ const server = createServer(async (req, res) => {
       return res.end(b);
     }
 
+    // The guide ships with the skill and is served from here, so it works with no
+    // network — the same promise the rest of the tool makes. Deliberately NOT
+    // token-gated: it is static help text containing no memories and no token, so a
+    // gate would buy nothing and would put the token into a second URL. The loopback
+    // Host check above still applies.
+    if (p === '/faq' || p === '/faq/') {
+      const b = Buffer.from(readFileSync(join(HERE, 'faq.html'), 'utf8'));
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': b.length });
+      return res.end(b);
+    }
+
     if (p === '/api/list' && req.method === 'GET') {
       return send(res, 200, { root: ROOT, stores: scan(), ops });
     }
