@@ -37,11 +37,31 @@
   button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
   button.danger { color:var(--bad); border-color:var(--bad); }
   button:disabled { opacity:.45; cursor:default; }
-  a.guide {
-    font-size:13px; color:var(--dim); text-decoration:none; padding:6px 10px;
-    border:1px solid var(--line); border-radius:7px; white-space:nowrap;
+  button.guide { font-size:13px; color:var(--dim); white-space:nowrap; }
+  button.guide:hover { color:var(--ink); }
+  button.guide[aria-expanded="true"] { background:var(--chip); color:var(--ink); border-color:var(--dim); }
+
+  /* The guide is a third column, not a new tab — help belongs beside the thing it
+     explains, where you can read a line and act on it without losing your place. */
+  .wrap.guide-open { grid-template-columns:minmax(240px,320px) 1fr minmax(300px,360px); }
+  .guidepanel { border-left:1px solid var(--line); background:var(--panel); overflow-y:auto; padding:18px 20px 50px; }
+  .guidepanel[hidden] { display:none; }
+  .guidepanel h2 { font-size:15px; margin:0 0 4px; letter-spacing:-.01em; }
+  .guidepanel p { margin:0 0 10px; font-size:13px; }
+  .guidepanel .lede { color:var(--dim); }
+  .guidepanel h3 {
+    font-size:11px; font-weight:650; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--dim); margin:20px 0 6px;
   }
-  a.guide:hover { color:var(--ink); border-color:var(--dim); }
+  .guidepanel details { border-top:1px solid var(--line); padding:8px 0; }
+  .guidepanel details:last-of-type { border-bottom:1px solid var(--line); }
+  .guidepanel summary { cursor:pointer; font-size:13px; font-weight:560; list-style:none; }
+  .guidepanel summary::-webkit-details-marker { display:none; }
+  .guidepanel summary::before { content:"+ "; color:var(--dim); font-weight:400; }
+  .guidepanel details[open] summary::before { content:"− "; }
+  .guidepanel details p { margin:8px 0 4px; font-size:12.5px; color:var(--dim); }
+  .guidepanel code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; }
+  .guidepanel .full { display:inline-block; margin-top:16px; font-size:12.5px; color:var(--accent); }
 
   .wrap { display:grid; grid-template-columns:minmax(280px,360px) 1fr; height:calc(100vh - 53px); }
   .side { border-right:1px solid var(--line); overflow-y:auto; background:var(--panel); }
@@ -125,7 +145,7 @@
   <span class="root" id="root"></span>
   <span class="spacer"></span>
   <span class="status" id="status"></span>
-  <a class="guide" href="/faq" target="_blank" rel="noopener">Guide</a>
+  <button class="guide" id="guidebtn" aria-expanded="false">Guide</button>
   <button class="primary" id="done">Finish &amp; close</button>
 </header>
 
@@ -150,6 +170,81 @@
     <div id="list"></div>
   </div>
   <div class="main" id="main"><div class="empty">Loading…</div></div>
+
+  <aside class="guidepanel" id="guidepanel" hidden>
+    <h2>What this is</h2>
+    <p class="lede">
+      Claude writes notes about you as it works. They're useful, and they're invisible —
+      you can't see them, and there's no built-in way to correct one. So a fact that was
+      true when it was written keeps getting repeated after it changes.
+    </p>
+    <p class="lede">This page is every note, so you can fix or delete it.</p>
+
+    <h3>Questions</h3>
+
+    <details>
+      <summary>Where does Claude keep these notes?</summary>
+      <p>One set per project folder — there's no single pile. A chat working in one project
+         can't see another project's notes. This page shows all of them together.</p>
+    </details>
+
+    <details>
+      <summary>I fixed a note. Why doesn't my open chat notice?</summary>
+      <p>A chat reads the notes once, when it starts. Fixing one here doesn't reach a
+         conversation already running. Make your changes, close this page, then start a
+         new chat. Claude gets a summary of what you changed either way.</p>
+    </details>
+
+    <details>
+      <summary>Can I lose something?</summary>
+      <p>Deleting moves a note to a trash folder — it isn't erased, and you can get it back.
+         But nothing warns you later: if you delete something you needed, Claude simply
+         stops knowing it. No error, no gap where it used to be.</p>
+    </details>
+
+    <details>
+      <summary>Does any of this leave my computer?</summary>
+      <p>No. It runs on your machine — no account, no network, nothing uploaded. This page
+         is only reachable from this computer, and it closes when you're done.</p>
+    </details>
+
+    <details>
+      <summary>What does "undated" mean?</summary>
+      <p>The note doesn't say when it was written, so the date shown is the file's
+         last-changed time. That's a guess about its age, not a record — which matters when
+         you're deciding whether something is still true.</p>
+    </details>
+
+    <details>
+      <summary>What's the panel at the top telling me?</summary>
+      <p>Mismatches between your notes and the contents list Claude actually reads at the
+         start of a chat — a note missing from the list, or a listing pointing at a note
+         that's gone. Each one has a fix <em>you</em> approve. Nothing changes on its own.</p>
+    </details>
+
+    <details>
+      <summary>Some notes are "filed under a folder that no longer exists"?</summary>
+      <p>You renamed or moved that project. The notes stayed behind under the old name,
+         where Claude never looks. Nothing is lost. Send them to the project's new location,
+         or remove them if you don't want them.</p>
+    </details>
+
+    <details>
+      <summary>What should I actually look at?</summary>
+      <p>The ones marked <code>project</code>. Those are facts about the world — dates,
+         plans, what you're working on — and they're what goes stale. A preference stays
+         true; a date doesn't.</p>
+    </details>
+
+    <details>
+      <summary>When would this be wrong?</summary>
+      <p>It can show you what's remembered and roughly when it was written. It can't tell
+         you whether any of it is still <em>true</em> — that judgment is yours. The trash
+         folder also grows and nothing cleans it up.</p>
+    </details>
+
+    <a class="full" href="/faq" target="_blank" rel="noopener">Longer guide, in a new tab →</a>
+  </aside>
 </div>
 
 <script>
@@ -476,6 +571,17 @@ function select(store, file) {
 }
 
 ['q', 'ftype', 'fflag'].forEach((id) => el(id).addEventListener('input', render));
+
+// Remembered across runs: someone who wants the guide open usually wants it open every
+// time, and someone who has read it shouldn't have to dismiss it again.
+const guideOpen = (on) => {
+  document.querySelector('.wrap').classList.toggle('guide-open', on);
+  el('guidepanel').hidden = !on;
+  el('guidebtn').setAttribute('aria-expanded', String(on));
+  try { localStorage.setItem('mm-guide', on ? '1' : '0'); } catch { /* private mode */ }
+};
+el('guidebtn').onclick = () => guideOpen(el('guidepanel').hidden);
+try { if (localStorage.getItem('mm-guide') === '1') guideOpen(true); } catch { /* ignore */ }
 
 el('done').onclick = async () => {
   if (dirty && !confirm('You have unsaved changes. Close anyway?')) return;

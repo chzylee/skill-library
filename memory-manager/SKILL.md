@@ -37,9 +37,11 @@ It prints markers to stdout:
 
 Flags: `--root <dir>` (default `~/.claude/projects`), `--port`, `--timeout <sec>`, `--no-open`.
 
-A plain-language user guide ships with the skill as `faq.html` and is served at `/faq` while
-the tool runs — the **Guide** link in the header opens it. It works offline, carries no token,
-and holds no memories. Point a confused user there rather than explaining the storage model.
+**Guide** in the header toggles a help panel down the right side of the UI — a short "what this
+is" plus nine plain-language questions, written for someone non-technical. The longer FAQ ships
+as `faq.html` and is served at `/faq` (linked from the panel). Both work offline, carry no
+token, and hold no memories. Point a confused user at the panel rather than explaining the
+storage model yourself.
 
 **When it exits, read the summary block and report it to the user.** You need to — the
 `MEMORY.md` loaded into your own context at session start is stale the moment anything is

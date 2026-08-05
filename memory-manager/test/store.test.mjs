@@ -418,6 +418,12 @@ test('the guide ships with the skill and is served locally', async (t) => {
   assert.ok(!/<link rel="stylesheet"/.test(html), 'self-contained: no external stylesheet to fetch');
   assert.ok(!html.includes(srv.token), 'the guide must never carry the session token');
 
+  // The short guide is inline in the app itself, so help is reachable without leaving it.
+  const app = await (await fetch(`${srv.origin}/?token=${srv.token}`)).text();
+  assert.match(app, /id="guidepanel"/, 'the in-app guide panel ships');
+  assert.match(app, /id="guidebtn"/, 'the toggle ships');
+  assert.match(app, /When would this be wrong\?/, 'the panel keeps the honest-limits question');
+
   // Same loopback rule as everything else. Raw http.request, not fetch — undici
   // silently drops a Host header, so a fetch-based check would pass vacuously.
   const port = Number(new URL(srv.origin).port);

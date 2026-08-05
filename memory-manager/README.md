@@ -57,10 +57,14 @@ loaded at the start of the session is out of date, and the summary is how it fin
 
 ## The guide
 
-A plain-language FAQ ships with the skill. Click **Guide** in the header while the tool is
-open, or read it at [chzylee.github.io/skill-library/memory-manager/](https://chzylee.github.io/skill-library/memory-manager/).
-It explains what the notes are, what happens when you rename a project, what's safe, and —
-in its last section — when this tool would be wrong.
+Click **Guide** in the header and a help panel opens down the right side, beside your notes
+rather than over them: what this is, and nine plain questions — where the notes live, why a
+chat you already have open won't notice your fix, whether you can lose something, whether
+anything leaves your computer. It stays open between runs once you open it.
+
+The longer version is one click further, and also lives at
+[chzylee.github.io/skill-library/memory-manager/](https://chzylee.github.io/skill-library/memory-manager/).
+Both end on the same question: when would this be wrong?
 
 ## What you'll see
 
