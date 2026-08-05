@@ -18,6 +18,7 @@ import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import {
   existsSync, readdirSync, readFileSync, writeFileSync, statSync, mkdirSync, renameSync,
+  realpathSync, copyFileSync, cpSync, constants as fsConstants,
 } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -89,7 +90,31 @@ function decodeStorePath(dirName) {
   if (i >= segs.length) return { path: cur, resolved: true };
   // Keep the resolved prefix; a hyphen in the unresolved tail is far likelier to be
   // part of a name than a separator, so preserve it rather than splitting on it.
-  return { path: `${cur}/${segs.slice(i).join('-')}`, resolved: false };
+  const tail = segs.slice(i).join('-');
+  return { path: `${cur}/${tail}`, resolved: false, prefix: cur, tail };
+}
+
+// An unresolved store usually means the project was renamed or moved, and the likely
+// new home is a sibling of where the path stopped resolving. Rank siblings by how much
+// of the unresolved tail they share, so the user picks from real candidates instead of
+// retyping a path. Suggestion only — nothing acts on this without a click.
+function suggestHomes(decoded) {
+  if (decoded.resolved || !decoded.prefix || !decoded.tail) return [];
+  let entries;
+  try { entries = readdirSync(decoded.prefix, { withFileTypes: true }); } catch { return []; }
+  const want = decoded.tail.toLowerCase().split('-').filter(Boolean);
+  if (!want.length) return [];
+  const scored = [];
+  for (const e of entries) {
+    if (!e.isDirectory() || e.name.startsWith('.')) continue;
+    const enc = encodeSeg(e.name).toLowerCase().split('-').filter(Boolean);
+    const have = new Set(enc);
+    const hit = want.filter((t) => have.has(t)).length;
+    if (!hit) continue;
+    const score = hit / Math.max(want.length, enc.length);
+    if (score >= 0.5) scored.push({ path: join(decoded.prefix, e.name), score });
+  }
+  return scored.sort((a, b) => b.score - a.score).slice(0, 5).map((s) => s.path);
 }
 
 // ---------------------------------------------------------------- frontmatter
@@ -234,6 +259,10 @@ function indexLineFor(title, target, hook) {
 function scan() {
   const stores = [];
   for (const dirName of readdirSync(ROOT).sort()) {
+    // Dot-entries are never stores (an encoded absolute path can't start with `.`),
+    // and this is what guarantees `.trash` never scans — even if something inside it
+    // happens to be shaped like `<entry>/memory`.
+    if (dirName.startsWith('.')) continue;
     try {
       scanStore(stores, dirName);
     } catch (e) {
@@ -347,6 +376,7 @@ function scanStore(stores, dirName) {
       store: dirName,
       projectPath: decoded.path,
       pathResolved: decoded.resolved,
+      suggestions: suggestHomes(decoded),
       memDir,
       indexKind,
       indexLines,
@@ -536,6 +566,136 @@ function fixIndex(store, action, payload) {
   return { ok: true };
 }
 
+// ---------------------------------------------------------------- whole-store actions
+//
+// Renaming or moving a project directory orphans its store permanently: the store keeps
+// the old encoded name, the renamed project starts an empty one, and every memory inside
+// becomes unreachable with nothing to say so. These two actions are the way out — send it
+// to the right home, or get rid of it. Both are reversible; neither unlinks.
+
+function trashStore(store) {
+  const dir = join(ROOT, safeStore(store));
+  if (!existsSync(dir)) throw new Error(`no such store: ${store}`);
+
+  // A sibling of the stores, not inside one. The scan skips dot-entries outright,
+  // so nothing under `.trash` can ever surface as a store.
+  const trash = join(ROOT, '.trash');
+  if (!existsSync(trash)) mkdirSync(trash, { recursive: true });
+  else if (!statSync(trash).isDirectory()) throw new Error(`${trash} exists but is not a directory — move it aside first`);
+  let dest = join(trash, store);
+  if (existsSync(dest)) dest = `${dest}.${Date.now()}`;
+
+  renameSync(dir, dest);
+  ops.push({ op: 'store removed', store, file: '(whole store)', note: `moved to .trash/${basename(dest)}` });
+  return { ok: true, trashed: basename(dest) };
+}
+
+function realpathOrNull(p) {
+  try { return realpathSync.native(p); } catch { try { return realpathSync(p); } catch { return null; } }
+}
+
+// Move one memory file. On EXDEV (the store dir is a symlink or mount onto another
+// filesystem) fall back to copy — and the original moves into the source's own
+// .trash rather than being unlinked. Never unlink.
+function moveMemoryFile(src, dest, srcMem) {
+  try { renameSync(src, dest); return; } catch (e) { if (e.code !== 'EXDEV') throw e; }
+  copyFileSync(src, dest, fsConstants.COPYFILE_EXCL);
+  const trash = join(srcMem, '.trash');
+  if (!existsSync(trash)) mkdirSync(trash, { recursive: true });
+  let t = join(trash, basename(src));
+  if (existsSync(t)) t = join(trash, `${basename(src).replace(/\.md$/, '')}.${Date.now()}.md`);
+  renameSync(src, t);
+}
+
+function rehomeStore(store, targetPath) {
+  const srcDir = join(ROOT, safeStore(store));
+  const srcMem = join(srcDir, 'memory');
+  if (!existsSync(srcMem)) throw new Error(`no such store: ${store}`);
+
+  let target = String(targetPath || '').trim().replace(/\/+$/, '');
+  if (!target || !target.startsWith('/')) throw new Error('target must be an absolute path');
+  if (!existsSync(target) || !statSync(target).isDirectory()) throw new Error(`no such directory: ${target}`);
+  // Claude Code keys a store by process.cwd(), which the OS reports symlink-resolved,
+  // normalized, and in on-disk case (`/tmp/x` is really `/private/tmp/x` on macOS).
+  // Encode that same physical form, or the re-homed store never loads.
+  target = (realpathOrNull(target) || target).replace(/\/+$/, '');
+  if (!target || target === '/') throw new Error('refusing to use the filesystem root as a project home');
+
+  const destName = encodeSeg(target);
+  const destDir = join(ROOT, destName);
+  // The same place under any spelling — different case on a case-insensitive
+  // filesystem, a symlink, `..` segments — must not "merge" a store into itself,
+  // skip everything as collisions, and then trash it.
+  if (destName === store
+    || (existsSync(destDir) && realpathOrNull(destDir) === realpathOrNull(srcDir))) {
+    throw new Error('this store already points there');
+  }
+
+  // Nothing there yet: the whole store just moves, index and all.
+  if (!existsSync(destDir)) {
+    let note = 'moved intact';
+    try {
+      renameSync(srcDir, destDir);
+    } catch (e) {
+      if (e.code !== 'EXDEV') throw e;
+      cpSync(srcDir, destDir, { recursive: true, force: false, errorOnExist: true });
+      note = 'copied across filesystems; original moved to .trash';
+    }
+    ops.push({ op: 'store re-homed', store, file: `→ ${target}`, note });
+    if (note !== 'moved intact') trashStore(store);
+    return { ok: true, moved: 'all', into: destName };
+  }
+
+  // The destination already has its own memories, so merge rather than overwrite:
+  // carry each file that doesn't collide, along with the index line that described it.
+  const destMem = join(destDir, 'memory');
+  mkdirSync(destMem, { recursive: true });
+  const srcEntries = parseIndex(readIndex(srcMem).text).entries;
+  const idx = readIndex(destMem);
+  let text = idx.text;
+  const moved = [];
+  const skipped = [];
+  let moveErr = null;
+
+  for (const d of readdirSync(srcMem, { withFileTypes: true })) {
+    const f = d.name;
+    if (!f.endsWith('.md') || f === 'MEMORY.md') continue;
+    // A directory named `x.md` is not a memory; moving it would smuggle a whole tree.
+    if (!d.isFile() && !d.isSymbolicLink()) continue;
+    if (existsSync(join(destMem, f))) { skipped.push(f); continue; }
+    try { moveMemoryFile(join(srcMem, f), join(destMem, f), srcMem); } catch (e) { moveErr = e; break; }
+    moved.push(f);
+  }
+  // Carry only lines that exist — a file the user never indexed stays unindexed, and
+  // reconciliation surfaces it at the destination for them to rule on. Index lines for
+  // whatever made it across are written even when the loop died midway, so a partial
+  // failure never lands moved files silently unindexed.
+  for (const f of moved) {
+    const e = srcEntries.find((x) => x.target === f);
+    if (e) text = replaceIndexLine(text, f, e.raw.trim());
+  }
+  if (text !== idx.text) writeFileSync(idx.path, text, 'utf8');
+
+  if (moveErr) {
+    ops.push({
+      op: 'store re-homed', store, file: `→ ${target}`,
+      note: `PARTIAL: ${moved.length} moved before a failure (${moveErr.message}); source store kept`,
+    });
+    throw new Error(`merge incomplete: ${moved.length} memor${moved.length === 1 ? 'y' : 'ies'} moved, `
+      + `then: ${moveErr.message}. The source store was kept; nothing was lost.`);
+  }
+
+  ops.push({
+    op: 'store re-homed',
+    store,
+    file: `→ ${target}`,
+    note: `merged ${moved.length} memor${moved.length === 1 ? 'y' : 'ies'}`
+      + (skipped.length ? `, skipped ${skipped.length} name collision(s): ${skipped.join(', ')}` : ''),
+  });
+  trashStore(store);
+  return { ok: true, moved, skipped, into: destName };
+}
+
 // ---------------------------------------------------------------- summary
 
 function printSummary() {
@@ -633,6 +793,15 @@ const server = createServer(async (req, res) => {
     if (fix && req.method === 'POST') {
       const body = await readBody(req);
       return send(res, 200, fixIndex(decodeURIComponent(fix[1]), body.action, body));
+    }
+
+    const st = /^\/api\/store\/([^/]+)$/.exec(p);
+    if (st && req.method === 'POST') {
+      const body = await readBody(req);
+      const s = decodeURIComponent(st[1]);
+      if (body.action === 'trash-store') return send(res, 200, trashStore(s));
+      if (body.action === 'rehome-store') return send(res, 200, rehomeStore(s, body.targetPath));
+      throw new Error(`unknown action: ${body.action}`);
     }
 
     if (p === '/api/done' && req.method === 'POST') {

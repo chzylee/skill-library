@@ -72,6 +72,7 @@ actually loads:
 
 | What it finds | Why it matters |
 |---|---|
+| Orphaned store | The project was renamed or moved, so every memory in it is unreachable |
 | Orphan index line | The line still asserts a memory whose file is gone |
 | Unindexed file | The file exists but never loads — it's invisible |
 | Name divergence | Internal `[[links]]` between memories break silently |
@@ -90,6 +91,20 @@ that regenerates them destroys the part that took thought.
   It is never unlinked.** If you delete something you shouldn't have, it's still on disk.
 - The **index line is editable directly**, alongside the memory's description, so what loads at
   session start is something you wrote rather than something a tool guessed.
+- **Removing a whole store** moves the entire folder to a `.trash/` beside your other stores.
+  Also a move, also recoverable.
+
+### When you rename a project
+
+Memory stores are keyed by the project's full path, so **renaming or moving a project orphans
+its store**: the old store keeps the old path, the renamed project starts an empty one, and
+every memory in the old store becomes unreachable. Nothing tells you this happened.
+
+The tool flags those stores and offers two ways out — **re-home it** to the directory the
+project lives in now, or **remove it**. Re-homing suggests the likely destination by matching
+the old path against real directories, so usually you just confirm. If the destination already
+has memories of its own, they merge: nothing is overwritten, and any name collisions are
+reported by name instead of resolved silently.
 
 ## Options
 

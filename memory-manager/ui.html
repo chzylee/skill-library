@@ -80,9 +80,19 @@
   .banner h3 { margin:0 0 8px; font-size:13px; }
   .issue { display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--line); font-size:13px; }
   .issue:first-of-type { border-top:0; }
-  .issue .txt { flex:1; }
+  .issue .txt { flex:1; min-width:0; overflow-wrap:anywhere; }
   .issue .txt small { display:block; color:var(--dim); font-size:11.5px; }
   .issue code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  /* Store paths are long and unbreakable; without min-width:0 the flex children refuse
+     to shrink and push the action buttons off the panel entirely. */
+  .storefix { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:9px; min-width:0; }
+  .storefix select, .storefix input {
+    font:inherit; font-size:12.5px; padding:5px 8px; border:1px solid var(--line);
+    border-radius:6px; background:var(--panel); color:var(--ink);
+    flex:1 1 240px; min-width:0; max-width:100%; text-overflow:ellipsis;
+  }
+  .storefix input { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  .storefix button { padding:5px 10px; font-size:12.5px; flex:0 0 auto; }
 
   .field { margin-bottom:16px; }
   .field label { display:block; font-size:11.5px; font-weight:640; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
@@ -231,6 +241,12 @@ function issues() {
       out.push({ store: s, kind: 'error', text: 'Store could not be scanned',
         sub: esc(s.projectPath) + ' — ' + esc(s.error) });
     }
+    if (!s.pathResolved) {
+      out.push({ store: s, kind: 'unresolved',
+        text: 'Orphaned store — its project directory no longer exists',
+        sub: '<code>' + esc(s.projectPath) + '</code> — the project was renamed, moved, or deleted. The store keeps the old path forever, so its '
+          + s.records.length + ' memor' + (s.records.length === 1 ? 'y is' : 'ies are') + ' unreachable from anywhere. Send it to the right directory, or remove it.' });
+    }
     if (s.indexKind === 'non-index') {
       out.push({ store: s, kind: 'non-index', text: '<code>MEMORY.md</code> is not a memory index',
         sub: esc(s.projectPath) + ' — it holds prose, not <code>- [Title](file.md)</code> lines. Nothing in this store loads at session start.' });
@@ -269,6 +285,23 @@ function issues() {
   return out;
 }
 
+// An orphaned store needs a destination, not just a yes/no — so it gets its own row of
+// controls: the ranked suggestions, a free path field, and the two ways out.
+function storeControls(i, n) {
+  const sug = i.store.suggestions || [];
+  return '<div class="storefix">'
+    + (sug.length
+      ? '<select data-home="' + n + '">' + sug.map((p) =>
+          '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('')
+        + '<option value="">other — type a path…</option></select>'
+      : '')
+    + '<input data-path="' + n + '" placeholder="/absolute/path/to/project"'
+    + (sug.length ? ' value="' + esc(sug[0]) + '"' : '') + '>'
+    + '<button data-rehome="' + n + '">Re-home</button>'
+    + '<button class="danger" data-nuke="' + n + '">Remove store</button>'
+    + '</div>';
+}
+
 function renderOverview() {
   const iss = issues();
   const recs = allRecords();
@@ -279,7 +312,8 @@ function renderOverview() {
     '<div class="banner' + (iss.length ? ' has' : '') + '">'
     + '<h3>' + (iss.length ? iss.length + ' thing' + (iss.length > 1 ? 's' : '') + ' to rule on' : 'No divergences found') + '</h3>'
     + (iss.length ? iss.map((i, n) =>
-        '<div class="issue"><div class="txt">' + i.text + '<small>' + i.sub + '</small></div>'
+        '<div class="issue"><div class="txt">' + i.text + '<small>' + i.sub + '</small>'
+        + (i.kind === 'unresolved' ? storeControls(i, n) : '') + '</div>'
         + (i.act ? '<button data-iss="' + n + '">' + i.act.label + '</button>' : '') + '</div>').join('')
       : '<div class="status">Every index line resolves to a file, every file has an index line, and names match filenames.</div>')
     + '</div>'
@@ -306,6 +340,51 @@ function renderOverview() {
         await load();
       } catch (e) { setStatus('Failed: ' + e.message); b.disabled = false; }
     };
+  });
+
+  // Picking a suggestion fills the path field, so the field is always the single source
+  // of truth for what gets sent — no hidden state behind the dropdown.
+  el('main').querySelectorAll('[data-home]').forEach((s) => {
+    s.onchange = () => {
+      const inp = el('main').querySelector('[data-path="' + s.dataset.home + '"]');
+      if (s.value) { inp.value = s.value; } else { inp.value = ''; inp.focus(); }
+    };
+  });
+
+  const storeAction = async (btn, key, build) => {
+    const i = iss[Number(btn.dataset[key])];
+    const body = build(btn.dataset[key]);
+    if (!body) return;
+    btn.disabled = true;
+    try {
+      const r = await api('/store/' + encodeURIComponent(i.store.store), {
+        method: 'POST', body: JSON.stringify(body),
+      });
+      setStatus(r.skipped && r.skipped.length
+        ? 'Re-homed — skipped ' + r.skipped.length + ' name collision(s): ' + r.skipped.join(', ')
+        : 'Done.');
+      sel = null;
+      await load();
+    } catch (e) { setStatus('Failed: ' + e.message); btn.disabled = false; }
+  };
+
+  el('main').querySelectorAll('[data-rehome]').forEach((b) => {
+    b.onclick = () => storeAction(b, 'rehome', (n) => {
+      const path = el('main').querySelector('[data-path="' + n + '"]').value.trim();
+      if (!path) { setStatus('Enter the directory this store belongs to.'); return null; }
+      return { action: 'rehome-store', targetPath: path };
+    });
+  });
+
+  el('main').querySelectorAll('[data-nuke]').forEach((b) => {
+    b.onclick = () => storeAction(b, 'nuke', (n) => {
+      const s = iss[Number(n)].store;
+      const count = s.records.length;
+      return confirm('Remove this entire store?\n\n' + s.projectPath + '\n'
+        + count + ' memor' + (count === 1 ? 'y' : 'ies') + ' and its index.\n\n'
+        + 'The folder is moved to .trash/ beside your other stores, not deleted — you can restore it.')
+        ? { action: 'trash-store' } : null;
+    });
   });
 }
 

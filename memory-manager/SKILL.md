@@ -73,8 +73,20 @@ it never regenerates an index.
 4. **Budget** — index line count and bytes against the 200-line / 25 KB cap
 5. **Non-index `MEMORY.md`** — the file exists but holds prose instead of index lines, so the
    store's entire memory system is dead and nothing else would say so
+6. **Orphaned store** — the project directory no longer exists at that path
 
 Each gets a one-click fix the user approves. Nothing is written silently.
+
+Stores are keyed by the project's full path, so **renaming or moving a project orphans its
+store permanently** — the old store keeps the old path, the renamed project starts an empty
+one, and every memory in the old store becomes unreachable with nothing to say so. This is the
+most repeatable failure of the set. An orphaned store gets two whole-store actions: **re-home**
+it to the directory the project lives in now (the tool ranks likely destinations by matching
+the old path against real directories), or **remove** it. Re-homing into an occupied store
+merges rather than overwrites, skipping and reporting name collisions. The destination path is
+canonicalized before it's encoded, because Claude Code keys stores by the resolved physical
+path — `/tmp/x` and `/private/tmp/x` are the same store, and guessing wrong would silently
+create one that never loads.
 
 ## How writes work
 
@@ -85,6 +97,8 @@ write — the file and its index line — and both new contents are computed bef
   `originSessionId`, anything added later) survive byte-for-byte. Saving stamps `modified:`.
 - **Delete** — moves the file to a `.trash/` folder inside its own store and removes the index
   line. **Never unlinks.** Nothing reads `.trash/`; it's there so a mistake is recoverable.
+- **Remove store** — moves the whole store folder to `<root>/.trash/`. Same rule: a move, not
+  a delete. Dot-entries are skipped by the scan, so a trashed store stops appearing.
 - **The index line is an editable field of the record**, shown next to `description` and written
   back on save. The tool never invents editorial text.
 
