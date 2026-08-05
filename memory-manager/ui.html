@@ -39,27 +39,7 @@
   button:disabled { opacity:.45; cursor:default; }
   button.guide { font-size:13px; color:var(--dim); white-space:nowrap; }
   button.guide:hover { color:var(--ink); }
-  button.guide[aria-expanded="true"], button.guide[aria-pressed="true"] {
-    background:var(--chip); color:var(--ink); border-color:var(--dim);
-  }
-
-  /* Screenshot mode. Blurs the identifying parts — the home-directory paths and the
-     text of the notes themselves — while leaving the structure legible: names, types,
-     flags, counts, and the reconciliation panel. Presentation only; nothing is written,
-     and it resets on reload so it can't be mistaken for a stored setting. */
-  body.redact .root,
-  body.redact .store > h2,
-  body.redact .rec .d,
-  body.redact .path,
-  body.redact .preview,
-  body.redact .field input,
-  body.redact .field textarea,
-  body.redact .issue .txt small,
-  body.redact .storefix input,
-  body.redact .storefix select { filter:blur(4px); user-select:none; }
-  /* The overview stats explain the mechanism and name no one — they're the point of a
-     screenshot, so they stay sharp. */
-  body.redact .stats .issue .txt small { filter:none; user-select:auto; }
+  button.guide[aria-expanded="true"] { background:var(--chip); color:var(--ink); border-color:var(--dim); }
 
   /* The guide is a third column, not a new tab — help belongs beside the thing it
      explains, where you can read a line and act on it without losing your place. */
@@ -165,7 +145,6 @@
   <span class="root" id="root"></span>
   <span class="spacer"></span>
   <span class="status" id="status"></span>
-  <button class="guide" id="redactbtn" aria-pressed="false" title="Blur paths and note text for screenshots">Redact</button>
   <button class="guide" id="guidebtn" aria-expanded="false">Guide</button>
   <button class="primary" id="done">Finish &amp; close</button>
 </header>
@@ -450,7 +429,7 @@ function renderOverview() {
         + (i.act ? '<button data-iss="' + n + '">' + i.act.label + '</button>' : '') + '</div>').join('')
       : '<div class="status">Every index line resolves to a file, every file has an index line, and names match filenames.</div>')
     + '</div>'
-    + '<div class="banner stats"><h3>What Claude can remember about you</h3>'
+    + '<div class="banner"><h3>What Claude can remember about you</h3>'
     + '<div class="issue"><div class="txt"><b>' + recs.length + '</b> memories across <b>' + data.stores.length + '</b> projects'
     + '<small>Notes are kept separately per project folder. There is no single global pile — this page shows all of them together.</small></div></div>'
     + '<div class="issue"><div class="txt"><b>' + proj + '</b> of type <code>project</code>'
@@ -619,14 +598,6 @@ const guideOpen = (on) => {
   try { localStorage.setItem('mm-guide', on ? '1' : '0'); } catch { /* private mode */ }
 };
 el('guidebtn').onclick = () => guideOpen(el('guidepanel').hidden);
-
-// Deliberately not persisted: leaving a run blurred without meaning to would be worse
-// than clicking it again.
-el('redactbtn').onclick = () => {
-  const on = !document.body.classList.contains('redact');
-  document.body.classList.toggle('redact', on);
-  el('redactbtn').setAttribute('aria-pressed', String(on));
-};
 try { if (localStorage.getItem('mm-guide') === '1') guideOpen(true); } catch { /* ignore */ }
 
 el('done').onclick = async () => {
