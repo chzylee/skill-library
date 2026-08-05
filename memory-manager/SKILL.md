@@ -33,6 +33,7 @@ It prints markers to stdout:
 |---|---|
 | `MEMORY_MANAGER_URL=<url>` | server is listening; the browser has been opened |
 | `MEMORY_MANAGER_SUMMARY` … `MEMORY_MANAGER_DONE` | the user finished; itemized summary of every write |
+| `MEMORY_MANAGER_CLOSED` | the user closed the browser tab; the summary follows, exit 0 |
 | `MEMORY_MANAGER_TIMEOUT` | nobody finished in time (default 30 min) |
 
 Flags: `--root <dir>` (default `~/.claude/projects`), `--port`, `--timeout <sec>`, `--no-open`.
@@ -42,6 +43,11 @@ is" plus nine plain-language questions, written for someone non-technical. The l
 as `faq.html` and is served at `/faq` (linked from the panel). Both work offline, carry no
 token, and hold no memories. Point a confused user at the panel rather than explaining the
 storage model yourself.
+
+The page holds the session open with a ping. Close the tab and the server shuts itself down
+within ~12s and prints `MEMORY_MANAGER_CLOSED` plus the usual summary — so a forgotten tab
+never leaves a server running where the user can't see it. This makes backgrounding safe:
+run it with `run_in_background` and a long `--timeout`, and it still ends when they're done.
 
 **When it exits, read the summary block and report it to the user.** You need to — the
 `MEMORY.md` loaded into your own context at session start is stale the moment anything is

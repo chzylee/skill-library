@@ -437,3 +437,30 @@ test('the guide ships with the skill and is served locally', async (t) => {
   });
   assert.equal(status, 403, 'non-loopback Host rejected');
 });
+
+test('the server shuts down when the browser tab stops pinging', async (t) => {
+  const base = makeTmp('mm-ping-');
+  const root = join(base, 'projects');
+  write(root, join('-tmp-x', 'memory', 'MEMORY.md'), '# Memory Index\n');
+  const srv = await startServer(root);
+  t.after(() => { srv.child.kill(); cleanup(base); });
+
+  // The watchdog arms only on the first ping, so a server nobody has opened yet survives.
+  await new Promise((r) => setTimeout(r, 1500));
+  assert.equal(srv.child.exitCode, null, 'unarmed server stays up waiting for the browser');
+
+  const ok = await api(srv, '/ping', { method: 'POST' });
+  assert.equal(ok.status, 200);
+
+  // A reload is a gap shorter than the grace window; it must not end the session.
+  await new Promise((r) => setTimeout(r, 8000));
+  await api(srv, '/ping', { method: 'POST' });
+  assert.equal(srv.child.exitCode, null, 'a reload-length gap does not kill the session');
+
+  // Now stop pinging, as a closed tab would.
+  assert.equal(await srv.exited, 0, 'exits cleanly once the tab is gone');
+  const out = srv.stdout();
+  assert.match(out, /MEMORY_MANAGER_CLOSED/);
+  assert.match(out, /MEMORY_MANAGER_SUMMARY/);
+  assert.match(out, /MEMORY_MANAGER_DONE/, 'still reports what changed');
+});

@@ -51,6 +51,9 @@ Copy-Item -Recurse skill-library/memory-manager "$HOME/.claude/skills/memory-man
 - **"audit my memory"** — opens on the reconciliation view: what's broken and what to do about it.
 - **`/memory-manager`** — explicit invocation.
 
+Closing the browser tab ends the session too — the tool notices within a few seconds and shuts
+itself down, so nothing keeps running after you've stopped looking at it.
+
 When you click **Finish & close**, the tool reports back an itemized summary of everything that
 changed, and Claude relays it. That matters: after you edit anything, the memory index Claude
 loaded at the start of the session is out of date, and the summary is how it finds out.

@@ -178,7 +178,13 @@
       you can't see them, and there's no built-in way to correct one. So a fact that was
       true when it was written keeps getting repeated after it changes.
     </p>
-    <p class="lede">This page is every note, so you can fix or delete it.</p>
+    <p class="lede">
+      Claude only knows what's in front of it — one conversation's worth. Start a new chat
+      and it's blank again. Memory is the patch: a short list is slipped into the start of
+      every chat so Claude doesn't begin from nothing. The catch is that the list goes in
+      whether or not it's still true, and you never see it happen.
+    </p>
+    <p class="lede">This page is where you see it, and fix it.</p>
 
     <h3>Questions</h3>
 
@@ -186,6 +192,17 @@
       <summary>Where does Claude keep these notes?</summary>
       <p>One set per project folder — there's no single pile. A chat working in one project
          can't see another project's notes. This page shows all of them together.</p>
+    </details>
+
+    <details>
+      <summary>Where are these on my computer?</summary>
+      <p>They're ordinary text files. Each project gets a folder:</p>
+      <p><code>~/.claude/projects/&lt;project&gt;/memory/</code></p>
+      <p>Inside it: one <code>.md</code> file per note, plus <code>MEMORY.md</code> — the
+         contents list Claude reads at the start of a chat. Deleted notes move to a
+         <code>.trash</code> folder in the same place.</p>
+      <p>The <code>.claude</code> folder is hidden. In Finder, press
+         <code>⌘⇧G</code> and paste the path.</p>
     </details>
 
     <details>
@@ -571,6 +588,12 @@ function select(store, file) {
 }
 
 ['q', 'ftype', 'fflag'].forEach((id) => el(id).addEventListener('input', render));
+
+// Holds the session open. Stop pinging — close the tab, quit the browser — and the server
+// shuts itself down rather than lingering somewhere the user can no longer see it.
+const ping = () => api('/ping', { method: 'POST' }).catch(() => {});
+ping();
+setInterval(ping, 3000);
 
 // Remembered across runs: someone who wants the guide open usually wants it open every
 // time, and someone who has read it shouldn't have to dismiss it again.

@@ -9,6 +9,7 @@
 // Contract (stdout markers the caller parses):
 //   MEMORY_MANAGER_URL=<url>       printed once the server is listening
 //   MEMORY_MANAGER_SUMMARY ... MEMORY_MANAGER_DONE   printed on finish, then exit 0
+//   MEMORY_MANAGER_CLOSED          printed if the browser tab closed, then the summary, exit 0
 //   MEMORY_MANAGER_TIMEOUT         printed if nobody finished in time, then exit 3
 //
 // Node stdlib only. The server owns every write; the browser only sends intent.
@@ -744,6 +745,30 @@ function readBody(req) {
 
 let finishing = false;
 
+// The page holds the session open by pinging. When the tab closes — or the browser quits,
+// or the machine sleeps the page — the pings stop and so does this process. Otherwise a
+// forgotten tab leaves a server running that the user can no longer see, which is exactly
+// the kind of invisible background state this tool exists to argue against.
+//
+// The watchdog only arms after the first ping, so the gap between listening and the browser
+// loading can't kill it, and the grace window is long enough that a page reload survives.
+const PING_GRACE_MS = 12000;
+let lastPing = 0;
+let watchdog = null;
+
+function armWatchdog() {
+  if (watchdog) return;
+  watchdog = setInterval(() => {
+    if (finishing || Date.now() - lastPing <= PING_GRACE_MS) return;
+    clearInterval(watchdog);
+    finishing = true;
+    process.stdout.write('\nMEMORY_MANAGER_CLOSED browser tab closed\n');
+    printSummary();
+    server.close();
+    process.exit(0);
+  }, 3000);
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
   const p = url.pathname;
@@ -786,6 +811,12 @@ const server = createServer(async (req, res) => {
       const b = Buffer.from(readFileSync(join(HERE, 'faq.html'), 'utf8'));
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': b.length });
       return res.end(b);
+    }
+
+    if (p === '/api/ping' && req.method === 'POST') {
+      lastPing = Date.now();
+      armWatchdog();
+      return send(res, 200, { ok: true });
     }
 
     if (p === '/api/list' && req.method === 'GET') {
