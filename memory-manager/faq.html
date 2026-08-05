@@ -103,9 +103,9 @@ footer{margin-top:clamp(30px,5vw,44px);padding-top:20px;border-top:1px solid var
       <p class="eyebrow"><span class="dot"></span><a href="https://github.com/chzylee/skill-library">skill-library</a> · <a href="https://github.com/chzylee/skill-library/tree/main/memory-manager">memory-manager</a><span class="muted"> · updated 2026-08-05</span></p>
       <h1>See what Claude remembers about you.</h1>
       <p class="tagline">
-        Every note Claude has written about you, on one page you can read, edit,
-        and clean up. The detail is below, including the parts you should not
-        take on faith.
+        You can see and manage what Claude remembers about you.
+        Every note Claude has written about you made visible on one page you
+        can read, edit, and clean up.
       </p>
       <p class="topnav"><a href="https://github.com/chzylee/skill-library/tree/main/memory-manager">memory-manager on GitHub</a></p>
     </header>
@@ -113,14 +113,14 @@ footer{margin-top:clamp(30px,5vw,44px);padding-top:20px;border-top:1px solid var
     <main id="section-faq">
       <h2>Why this exists</h2>
       <p>
-        Claude writes notes about you as it works — your projects, your preferences,
-        facts you've mentioned. They're useful, and they're invisible: you can't see
-        them, and there's no built-in way to correct one.
+        Claude writes notes about you as it works: your projects, your preferences,
+        facts you've mentioned. They're useful sometimes, and remembered invisibly.
+        Claude writes them to <em>~/.claude/projects/*/memory/*</em> for each project.
       </p>
       <p>
-        The failure is quiet. A fact that was true when it was written keeps getting
-        repeated after reality moves. Real example: an interview date changed, and
-        sessions kept confidently stating the old one.
+        Sometimes Claude remembers things it can't verify remain true. It won't know when
+        you get a phone call to reschedule a meeting. Wrong memories weaken your context.
+        It's helpful to make sure Claude is remembering acutal useful information.
       </p>
       <p>
         <strong>/memory-manager</strong> opens a page on your own computer showing every
