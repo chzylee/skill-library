@@ -6,6 +6,7 @@
   },
   "skills": [
     "./content-starter",
+    "./notion-digest",
     "./sharpen",
     "./legible",
     "./memory-manager",

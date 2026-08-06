@@ -68,6 +68,7 @@ duplicate copies answering to the same name.
 | **[legible](legible/README.md)** | A first-time reader walks your writing part by part and signs off on its legibility — or says exactly where it doesn't read clearly. You rule on every change. | Anyone about to share a doc, post, or README and wondering "is this actually clear?" | ✅ Fully |
 | **[content-starter](content-starter/README.md)** | Coaches a vague content idea into a ready-to-write outline through a real back-and-forth. You keep the voice; it does the scaffolding. | People who write posts or scripts and stall at the start. | ✅ Fully |
 | **[memory-manager](memory-manager/README.md)** | See everything Claude remembers about you — every auto-memory store on your machine in one view — then edit or delete what's wrong. Opens a local UI; nothing is uploaded. | Anyone whose Claude has started repeating something that stopped being true. | ✅ Fully |
+| **[notion-digest](notion-digest/README.md)** | Answers one question from a Notion page by delegating the read to a sub-agent — the raw page never enters your conversation, only the answer does. For pages too big to fetch directly, or narrow lookups you don't want cluttering the chat. | Anyone with a Notion MCP connector who's hit (or wants to avoid) a page blowing past their context. | ✅ Fully (needs a Notion MCP connector to *use*, not to install) |
 | **[ratify](ratify/README.md)** | The ratification protocol for decision gates: you state your expectation *before* seeing the recommendation, the gap becomes the discussion, and every decision is logged as predicted / surprised / no-opinion. Kills rubber-stamping. [See the proof card](https://chzylee.github.io/skill-library/ratify/). | Anyone approving AI recommendations who wants their "yes" to mean something. | ✅ Pairs with `ratify-configure` |
 | **[ratify-configure](ratify-configure/README.md)** | Settings console for ratify's local decision telemetry — view your numbers, keep recording, or turn it off. | ratify users. | ⚠️ Companion to `ratify` |
 | **[recording-standard](recording-standard/README.md)** | Installs and keeps fresh my Recording Standard's enforcement block in `~/.claude/CLAUDE.md`, plus a session-start staleness warning. | Users of my Recording Standard documentation system. | ⚠️ Part of the Recording Standard set |
@@ -153,6 +154,8 @@ Note: a `SKILL.md` description containing a bare `: ` must be single-quoted in Y
   `~/.claude/CLAUDE.md` / `settings.json`); their READMEs show exactly what gets written.
 - **register-page** — needs a Notion connection (MCP) and a Page Index database to write to;
   most useful alongside the Recording Standard system.
+- **notion-digest** — needs a Notion connection (MCP) to *use*; read-only, writes nothing.
+  Works with any Notion workspace, not tied to a specific database or schema.
 - **ratify** — records one enums-only line per decision to a local file
   (`~/.claude/ship-pipeline/…` — a historical path name; ratify grew up inside my
   [Ship Pipeline](https://github.com/chzylee/ship-pipeline) build process, which now depends on it

@@ -8,7 +8,7 @@
     {
       "name": "skill-library",
       "source": "./",
-      "description": "All skill-library skills as one plugin: content-starter, sharpen, legible, memory-manager, ratify (+ratify-configure), recording-standard, write-enforcement, register-page."
+      "description": "All skill-library skills as one plugin: content-starter, notion-digest, sharpen, legible, memory-manager, ratify (+ratify-configure), recording-standard, write-enforcement, register-page."
     }
   ]
 }
