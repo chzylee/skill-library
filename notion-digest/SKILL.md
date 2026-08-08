@@ -24,9 +24,22 @@ stop — don't answer from guesswork about what the page probably says.
   to be synthesized into one answer.
 - **Don't use this** to load material as standing background for the rest of a
   long-running conversation — if you'll keep referencing the content directly, fetch
-  it yourself instead of routing it through a summary.
+  it yourself instead of routing it through a summary. **If this only becomes clear
+  once you're in it** — the ask turns out to be "keep this around" rather than "answer
+  X" — say so plainly and stop instead of quietly finishing anyway. This skill never
+  fails silently: a bad fit gets flagged, not papered over with an answer.
 
 ## Procedure
+
+**Invoked as `/notion-digest <input>`?** The slash form hands over one undifferentiated
+string — split it before running the steps below:
+- A URL or an explicit page name/title in the input is the **page**; strip it out.
+- Whatever's left is the **ask**. If nothing's left (the input was only a URL/page
+  name), default the ask to "summarize what's most relevant on this page" and say
+  plainly that's a default, not a stated question — so a wrong guess is visible, not
+  silent.
+- If the input has no page reference at all — just a bare question — don't guess a
+  page: ask which page, once, before dispatching.
 
 1. RESOLVE THE ASK. Before dispatching anything, pin down what you actually need to
    know or decide — not just "summarize this page." A vague ask produces a vague
