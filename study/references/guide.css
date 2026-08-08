@@ -1,0 +1,199 @@
+/* Study guide — guide.html styles.
+   Inlined into the output by render.py; keep this file self-sufficient.
+   Order: tokens → base → layout → nav → topic chrome → items → self-check /
+   limits / ledger → footer → responsive → print. */
+
+/* ---------- 1. Design tokens ---------- */
+:root {
+  --bg: #fbfaf8;
+  --fg: #1f1d1a;
+  --muted: #6b6862;
+  --rule: #e3e0da;
+  --card: #ffffff;
+  --accent: #7a4b2a;
+  --warn: #8a3d2e;
+  --ok: #2f6b4f;
+  --chip: #f2efe9;
+  --font-ui: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-reading: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --pill: 999px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161513;
+    --fg: #eae7e1;
+    --muted: #a19c93;
+    --rule: #2e2c28;
+    --card: #1e1d1a;
+    --accent: #d8a074;
+    --warn: #e08a76;
+    --ok: #7fc2a0;
+    --chip: #26241f;
+  }
+}
+
+/* ---------- 2. Base ---------- */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 2.5rem 1.25rem 6rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.62 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+main { max-width: 47rem; margin: 0 auto; }
+
+/* ---------- 3. Page header ---------- */
+h1 {
+  margin: 0 0 0.3rem;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+}
+.sub { margin: 0 0 1.5rem; font-size: 0.95rem; color: var(--muted); }
+
+/* ---------- 4. Section nav ---------- */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: -0.5rem 0 1rem;
+  padding: 0.5rem 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.82rem;
+}
+
+/* ---------- 5. Topic chrome ---------- */
+.topic-h { margin: 3.5rem 0 0.3rem; font-size: 1.45rem; letter-spacing: -0.02em; }
+.topic:first-of-type .topic-h { margin-top: 2rem; }
+.scope { margin: 0 0 1rem; font-size: 0.9rem; color: var(--muted); }
+h3.sec {
+  margin: 2.5rem 0 0.25rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+h3.sec .note {
+  float: right;
+  padding-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+.triage {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.5rem;
+  padding: 0.8rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  font-size: 0.85rem;
+}
+.triage b { display: block; font-size: 1.2rem; letter-spacing: -0.02em; }
+.triage span { color: var(--muted); }
+.budget {
+  margin: 0 0 1.5rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius-s);
+  font-size: 0.85rem;
+}
+
+/* ---------- 6. Items ---------- */
+.item { padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+.item h4 { margin: 0 0 0.3rem; font-size: 1rem; letter-spacing: -0.005em; }
+.item p {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-reading);
+  font-size: 1.0325rem;
+  line-height: 1.66;
+}
+.q {
+  margin: 0 0 0.55rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.meta {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.tag {
+  padding: 0.1rem 0.45rem;
+  background: var(--chip);
+  border-radius: var(--pill);
+  color: var(--muted);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.warnt {
+  border: 1px solid var(--warn);
+  background: transparent;
+  color: var(--warn);
+  font-weight: 600;
+}
+.rid {
+  font: 0.7rem/1 var(--font-mono);
+  color: var(--muted);
+  opacity: 0.7;
+}
+.trap h4::before { content: "\26A0  "; color: var(--warn); }
+.empty { padding: 0.6rem 0; color: var(--muted); font-size: 0.9rem; font-style: italic; }
+.unverified { color: var(--warn); font-weight: 600; }
+.verified { color: var(--ok); }
+
+/* ---------- 7. Self-check, limits, ledger ---------- */
+ol.checks { padding-left: 1.3rem; }
+ol.checks li { margin: 0.5rem 0; font-family: var(--font-reading); font-size: 1.0325rem; }
+details { margin-top: 0.75rem; }
+summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+.limits {
+  padding: 0.9rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius-s);
+  font-size: 0.9rem;
+}
+.limits p { margin: 0 0 0.6rem; }
+.limits p:last-child { margin: 0; }
+.ledger { padding-left: 1.1rem; font-size: 0.82rem; }
+.ledger li { margin: 0.35rem 0; }
+
+/* ---------- 8. Footer ---------- */
+footer {
+  margin-top: 4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ---------- 9. Print ---------- */
+@media print {
+  body { background: #fff; color: #000; padding: 0; }
+  nav { display: none; }
+  h3.sec { page-break-after: avoid; }
+  .item { page-break-inside: avoid; }
+}
