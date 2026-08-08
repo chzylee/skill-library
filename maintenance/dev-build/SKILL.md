@@ -19,9 +19,19 @@ Two invariants this skill exists to protect:
 2. **A deployed build is an artifact, never a workbench.** Edits happen on the `dev`
    branch; the build is regenerated. Never edit `~/.claude/skills/<skill>-dev` directly.
 
-Resolve the repo root as the directory containing this skill's `maintenance/` parent
-(or the current project directory when working inside the repo). All git commands run
-against that repo. Never force-push. Never touch any other repo.
+**Target repo = the current project directory.** This skill serves any repo rigged for
+the pattern, not just its home repo. On invocation, read `.dev-build.conf` at the target
+repo's root — a plain sh `KEY="value"` file:
+
+- `skills_root` — directory holding the skill folders (`"."` for repo-root layout,
+  `"skills"` for a skills/ subdir). Default `"."`.
+- `stable_branch` / `dev_branch` — defaults `"main"` / `"dev"`.
+- `release_steps` — prose list of what promotion must update in this repo beyond moving
+  the folder (manifests, catalog rows, bundles). Default: nothing beyond the commit.
+
+No `.dev-build.conf` and no `dev` branch → this repo isn't rigged; say so and stop.
+All paths below mean `<skills_root>/<skill>`; all branch names mean the configured ones.
+Never force-push. Never touch any repo other than the current project.
 
 ## `/dev-build deploy <skill>`
 
@@ -63,21 +73,22 @@ Per-skill promotion `dev` → `main`. **Show the full plan and get a yes before 
 This is deliberately NOT a whole-branch merge — promoting one skill must never drag
 other unfinished dev skills to main.
 
-1. Working tree must be clean on `main` (stash nothing silently — if dirty, stop and
-   say what's in the way).
-2. `git checkout dev -- <skill>/` and commit on `main` ("Promote <skill> from dev").
-3. Add `"./<skill>"` to the `skills` array in `.claude-plugin/plugin.json`.
-4. Draft the README catalog-table row (what it does · who it's for · standalone?) and
-   show it for the maintainer's edit before inserting.
-5. Build `dist/<skill>.skill` — a zip of the folder (`python` + `zipfile`; set
-   `PYTHONUTF8=1` on Windows). Skip with a note if the skill installs hooks (bundles
-   are for desktop, which can't run hook installs).
-6. `claude plugin validate .` — must pass before pushing.
-7. Commit the manifest/README/bundle changes and push `main`.
-8. **Tear down the dev build**: delete `~/.claude/skills/<skill>-dev/`. Note that other
+1. Working tree must be clean on the stable branch (stash nothing silently — if dirty,
+   stop and say what's in the way).
+2. `git checkout <dev_branch> -- <skills_root>/<skill>/` and commit on the stable
+   branch ("Promote <skill> from dev").
+3. Execute the repo's `release_steps` from `.dev-build.conf` — e.g. for skill-library:
+   add `"./<skill>"` to the `skills` array in `.claude-plugin/plugin.json`; draft the
+   README catalog row (shown for the maintainer's edit before inserting); build
+   `dist/<skill>.skill` (zip via python `zipfile`, `PYTHONUTF8=1` on Windows; skip
+   with a note for hook-installer skills). A repo with no release steps skips straight
+   to validation.
+4. If the repo has plugin manifests: `claude plugin validate .` must pass before pushing.
+5. Commit the release-step changes and push the stable branch.
+6. **Tear down the dev build**: delete `~/.claude/skills/<skill>-dev/`. Note that other
    machines tear theirs down on their next status check (it will show as an orphan).
-9. Report every step taken, and remind: the Skill Index row still needs its update
-   (skill-forge/sync owns the catalog, not this skill).
+7. Report every step taken, and remind the maintainer if their catalog (e.g. a Notion
+   index) tracks skills — the catalog update is theirs, not this skill's.
 
 ## Notes
 
