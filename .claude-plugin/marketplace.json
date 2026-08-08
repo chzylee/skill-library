@@ -9,6 +9,11 @@
       "name": "skill-library",
       "source": "./",
       "description": "All skill-library skills as one plugin: content-starter, notion-digest, sharpen, legible, memory-manager, ratify (+ratify-configure), recording-standard, write-enforcement, register-page."
+    },
+    {
+      "name": "skill-library-maint",
+      "source": "./maintenance",
+      "description": "Maintainer tooling for this repo or your fork of it: dev-build (deploy · status · promote for skills in development). Not for library users — install only if you run the library."
     }
   ]
 }
