@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory Manager</title>
+<style>
+  :root {
+    --bg:#fbfbfa; --panel:#fff; --line:#e4e2dd; --ink:#1f1e1c; --dim:#6d6a63;
+    --accent:#2c6e5b; --warn:#8a5a00; --warnbg:#fdf6e6; --bad:#a03027; --badbg:#fdeeec;
+    --chip:#f0efec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#16161a; --panel:#1d1d22; --line:#32323a; --ink:#e8e6e1; --dim:#9a978f;
+      --accent:#6fbfa2; --warn:#e0aa4e; --warnbg:#2a2317; --bad:#e08078; --badbg:#2b1a19;
+      --chip:#292930;
+    }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  header {
+    display:flex; align-items:center; gap:16px; padding:12px 18px;
+    border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5;
+  }
+  header h1 { font-size:15px; margin:0; font-weight:640; letter-spacing:-.01em; }
+  header .root { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--dim); }
+  header .spacer { flex:1; }
+  button {
+    font:inherit; border:1px solid var(--line); background:var(--panel); color:var(--ink);
+    padding:6px 12px; border-radius:7px; cursor:pointer;
+  }
+  button:hover { border-color:var(--dim); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button.danger { color:var(--bad); border-color:var(--bad); }
+  button:disabled { opacity:.45; cursor:default; }
+  button.guide { font-size:13px; color:var(--dim); white-space:nowrap; }
+  button.guide:hover { color:var(--ink); }
+  button.guide[aria-expanded="true"] { background:var(--chip); color:var(--ink); border-color:var(--dim); }
+
+  /* The guide is a third column, not a new tab — help belongs beside the thing it
+     explains, where you can read a line and act on it without losing your place. */
+  .wrap.guide-open { grid-template-columns:minmax(240px,320px) 1fr minmax(300px,360px); }
+  .guidepanel { border-left:1px solid var(--line); background:var(--panel); overflow-y:auto; padding:18px 20px 50px; }
+  .guidepanel[hidden] { display:none; }
+  .guidepanel h2 { font-size:15px; margin:0 0 4px; letter-spacing:-.01em; }
+  .guidepanel p { margin:0 0 10px; font-size:13px; }
+  .guidepanel .lede { color:var(--dim); }
+  .guidepanel h3 {
+    font-size:11px; font-weight:650; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--dim); margin:20px 0 6px;
+  }
+  .guidepanel details { border-top:1px solid var(--line); padding:8px 0; }
+  .guidepanel details:last-of-type { border-bottom:1px solid var(--line); }
+  .guidepanel summary { cursor:pointer; font-size:13px; font-weight:560; list-style:none; }
+  .guidepanel summary::-webkit-details-marker { display:none; }
+  .guidepanel summary::before { content:"+ "; color:var(--dim); font-weight:400; }
+  .guidepanel details[open] summary::before { content:"− "; }
+  .guidepanel details p { margin:8px 0 4px; font-size:12.5px; color:var(--dim); }
+  .guidepanel code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; }
+  .guidepanel .full { display:inline-block; margin-top:16px; font-size:12.5px; color:var(--accent); }
+
+  .wrap { display:grid; grid-template-columns:minmax(280px,360px) 1fr; height:calc(100vh - 53px); }
+  .side { border-right:1px solid var(--line); overflow-y:auto; background:var(--panel); }
+  .main { overflow-y:auto; padding:22px 26px 60px; }
+
+  .filter { padding:10px 12px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel); z-index:2; }
+  .filter input, .filter select {
+    font:inherit; width:100%; padding:7px 9px; border:1px solid var(--line);
+    border-radius:7px; background:var(--bg); color:var(--ink);
+  }
+  .filter .row { display:flex; gap:6px; margin-top:6px; }
+  .filter select { width:auto; flex:1; font-size:12px; }
+
+  .store { border-bottom:1px solid var(--line); }
+  .store > h2 {
+    margin:0; padding:11px 12px 4px; font-size:12px; font-weight:650;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; word-break:break-all;
+  }
+  .store .meta { padding:0 12px 8px; font-size:11px; color:var(--dim); }
+  .rec {
+    display:block; width:100%; text-align:left; border:0; border-left:3px solid transparent;
+    border-radius:0; background:none; padding:8px 12px; cursor:pointer;
+  }
+  .rec:hover { background:var(--chip); }
+  .rec.sel { background:var(--chip); border-left-color:var(--accent); }
+  .rec .t { font-weight:560; }
+  .rec .d { font-size:12px; color:var(--dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .chips { display:flex; gap:4px; flex-wrap:wrap; margin-top:3px; }
+  .chip {
+    font-size:10.5px; padding:1px 6px; border-radius:20px; background:var(--chip); color:var(--dim);
+    font-weight:560; letter-spacing:.01em;
+  }
+  .chip.type { background:transparent; border:1px solid var(--line); }
+  .chip.type.project { border-color:var(--warn); color:var(--warn); }
+  .chip.warn { background:var(--warnbg); color:var(--warn); }
+  .chip.bad { background:var(--badbg); color:var(--bad); }
+
+  .banner { border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:22px; background:var(--panel); }
+  .banner.has { border-color:var(--warn); background:var(--warnbg); }
+  .banner h3 { margin:0 0 8px; font-size:13px; }
+  .issue { display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--line); font-size:13px; }
+  .issue:first-of-type { border-top:0; }
+  .issue .txt { flex:1; min-width:0; overflow-wrap:anywhere; }
+  .issue .txt small { display:block; color:var(--dim); font-size:11.5px; }
+  .issue code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  /* Store paths are long and unbreakable; without min-width:0 the flex children refuse
+     to shrink and push the action buttons off the panel entirely. */
+  .storefix { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:9px; min-width:0; }
+  .storefix select, .storefix input {
+    font:inherit; font-size:12.5px; padding:5px 8px; border:1px solid var(--line);
+    border-radius:6px; background:var(--panel); color:var(--ink);
+    flex:1 1 240px; min-width:0; max-width:100%; text-overflow:ellipsis;
+  }
+  .storefix input { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  .storefix button { padding:5px 10px; font-size:12.5px; flex:0 0 auto; }
+
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:11.5px; font-weight:640; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+  .field .hint { font-size:11.5px; color:var(--dim); font-weight:400; text-transform:none; letter-spacing:0; }
+  .field input, .field textarea, .field select {
+    font:inherit; width:100%; padding:8px 10px; border:1px solid var(--line);
+    border-radius:7px; background:var(--panel); color:var(--ink);
+  }
+  .field textarea { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; line-height:1.6; resize:vertical; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .idxbox { border:1px solid var(--line); border-radius:10px; padding:14px 16px; background:var(--panel); margin-bottom:18px; }
+  .idxbox > p { margin:0 0 12px; font-size:12px; color:var(--dim); }
+  .preview { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; color:var(--dim); word-break:break-word; margin-top:8px; }
+  .bar { display:flex; gap:10px; align-items:center; margin-top:20px; }
+  .bar .spacer { flex:1; }
+  .status { font-size:12.5px; color:var(--dim); }
+  .empty { color:var(--dim); padding:40px 0; text-align:center; }
+  h2.recname { margin:0 0 3px; font-size:19px; letter-spacing:-.01em; }
+  .path { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--dim); margin-bottom:18px; overflow-wrap:anywhere; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Memory Manager</h1>
+  <span class="root" id="root"></span>
+  <span class="spacer"></span>
+  <span class="status" id="status"></span>
+  <button class="guide" id="guidebtn" aria-expanded="false">Guide</button>
+  <button class="primary" id="done">Finish &amp; close</button>
+</header>
+
+<div class="wrap">
+  <div class="side">
+    <div class="filter">
+      <input id="q" placeholder="Filter by name, description, body, store…" autocomplete="off">
+      <div class="row">
+        <select id="ftype">
+          <option value="">all types</option>
+          <option>user</option><option>feedback</option><option>project</option><option>reference</option>
+        </select>
+        <select id="fflag">
+          <option value="">all records</option>
+          <option value="unindexed">unindexed</option>
+          <option value="undated">undated</option>
+          <option value="name-divergence">name divergence</option>
+          <option value="no-description">no description</option>
+        </select>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+  <div class="main" id="main"><div class="empty">Loading…</div></div>
+
+  <aside class="guidepanel" id="guidepanel" hidden>
+    <h2>What this is</h2>
+    <p class="lede">
+      Claude automatically remembers things about you from your work. Sometimes it remembers
+      things it can't verify remain true, and you never see it. Wrong memories weaken your
+      context.
+    </p>
+    <p class="lede">This is where you can see it and fix it.</p>
+
+    <h3>Questions</h3>
+
+    <details>
+      <summary>Where does Claude keep these notes?</summary>
+      <p>One set per project folder — there's no single pile. A chat working in one project
+         can't see another project's notes. This page shows all of them together.</p>
+    </details>
+
+    <details>
+      <summary>Where are these on my computer?</summary>
+      <p>They're ordinary text files. Each project gets a folder:</p>
+      <p><code>~/.claude/projects/&lt;project&gt;/memory/</code></p>
+      <p>Inside it: one <code>.md</code> file per note, plus <code>MEMORY.md</code> — the
+         contents list Claude reads at the start of a chat. Deleted notes move to a
+         <code>.trash</code> folder in the same place.</p>
+      <p>The <code>.claude</code> folder is hidden. In Finder, press
+         <code>⌘⇧G</code> and paste the path.</p>
+    </details>
+
+    <details>
+      <summary>I fixed a note. Why doesn't my open chat notice?</summary>
+      <p>A chat reads the notes once, when it starts. Fixing one here doesn't reach a
+         conversation already running. Make your changes, close this page, then start a
+         new chat. Claude gets a summary of what you changed either way.</p>
+    </details>
+
+    <details>
+      <summary>Can I lose something?</summary>
+      <p>Deleting moves a note to a trash folder — it isn't erased, and you can get it back.
+         But nothing warns you later: if you delete something you needed, Claude simply
+         stops knowing it. No error, no gap where it used to be.</p>
+    </details>
+
+    <details>
+      <summary>Does any of this leave my computer?</summary>
+      <p>No. It runs on your machine — no account, no network, nothing uploaded. This page
+         is only reachable from this computer, and it closes when you're done.</p>
+    </details>
+
+    <details>
+      <summary>What does "undated" mean?</summary>
+      <p>The note doesn't say when it was written, so the date shown is the file's
+         last-changed time. That's a guess about its age, not a record — which matters when
+         you're deciding whether something is still true.</p>
+    </details>
+
+    <details>
+      <summary>What's the panel at the top telling me?</summary>
+      <p>Mismatches between your notes and the contents list Claude actually reads at the
+         start of a chat — a note missing from the list, or a listing pointing at a note
+         that's gone. Each one has a fix <em>you</em> approve. Nothing changes on its own.</p>
+    </details>
+
+    <details>
+      <summary>Some notes are "filed under a folder that no longer exists"?</summary>
+      <p>You renamed or moved that project. The notes stayed behind under the old name,
+         where Claude never looks. Nothing is lost. Send them to the project's new location,
+         or remove them if you don't want them.</p>
+    </details>
+
+    <details>
+      <summary>What should I actually look at?</summary>
+      <p>The ones marked <code>project</code>. Those are facts about the world — dates,
+         plans, what you're working on — and they're what goes stale. A preference stays
+         true; a date doesn't.</p>
+    </details>
+
+    <details>
+      <summary>When would this be wrong?</summary>
+      <p>It can show you what's remembered and roughly when it was written. It can't tell
+         you whether any of it is still <em>true</em> — that judgment is yours. The trash
+         folder also grows and nothing cleans it up.</p>
+    </details>
+
+    <a class="full" href="/faq" target="_blank" rel="noopener">Longer guide, in a new tab →</a>
+  </aside>
+</div>
+
+<script>
+const TOKEN = '__TOKEN__';
+const api = (p, opt = {}) => fetch('/api' + p, {
+  ...opt,
+  headers: { 'content-type': 'application/json', 'x-mm-token': TOKEN },
+}).then(async (r) => {
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+});
+
+let data = null, sel = null, dirty = false;
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const el = (id) => document.getElementById(id);
+const setStatus = (s) => { el('status').textContent = s; };
+
+const FLAG_LABEL = {
+  'unindexed': ['bad', 'unindexed', 'no index line — never loads at session start'],
+  'name-divergence': ['warn', 'name ≠ file', 'wiki-links to this memory will not resolve'],
+  'no-description': ['bad', 'no description', 'description drives recall — without it this may never surface'],
+  'undated': ['warn', 'undated', 'no declared date; only the file mtime says how old this is'],
+  'no-type': ['warn', 'no type', ''],
+  'no-name': ['bad', 'no name', ''],
+  'unreadable': ['bad', 'unreadable', 'this file could not be read'],
+};
+
+async function load(keep) {
+  data = await api('/list');
+  el('root').textContent = data.root;
+  render();
+  if (keep) select(keep.store, keep.file);
+}
+
+function allRecords() {
+  return data.stores.flatMap((s) => s.records.map((r) => ({ ...r, _store: s })));
+}
+
+function matches(r) {
+  const q = el('q').value.trim().toLowerCase();
+  const t = el('ftype').value, f = el('fflag').value;
+  if (t && r.type !== t) return false;
+  if (f && !r.flags.includes(f)) return false;
+  if (!q) return true;
+  return [r.name, r.file, r.description, r.body, r._store.projectPath, r.indexTitle, r.indexHook]
+    .join(' ').toLowerCase().includes(q);
+}
+
+function render() {
+  const list = el('list');
+  const shown = allRecords().filter(matches);
+  const byStore = new Map();
+  for (const r of shown) {
+    if (!byStore.has(r.store)) byStore.set(r.store, []);
+    byStore.get(r.store).push(r);
+  }
+
+  list.innerHTML = data.stores.map((s) => {
+    const recs = byStore.get(s.store) || [];
+    if (!recs.length && (el('q').value || el('ftype').value || el('fflag').value)) return '';
+    const problems = [];
+    if (s.error) problems.push('<span class="chip bad">scan error</span>');
+    if (s.indexKind === 'non-index') problems.push('<span class="chip bad">MEMORY.md is not an index</span>');
+    if (s.indexKind === 'missing') problems.push('<span class="chip bad">no MEMORY.md</span>');
+    if (s.orphans.length) problems.push('<span class="chip bad">' + s.orphans.length + ' orphan line' + (s.orphans.length > 1 ? 's' : '') + '</span>');
+    if ((s.duplicates || []).length) problems.push('<span class="chip bad">duplicate index lines</span>');
+    if (s.budget.over) problems.push('<span class="chip bad">over index budget</span>');
+    else if (s.budget.warn) problems.push('<span class="chip warn">index budget ' + s.budget.lines + '/' + s.budget.capLines + '</span>');
+    return '<div class="store"><h2>' + esc(s.projectPath) + (s.pathResolved ? '' : ' <span class="chip warn">path unresolved</span>') + '</h2>'
+      + '<div class="meta">' + s.records.length + ' memories · index ' + s.budget.lines + '/' + s.budget.capLines + ' lines'
+      + (problems.length ? '<div class="chips" style="margin-top:5px">' + problems.join('') + '</div>' : '') + '</div>'
+      + recs.map((r) => {
+        const chips = (r.type ? '<span class="chip type ' + esc(r.type) + '">' + esc(r.type) + '</span>' : '')
+          + r.flags.map((f) => FLAG_LABEL[f] ? '<span class="chip ' + FLAG_LABEL[f][0] + '">' + FLAG_LABEL[f][1] + '</span>' : '').join('');
+        return '<button class="rec' + (sel && sel.store === r.store && sel.file === r.file ? ' sel' : '') + '"'
+          + ' data-store="' + esc(r.store) + '" data-file="' + esc(r.file) + '">'
+          + '<div class="t">' + esc(r.indexTitle || r.name || r.file) + '</div>'
+          + '<div class="d">' + esc(r.description || '(no description)') + '</div>'
+          + (chips ? '<div class="chips">' + chips + '</div>' : '') + '</button>';
+      }).join('') + '</div>';
+  }).join('') || '<div class="empty">Nothing matches.</div>';
+
+  list.querySelectorAll('.rec').forEach((b) => {
+    b.onclick = () => select(b.dataset.store, b.dataset.file);
+  });
+
+  if (!sel) renderOverview();
+}
+
+function issues() {
+  const out = [];
+  for (const s of data.stores) {
+    if (s.error) {
+      out.push({ store: s, kind: 'error', text: 'Store could not be scanned',
+        sub: esc(s.projectPath) + ' — ' + esc(s.error) });
+    }
+    if (!s.pathResolved) {
+      out.push({ store: s, kind: 'unresolved',
+        text: 'Notes filed under a folder that no longer exists',
+        sub: '<code>' + esc(s.projectPath) + '</code> — this project folder was renamed, moved, or deleted, and its '
+          + s.records.length + ' note' + (s.records.length === 1 ? '' : 's') + ' stayed behind under the old address, where Claude never looks. Nothing is lost. If the project still exists, <b>Re-home</b> the notes to its new location; if not, <b>Remove</b> them (they go to trash, recoverable). Unsure — leave it; it’s harmless.' });
+    }
+    if (s.indexKind === 'non-index') {
+      out.push({ store: s, kind: 'non-index', text: 'The contents page (<code>MEMORY.md</code>) is not a contents page',
+        sub: esc(s.projectPath) + ' — it has been overwritten with other text, so none of this project’s notes can load. Claude here is running on empty and nothing else would tell you.' });
+    }
+    if (s.indexKind === 'missing' && s.records.length) {
+      out.push({ store: s, kind: 'missing', text: 'Notes exist but there is no contents page',
+        sub: esc(s.projectPath) + ' — ' + s.records.length + ' note(s) exist, but without a contents page (<code>MEMORY.md</code>) none of them ever load.' });
+    }
+    for (const o of s.orphans) {
+      out.push({ store: s, kind: 'orphan', target: o.target, text: 'The contents page lists a note that no longer exists → <code>' + esc(o.target) + '</code>',
+        sub: esc(s.projectPath) + ' — every session is still told this note exists, but the file behind it is gone.',
+        act: { label: 'Remove line', action: 'drop-orphan', payload: { target: o.target } } });
+    }
+    for (const d of (s.duplicates || [])) {
+      out.push({ store: s, kind: 'duplicate', target: d.target, text: 'The contents page lists the same note more than once → <code>' + esc(d.target) + '</code>',
+        sub: esc(s.projectPath) + ' — ' + d.count + ' lines point at the same note. Only the first is kept up to date; the extras drift out of sync.',
+        act: { label: 'Remove duplicates', action: 'drop-duplicate', payload: { target: d.target } } });
+    }
+    for (const r of s.records) {
+      if (r.flags.includes('unindexed')) {
+        out.push({ store: s, kind: 'unindexed', text: 'A note missing from the contents page → <code>' + esc(r.file) + '</code>',
+          sub: esc(s.projectPath) + ' — the note exists, but it isn’t listed, so Claude never sees it.',
+          act: { label: 'Add index line', action: 'add-index', payload: { target: r.file, title: r.name || r.file.replace(/\.md$/, ''), hook: r.description } } });
+      }
+      if (r.flags.includes('name-divergence')) {
+        out.push({ store: s, kind: 'divergence', text: 'A note whose internal name doesn’t match its filename → <code>' + esc(r.file) + '</code>',
+          sub: 'inside the note it calls itself <code>' + esc(r.name) + '</code>, but the file is <code>' + esc(r.file.replace(/\.md$/, '')) + '</code>. Cross-references between notes use the internal name, so they quietly fail.',
+          act: { label: 'Align name to file', action: 'align-name', payload: { target: r.file } } });
+      }
+    }
+    if (s.budget.over) {
+      out.push({ store: s, kind: 'budget', text: 'The contents page is too big',
+        sub: esc(s.projectPath) + ' — ' + s.budget.lines + '/' + s.budget.capLines + ' lines, ' + Math.round(s.budget.bytes / 1024) + '/25 KB. Past the limit, it may not load completely at session start.' });
+    }
+  }
+  return out;
+}
+
+// An orphaned store needs a destination, not just a yes/no — so it gets its own row of
+// controls: the ranked suggestions, a free path field, and the two ways out.
+function storeControls(i, n) {
+  const sug = i.store.suggestions || [];
+  return '<div class="storefix">'
+    + (sug.length
+      ? '<select data-home="' + n + '">' + sug.map((p) =>
+          '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('')
+        + '<option value="">other — type a path…</option></select>'
+      : '')
+    + '<input data-path="' + n + '" placeholder="/absolute/path/to/project"'
+    + (sug.length ? ' value="' + esc(sug[0]) + '"' : '') + '>'
+    + '<button data-rehome="' + n + '">Re-home</button>'
+    + '<button class="danger" data-nuke="' + n + '">Remove store</button>'
+    + '</div>';
+}
+
+function renderOverview() {
+  const iss = issues();
+  const recs = allRecords();
+  const undated = recs.filter((r) => r.flags.includes('undated')).length;
+  const proj = recs.filter((r) => r.type === 'project').length;
+
+  el('main').innerHTML =
+    '<div class="banner' + (iss.length ? ' has' : '') + '">'
+    + '<h3>' + (iss.length ? iss.length + ' thing' + (iss.length > 1 ? 's' : '') + ' to rule on' : 'No divergences found') + '</h3>'
+    + (iss.length ? iss.map((i, n) =>
+        '<div class="issue"><div class="txt">' + i.text + '<small>' + i.sub + '</small>'
+        + (i.kind === 'unresolved' ? storeControls(i, n) : '') + '</div>'
+        + (i.act ? '<button data-iss="' + n + '">' + i.act.label + '</button>' : '') + '</div>').join('')
+      : '<div class="status">Every index line resolves to a file, every file has an index line, and names match filenames.</div>')
+    + '</div>'
+    + '<div class="banner"><h3>What Claude can remember about you</h3>'
+    + '<div class="issue"><div class="txt"><b>' + recs.length + '</b> memories across <b>' + data.stores.length + '</b> projects'
+    + '<small>Notes are kept separately per project folder. There is no single global pile — this page shows all of them together.</small></div></div>'
+    + '<div class="issue"><div class="txt"><b>' + proj + '</b> of type <code>project</code>'
+    + '<small>Facts about the world. These are the ones that go quietly wrong when reality moves — like a date that changed.</small></div></div>'
+    + '<div class="issue"><div class="txt"><b>' + undated + '</b> undated'
+    + '<small>These notes don’t say when they were written. The date shown is the file’s last-changed time — an inference, not a record.</small></div></div>'
+    + '</div>'
+    + '<div class="status">Pick a memory on the left to read or edit it.</div>';
+
+  el('main').querySelectorAll('[data-iss]').forEach((b) => {
+    b.onclick = async () => {
+      const i = iss[Number(b.dataset.iss)];
+      b.disabled = true;
+      try {
+        await api('/index/' + encodeURIComponent(i.store.store), {
+          method: 'POST', body: JSON.stringify({ action: i.act.action, ...i.act.payload }),
+        });
+        setStatus('Fixed.');
+        sel = null;
+        await load();
+      } catch (e) { setStatus('Failed: ' + e.message); b.disabled = false; }
+    };
+  });
+
+  // Picking a suggestion fills the path field, so the field is always the single source
+  // of truth for what gets sent — no hidden state behind the dropdown.
+  el('main').querySelectorAll('[data-home]').forEach((s) => {
+    s.onchange = () => {
+      const inp = el('main').querySelector('[data-path="' + s.dataset.home + '"]');
+      if (s.value) { inp.value = s.value; } else { inp.value = ''; inp.focus(); }
+    };
+  });
+
+  const storeAction = async (btn, key, build) => {
+    const i = iss[Number(btn.dataset[key])];
+    const body = build(btn.dataset[key]);
+    if (!body) return;
+    btn.disabled = true;
+    try {
+      const r = await api('/store/' + encodeURIComponent(i.store.store), {
+        method: 'POST', body: JSON.stringify(body),
+      });
+      setStatus(r.skipped && r.skipped.length
+        ? 'Re-homed — skipped ' + r.skipped.length + ' name collision(s): ' + r.skipped.join(', ')
+        : 'Done.');
+      sel = null;
+      await load();
+    } catch (e) { setStatus('Failed: ' + e.message); btn.disabled = false; }
+  };
+
+  el('main').querySelectorAll('[data-rehome]').forEach((b) => {
+    b.onclick = () => storeAction(b, 'rehome', (n) => {
+      const path = el('main').querySelector('[data-path="' + n + '"]').value.trim();
+      if (!path) { setStatus('Enter the directory this store belongs to.'); return null; }
+      return { action: 'rehome-store', targetPath: path };
+    });
+  });
+
+  el('main').querySelectorAll('[data-nuke]').forEach((b) => {
+    b.onclick = () => storeAction(b, 'nuke', (n) => {
+      const s = iss[Number(n)].store;
+      const count = s.records.length;
+      return confirm('Remove this entire store?\n\n' + s.projectPath + '\n'
+        + count + ' memor' + (count === 1 ? 'y' : 'ies') + ' and its index.\n\n'
+        + 'The folder is moved to .trash/ beside your other stores, not deleted — you can restore it.')
+        ? { action: 'trash-store' } : null;
+    });
+  });
+}
+
+function select(store, file) {
+  if (dirty && !confirm('Discard unsaved changes to this memory?')) return;
+  const r = allRecords().find((x) => x.store === store && x.file === file);
+  if (!r) { sel = null; return renderOverview(); }
+  sel = { store, file };
+  dirty = false;
+  render();
+
+  const dateLine = r.modified
+    ? 'declared <code>modified: ' + esc(r.modified) + '</code>'
+    : '<b>undated</b> — no <code>modified:</code> field; file mtime is ' + esc(r.mtime.slice(0, 10)) + ' (inferred, not declared)';
+
+  el('main').innerHTML =
+    '<h2 class="recname">' + esc(r.indexTitle || r.name || r.file) + '</h2>'
+    + '<div class="path">' + esc(r._store.projectPath) + '/memory/' + esc(r.file) + ' · ' + dateLine + '</div>'
+
+    + '<div class="idxbox"><h3 style="margin:0 0 4px;font-size:13px">Index line</h3>'
+    + '<p>This is the only part of the memory that loads at session start. Title and hook are editorial — yours, not derived.</p>'
+    + '<div class="two">'
+    + '<div class="field"><label>Title</label><input id="f_title" value="' + esc(r.indexTitle) + '"></div>'
+    + '<div class="field"><label>Hook</label><input id="f_hook" value="' + esc(r.indexHook) + '"></div>'
+    + '</div><div class="preview" id="prev"></div>'
+    + (r.indexSection ? '<div class="preview">under section: ' + esc(r.indexSection) + '</div>' : '')
+    + '</div>'
+
+    + '<div class="two">'
+    + '<div class="field"><label>name <span class="hint">— what [[wiki-links]] resolve against</span></label><input id="f_name" value="' + esc(r.name) + '"></div>'
+    + '<div class="field"><label>type</label><select id="f_type">'
+    + ['', 'user', 'feedback', 'project', 'reference'].map((t) =>
+        '<option' + (t === r.type ? ' selected' : '') + '>' + t + '</option>').join('')
+    + '</select></div></div>'
+
+    + '<div class="field"><label>description <span class="hint">— decides when this memory surfaces in recall</span></label>'
+    + '<input id="f_desc" value="' + esc(r.description) + '"></div>'
+
+    + '<div class="field"><label>body</label><textarea id="f_body" rows="18">' + esc(r.body) + '</textarea></div>'
+
+    + '<div class="bar"><button class="primary" id="save">Save</button>'
+    + '<button class="danger" id="del">Delete</button>'
+    + '<span class="spacer"></span>'
+    + (r.originSessionId ? '<span class="status">origin session ' + esc(r.originSessionId.slice(0, 8)) + '</span>' : '')
+    + '</div>';
+
+  const prev = () => {
+    const t = el('f_title').value || el('f_name').value || r.file.replace(/\.md$/, '');
+    const h = el('f_hook').value;
+    el('prev').textContent = '- [' + t + '](' + r.file + ')' + (h ? ' — ' + h : '');
+  };
+  prev();
+  ['f_title', 'f_hook', 'f_name', 'f_desc', 'f_type', 'f_body'].forEach((id) => {
+    el(id).addEventListener('input', () => { dirty = true; prev(); });
+  });
+
+  el('save').onclick = async () => {
+    el('save').disabled = true;
+    try {
+      await api('/memory/' + encodeURIComponent(store) + '/' + encodeURIComponent(file), {
+        method: 'POST',
+        body: JSON.stringify({
+          name: el('f_name').value, description: el('f_desc').value, type: el('f_type').value,
+          body: el('f_body').value, indexTitle: el('f_title').value, indexHook: el('f_hook').value,
+        }),
+      });
+      dirty = false;
+      setStatus('Saved ' + file);
+      await load({ store, file });
+    } catch (e) { setStatus('Save failed: ' + e.message); }
+    el('save').disabled = false;
+  };
+
+  el('del').onclick = async () => {
+    if (!confirm('Move ' + file + ' to .trash/ and remove its index line?\n\nThe file is moved, never unlinked — you can restore it from the store\'s .trash/ folder.')) return;
+    try {
+      await api('/memory/' + encodeURIComponent(store) + '/' + encodeURIComponent(file), { method: 'DELETE' });
+      dirty = false; sel = null;
+      setStatus('Moved ' + file + ' to .trash/');
+      await load();
+    } catch (e) { setStatus('Delete failed: ' + e.message); }
+  };
+}
+
+['q', 'ftype', 'fflag'].forEach((id) => el(id).addEventListener('input', render));
+
+// Holds the session open. Stop pinging — close the tab, quit the browser — and the server
+// shuts itself down rather than lingering somewhere the user can no longer see it.
+const ping = () => api('/ping', { method: 'POST' }).catch(() => {});
+ping();
+setInterval(ping, 3000);
+
+// Remembered across runs: someone who wants the guide open usually wants it open every
+// time, and someone who has read it shouldn't have to dismiss it again.
+const guideOpen = (on) => {
+  document.querySelector('.wrap').classList.toggle('guide-open', on);
+  el('guidepanel').hidden = !on;
+  el('guidebtn').setAttribute('aria-expanded', String(on));
+  try { localStorage.setItem('mm-guide', on ? '1' : '0'); } catch { /* private mode */ }
+};
+el('guidebtn').onclick = () => guideOpen(el('guidepanel').hidden);
+try { if (localStorage.getItem('mm-guide') === '1') guideOpen(true); } catch { /* ignore */ }
+
+el('done').onclick = async () => {
+  if (dirty && !confirm('You have unsaved changes. Close anyway?')) return;
+  try {
+    await api('/done', { method: 'POST' });
+    dirty = false;
+    document.body.innerHTML = '<div class="empty" style="padding-top:80px">Done — summary written to the calling session.<br>You can close this tab.</div>';
+  } catch (e) {
+    dirty = false;
+    document.body.innerHTML = '<div class="empty" style="padding-top:80px">The server is already closed (it may have timed out).<br>You can close this tab.</div>';
+  }
+};
+
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+load().catch((e) => { el('main').innerHTML = '<div class="empty">Failed to load: ' + esc(e.message) + '</div>'; });
+</script>
+</body>
+</html>
