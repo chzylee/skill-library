@@ -113,12 +113,14 @@ around it — and tells you where it was guessing instead of hiding it.
 ```
 skill-library/
 ├── README.md              ← this guide
+├── CONTRIBUTING.md        ← branch model · dev-build workflow · running a fork
 ├── LICENSE
 ├── .claude-plugin/        ← marketplace + plugin manifests (the "install everything" path)
-│   ├── marketplace.json
-│   └── plugin.json
+├── .claude/               ← repo-scoped settings: the session-start dev-build check
 ├── dist/                  ← per-skill .skill bundles for one-click desktop install
 ├── docs/                  ← GitHub Pages site: one page per skill (docs/<skill>/)
+├── maintenance/           ← maintainer tooling (dev-build) — its own plugin, not part of the library
+├── scripts/               ← the hook script (short, readable, advisory-only)
 └── <skill>/               ← one self-contained skill per folder
     ├── README.md          ← what it is · install · invoke · requirements
     ├── SKILL.md           ← the skill itself
@@ -131,14 +133,29 @@ Each skill folder is installable on its own — no cross-skill dependencies, no 
 </details>
 
 <details>
-<summary><strong>Adding a skill (maintainer notes)</strong></summary>
+<summary><strong>Maintaining the library (me, and forkers)</strong></summary>
 
-1. Build the skill on the `dev` branch as a self-contained folder at repo root
-   (`SKILL.md` + `README.md` with install docs + optional assets).
-2. When a stranger could use it today, promote it to `main`: add a row to the table above,
-   add its path to the `skills` array in `.claude-plugin/plugin.json`, and build its bundle
-   into `dist/` (zip the folder; on Windows run the packager with `PYTHONUTF8=1`).
-3. Keep `main` honest: unfinished skills stay on `dev`.
+Skills are developed on the `dev` branch and tested as **dev builds** — separate
+`<skill>-dev` skills that never shadow the stable versions — then promoted to `main`.
+The tooling for that loop is the [`dev-build`](maintenance/dev-build/README.md) skill
+in `maintenance/`:
+
+```text
+/dev-build deploy <skill>    # test a dev-branch skill as <skill>-dev, side by side
+/dev-build status            # what's deployed, stale, or ahead of main
+/dev-build promote <skill>   # move it to main: folder + plugin + README row + bundle
+```
+
+It installs from this same marketplace as `skill-library-maint` — maintainers and
+forkers only; library users never need it.
+
+**If you clone this repo:** Claude Code will ask you to approve one hook —
+[`scripts/dev-build-check.sh`](scripts/dev-build-check.sh), a short read-only script
+that warns at session start (inside this repo only) when a dev build has gone stale.
+Approve or decline; declining only costs the warnings.
+
+**Forking as your own library** is a supported path — the branch model, tooling, and
+this maintenance rig all come with it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Note: a `SKILL.md` description containing a bare `: ` must be single-quoted in YAML.
 
