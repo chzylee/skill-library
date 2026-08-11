@@ -21,15 +21,12 @@ works on any OS:
 ```text
 Install one skill from https://github.com/chzylee/skill-library for me:
 
-1. Fetch ONLY the folder named notion-digest from that repo, from the dev
-   branch (it hasn't been promoted to main yet — shallow clone with
-   --branch dev, or the GitHub API equivalent).
+1. Fetch ONLY the folder named notion-digest from that repo (shallow clone or
+   GitHub API — your choice).
 2. Copy that folder to ~/.claude/skills/notion-digest, creating directories as
    needed. Change nothing else on my machine, and remove any temporary clone.
 3. Read the skill's description back to me so I can confirm it's what I wanted.
 ```
-
-(Once this skill is promoted to `main`, drop the `dev`-branch instruction above — plain `main` will work.)
 
 Then restart Claude Code (or start a new session). There's no extra setup — but *using*
 the skill requires a Notion MCP connector in the session (see
@@ -99,10 +96,9 @@ have nothing to do with each other get answered separately, with that stated pla
 
 ## Status
 
-New, on the `dev` branch — not yet promoted to `main`. Built 2026-08-06 and **not yet run
-on a real lookup**, so treat the first few runs as a shakedown. Until it's promoted, the
-folder only exists on `dev`, so tell the paste-prompt to fetch from the `dev` branch (or
-add `--branch dev` to the manual clone). The `dist/` bundle isn't built yet either;
+Promoted to `main` 2026-08-06. Built the same day and run once on a real lookup (the
+Persona Library page) before promotion — still early, so treat the first few runs as a
+shakedown. The `dist/` bundle isn't built yet (no packager available at promotion time);
 install by copying the folder.
 
 ## License
