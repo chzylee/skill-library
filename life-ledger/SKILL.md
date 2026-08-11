@@ -62,6 +62,9 @@ Field rules (the schema — identical for every subject):
   telemetry, dated journals). Metadata, never an admission gate: claims are admitted
   on say-so.
 - `parent` — nesting mechanism: new detail = child fact, never a rewrite of the parent.
+- Proof gaps are not a standing concern: proof matters only when a claim affects
+  outcomes or multiple people (the blast-radius rule). The "what needs an artifact"
+  list is an on-demand filter (`source = self-reported`), never a foregrounded view.
 - Pattern `claim` — one **person-neutral** sentence, so patterns are comparable across
   subjects.
 - Pattern `tier` — **earned, not declared**: start `personal`; promote to `universal`

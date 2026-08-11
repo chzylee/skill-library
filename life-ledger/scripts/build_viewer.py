@@ -89,20 +89,23 @@ a{color:var(--acc)}
 <nav>
 <button data-v="facts" class="on">Facts</button>
 <button data-v="patterns">Patterns</button>
-<button data-v="gaps">Proof gaps</button>
 </nav>
 <input type="search" id="q" placeholder="search statements…">
 <div class="filters" id="domf"></div>
+<div class="filters" id="srcf" style="opacity:.75"></div>
 <div class="count" id="count"></div>
 <div id="list"></div>
 <script>
 const DATA=/*__DATA__*/null;
 const $=s=>document.querySelector(s);
-let view='facts',qs='',domSel=new Set();
+let view='facts',qs='',domSel=new Set(),srcSel=new Set();
 $('#sub').textContent=`subject: ${DATA.subject} · built ${DATA.built} · ${DATA.facts.length} facts · ${DATA.patterns.length} patterns`;
 const doms=[...new Set(DATA.facts.flatMap(f=>f.domains||[]))].sort();
 $('#domf').innerHTML=doms.map(d=>`<span data-d="${d}">${d}</span>`).join('');
 $('#domf').onclick=e=>{const d=e.target.dataset.d;if(!d)return;domSel.has(d)?domSel.delete(d):domSel.add(d);e.target.classList.toggle('on');render()};
+const srcs=['public-artifact','third-party','recorded','self-reported'].filter(s=>DATA.facts.some(f=>f.source===s));
+$('#srcf').innerHTML=srcs.map(s=>`<span data-s="${s}">${s}</span>`).join('');
+$('#srcf').onclick=e=>{const s=e.target.dataset.s;if(!s)return;srcSel.has(s)?srcSel.delete(s):srcSel.add(s);e.target.classList.toggle('on');render()};
 document.querySelector('nav').onclick=e=>{const v=e.target.dataset.v;if(!v)return;view=v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));render()};
 $('#q').oninput=e=>{qs=e.target.value.toLowerCase();render()};
 const fmap=Object.fromEntries(DATA.facts.map(f=>[f.id,f]));
@@ -111,7 +114,8 @@ function factCard(f,child){return `<div class="card${child?' child':''}"><div>${
 ${(f.domains||[]).map(d=>`<span class="tag">${d}</span>`).join('')}
 <span>${f.era||''}</span><span>${f.source}</span>${(f.artifacts&&f.artifacts.length)?'<span>📎</span>':''}</div></div>`}
 function matches(f){if(qs&&!f.statement.toLowerCase().includes(qs))return false;
-if(domSel.size&&![...(f.domains||[])].some(d=>domSel.has(d)))return false;return true}
+if(domSel.size&&![...(f.domains||[])].some(d=>domSel.has(d)))return false;
+if(srcSel.size&&!srcSel.has(f.source))return false;return true}
 function render(){let h='',n=0;
 if(view==='facts'){const roots=DATA.facts.filter(f=>!f.parent),kids={};
 DATA.facts.filter(f=>f.parent).forEach(f=>(kids[f.parent]=kids[f.parent]||[]).push(f));
@@ -119,15 +123,14 @@ roots.forEach(f=>{const ks=(kids[f.id]||[]).filter(matches),self=matches(f);
 if(!self&&!ks.length)return;n+=self?1:0;n+=ks.length;
 h+=factCard(f);ks.forEach(k=>h+=factCard(k,true))});
 // orphaned children whose parent didn't render but match
-}else if(view==='patterns'){DATA.patterns.forEach(p=>{
+}else{DATA.patterns.forEach(p=>{
 if(qs&&!(p.name+' '+p.claim).toLowerCase().includes(qs))return;n++;
 h+=`<div class="card pat"><div><b>${p.name}</b>
 <span class="tier-${p.tier}">· ${p.tier}</span>
 ${p.claimed?'<span class="claim"> · claimed</span>':''}
 <span class="tag" style="float:right">reach ${p.reach}</span></div>
 <div style="margin-top:.25rem">${p.claim}</div>
-<div class="ev">evidence:<ul>${(p.evidence||[]).map(id=>`<li>${fmap[id]?fmap[id].statement:id}</li>`).join('')}</ul></div></div>`})
-}else{DATA.facts.filter(f=>f.source==='self-reported').filter(matches).forEach(f=>{n++;h+=factCard(f)})}
+<div class="ev">evidence:<ul>${(p.evidence||[]).map(id=>`<li>${fmap[id]?fmap[id].statement:id}</li>`).join('')}</ul></div></div>`})}
 $('#count').textContent=n+' shown';$('#list').innerHTML=h}
 render();
 </script></body></html>
