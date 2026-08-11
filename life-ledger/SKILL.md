@@ -68,8 +68,13 @@ Field rules (the schema — identical for every subject):
 - Pattern `claim` — one **person-neutral** sentence, so patterns are comparable across
   subjects.
 - Pattern `tier` — **earned, not declared**: start `personal`; promote to `universal`
-  when linked evidence spans 2+ domains and includes at least one public-artifact or
-  recorded source. Review promotions by hand when maintaining evidence.
+  when the linked facts alone would let a cold reader discern the same pattern, had
+  they the language for it. (Heuristic floor: evidence spans 2+ domains with at least
+  one public-artifact or recorded source — necessary, not sufficient.) Review
+  promotions by hand when maintaining evidence.
+- Patterns are identified, not solicited. Never prompt the subject to self-assert new
+  patterns — the method's power is in identification; capture self-assertions only
+  when volunteered.
 - Pattern `claimed` — `true` = the subject asserts the presented evidence is sufficient
   to demonstrate the pattern for now; `false` = observer-derived, awaiting endorsement.
 - **Anonymize sensitive facts by default**, at the granularity the subject would share
