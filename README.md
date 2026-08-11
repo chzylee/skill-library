@@ -119,7 +119,6 @@ skill-library/
 ├── .claude/               ← repo-scoped settings: the session-start dev-build check
 ├── dist/                  ← per-skill .skill bundles for one-click desktop install
 ├── docs/                  ← GitHub Pages site: one page per skill (docs/<skill>/)
-├── maintenance/           ← maintainer tooling (dev-build) — its own plugin, not part of the library
 ├── scripts/               ← the hook script (short, readable, advisory-only)
 └── <skill>/               ← one self-contained skill per folder
     ├── README.md          ← what it is · install · invoke · requirements
@@ -137,8 +136,8 @@ Each skill folder is installable on its own — no cross-skill dependencies, no 
 
 Skills are developed on the `dev` branch and tested as **dev builds** — separate
 `<skill>-dev` skills that never shadow the stable versions — then promoted to `main`.
-The tooling for that loop is the [`dev-build`](maintenance/dev-build/README.md) skill
-in `maintenance/`:
+The tooling is the [dev-build pattern](https://github.com/chzylee/dev-build), which
+started life in this repo and now lives in its own:
 
 ```text
 /dev-build deploy <skill>    # test a dev-branch skill as <skill>-dev, side by side
@@ -146,8 +145,9 @@ in `maintenance/`:
 /dev-build promote <skill>   # move it to main: folder + plugin + README row + bundle
 ```
 
-It installs from this same marketplace as `skill-library-maint` — maintainers and
-forkers only; library users never need it.
+This repo is rigged for it (`.dev-build.conf` + `scripts/dev-build-check.sh`); install
+the skill from `chzylee/dev-build` — maintainers and forkers only; library users never
+need it.
 
 **If you clone this repo:** Claude Code will ask you to approve one hook —
 [`scripts/dev-build-check.sh`](scripts/dev-build-check.sh), a short read-only script
