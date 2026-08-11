@@ -37,8 +37,9 @@ Work in progress never shadows a stable skill. While developing:
    plugin manifest, README row, and desktop bundle, and removes the `-dev` build.
 
 `/dev-build status` shows what's deployed, what's stale, and what's ahead of main.
-The dev-build skill itself lives in [`maintenance/`](maintenance/) and installs via
-the `skill-library-maint` plugin — maintainers and forkers only.
+The dev-build skill lives in its own repo — [chzylee/dev-build](https://github.com/chzylee/dev-build)
+(the pattern was born here, then extracted) — and installs from that marketplace;
+maintainers and forkers only.
 
 ## The session-start hook (what you're approving when you clone)
 
@@ -58,8 +59,8 @@ flow once it's usable cold.
 ## Running a fork as your own library
 
 1. Fork, then rename two identities: the marketplace name in
-   `.claude-plugin/marketplace.json` and the plugin names there and in
-   `.claude-plugin/plugin.json` / `maintenance/.claude-plugin/plugin.json`.
+   `.claude-plugin/marketplace.json` and the plugin name there and in
+   `.claude-plugin/plugin.json`.
 2. `/plugin marketplace add <you>/<your-fork>` and install your plugin — push-to-update
    distribution to all your machines from day one.
 3. The dev-build workflow, hook, and this guide come with it. Replace the skills with
