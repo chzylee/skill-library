@@ -1,6 +1,6 @@
 ---
 name: life-ledger
-description: 'Populate a Life Ledger — a structured, opinion-free personal profile for deducing identity patterns (identity is a compression of a corpus). Local-first: facts and patterns live in append-only JSONL under ~/.claude/life-ledger/ with a self-contained HTML viewer regenerated on every write — no external dependencies. Two modes: from-scratch (bootstrap the store, then interview from zero) and from-what-exists (read the ledger, fill gaps the data exposes, ask further from genuine reader curiosity). Open Q&A by turns, never multiple-choice about a life; episode questions over summary questions; neutral fact wording with sensitive facts anonymized by default; ability claims become claimed Pattern rows, not facts; batches read back for sign-off before writing. Trigger on "populate my life ledger", "life ledger interview", "interview me for my profile", "add to my life ledger", "start a life ledger", "open my life ledger", or /life-ledger.'
+description: 'Populate a Life Ledger — a structured, opinion-free personal profile for deducing identity patterns (identity is a compression of a corpus). Local-first: facts and patterns live in append-only JSONL under ~/.claude/life-ledger/ with a self-contained HTML viewer regenerated on every write — no external dependencies. Two modes: from-scratch (bootstrap the store, then interview from zero) and from-what-exists (read the ledger, fill gaps the data exposes, ask further from genuine reader curiosity). Open Q&A by turns, never multiple-choice about a life; episode questions over summary questions; neutral fact wording with sensitive facts anonymized by default; ability claims become claimed Pattern rows, not facts; batches read back for sign-off before writing. Trigger on "populate my life ledger", "life ledger interview", "interview me for my profile", "add to my life ledger", "start a life ledger", or /life-ledger. To just view the ledger, use the life-ledger-view skill.'
 ---
 
 # Life Ledger
@@ -135,9 +135,9 @@ for a mode always wins. Both modes serve one goal: populating the profile.
   tier promotion rule, and surface new pattern candidates — as `claimed` if the subject
   asserted them, else unclaimed for endorsement.
 - **Regenerate the viewer after every write session** by running the bundled script:
-  `python3 scripts/build_viewer.py <subject>` (from this skill's directory). Tell the
-  subject the file path; it opens in any browser. The viewer is part of the product —
-  transparency into the data is the app.
+  `python3 scripts/build_viewer.py <subject>` (from this skill's directory). The viewer
+  is part of the product — transparency into the data is the app. To open it for the
+  user and wait while they browse, use the sibling `life-ledger-view` skill.
 
 ## Notion / external stores
 
