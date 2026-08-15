@@ -1,0 +1,29 @@
+{
+  "title": "ratify telemetry",
+  "configPath": "~/.claude/ship-pipeline/config.json",
+  "groups": [
+    {
+      "name": "Telemetry",
+      "help": "Ratify records one enums-only line per ratified decision to a local corpus (~/.claude/ship-pipeline/sends.jsonl) so you can measure your own ownership over time — calibration, authorship rate, blind-spot trend. In this version nothing is ever sent off your machine: these settings control local recording only. Remote sending tiers (anonymous, identified) will appear here when the backend ships.",
+      "settings": [
+        {
+          "key": "telemetry",
+          "label": "Telemetry mode",
+          "type": "select",
+          "options": ["local", "off"],
+          "default": "local",
+          "required": true,
+          "help": "'local' — record each ratified decision to your machine for your own analysis; never transmitted. 'off' — record nothing. Recording holds enums and scalars only (no code, paths, prompts, or item text), so the corpus is safe to look at and, later, to share."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "bootstrap-identity",
+          "label": "Create this machine's telemetry identity",
+          "help": "Generates a random install id + salt, stored in ~/.claude/ship-pipeline/install.json. The id groups your records; the salt hashes project names so they can't be reversed. Pseudonymous — no account, nothing tied to you. Deleting that file, or re-running this task, resets your identity ('forget me'). Ratify also creates this automatically on first use, so this task is only for inspecting or resetting it. Not needed if telemetry is off.",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}
