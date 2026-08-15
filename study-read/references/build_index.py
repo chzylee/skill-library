@@ -123,11 +123,17 @@ def run_tag(topic, run_id):
 
 def load_library(root):
     """Walk the store; return (docs, groups, rows, runs, chapters, metas, linked_only,
-    unreadable, embedded)."""
+    unreadable, notices, embedded).
+
+    Two disclosure channels, kept apart because they mean different things: `unreadable`
+    is a file the build could not read, `notices` is something the build noticed and
+    worked around. Filing the second under the first would misreport it.
+    """
     docs, groups, rows, runs, chapters = [], [], [], [], []
     metas = {}
     linked_only = []
     unreadable = []
+    notices = []
     embedded = 0
 
     def add_md(path, group):
@@ -169,10 +175,11 @@ def load_library(root):
         # prints under its title; runs that predate it fall back to `sub`. Optional, and
         # an unreadable one is named rather than swallowed.
         meta_path = os.path.join(run_dir, "data", "guide-meta.json")
+        meta = None
         if os.path.exists(meta_path):
             try:
                 with open(meta_path, encoding="utf-8") as fh:
-                    metas[run_id] = json.load(fh)
+                    meta = json.load(fh)
             except Exception as exc:
                 unreadable.append((os.path.relpath(meta_path, root),
                                    f"{type(exc).__name__}: {exc}"))
@@ -188,21 +195,35 @@ def load_library(root):
             except Exception as exc:
                 unreadable.append((os.path.relpath(chap_path, root),
                                    f"{type(exc).__name__}: {exc}"))
-        for c in run_chapters:
-            c["run"] = run_id
-        chapters += run_chapters
-        chapter_of = {m: c.get("chapter_id", "")
-                      for c in run_chapters for m in (c.get("members") or [])}
-
-        run_rows = []
+        raw_rows = []
         if os.path.exists(final):
             try:
                 with open(final, encoding="utf-8") as fh:
-                    run_rows = [normalize(json.loads(l), chapter_of)
-                                for l in fh if l.strip()]
+                    raw_rows = [json.loads(l) for l in fh if l.strip()]
             except Exception as exc:
                 unreadable.append((os.path.relpath(final, root),
                                    f"{type(exc).__name__}: {exc}"))
+
+        # Chapters have no run field of their own, so one is attached here — and it has to
+        # be the value the ROWS carry, not the directory name. Gating keys on (run, topic)
+        # from both sides, so if a run directory is ever renamed or copied the two keys
+        # stop matching and every chaptered topic in it silently reports as legacy. Rows
+        # are the authority; a disagreement is named rather than absorbed.
+        row_run = next((r.get("run") for r in raw_rows if r.get("run")), run_id)
+        if row_run != run_id:
+            notices.append((os.path.relpath(run_dir, root),
+                            f"rows here declare run {row_run!r}, not the directory name "
+                            f"{run_id!r}. Chapters were keyed to the rows, which are the "
+                            f"authority; the directory was probably renamed or copied."))
+        for c in run_chapters:
+            c["run"] = row_run
+        chapters += run_chapters
+        if meta is not None:
+            metas[row_run] = meta          # keyed the same way units look it up
+        chapter_of = {m: c.get("chapter_id", "")
+                      for c in run_chapters for m in (c.get("members") or [])}
+
+        run_rows = [normalize(r, chapter_of) for r in raw_rows]
         rows += run_rows
 
         live = [r for r in run_rows if r["grade"] not in ("killed", "merged")]
@@ -232,7 +253,8 @@ def load_library(root):
                      "trust": round(1.0 - unver / len(live), 3) if live else 0.0,
                      "chapters": len(run_chapters)})
 
-    return docs, groups, rows, runs, chapters, metas, linked_only, unreadable, embedded
+    return (docs, groups, rows, runs, chapters, metas,
+            linked_only, unreadable, notices, embedded)
 
 
 # ------------------------------------------------------------ assemble
@@ -353,7 +375,11 @@ def build_units(rows, chapters, topic_gates, metas):
     topics_index = []
     for topic in sorted(runs_per_topic, key=str.lower):
         mine = [u for u in units if u["topic"] == topic]
-        mine.sort(key=lambda u: u["date"], reverse=True)   # newest first
+        # Newest first, with the run id as a tiebreak. Two runs of one topic on the same
+        # day is exactly the case this has to handle — Terraform's A/B arms both landed on
+        # 2026-08-07 — and without the second key "newest" is whatever order the store
+        # happened to be walked in, so which run a topic opens to would drift per machine.
+        mine.sort(key=lambda u: (u["date"], u["run"]), reverse=True)
         topics_index.append({"name": topic, "slug": slugify(topic),
                              "units": [u["slug"] for u in mine]})
     return units, topics_index
@@ -402,26 +428,31 @@ def gate_topics(rows, chapters):
     return out
 
 
-def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable,
+def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, notices,
                gates_by_key, units, topics_index):
     def jsdata(obj):
         # `</` would end the surrounding <script> tag if a body contains it.
         return (json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
                 .replace("</", "<\\/"))
 
+    # `runs` is deliberately not shipped: the page indexes by topic, and a unit already
+    # carries everything the old run cards showed. It stays in Python for the build log.
     data = {
-        "docs": docs, "rows": rows, "runs": runs, "groups": groups,
-        "chapters": chapters, "gates": gates_by_key,
-        "units": units, "topicIndex": topics_index,
+        "docs": docs, "rows": rows, "groups": groups,
+        "gates": gates_by_key, "units": units, "topicIndex": topics_index,
         "filters": {"type": TYPES, "depth": DEPTHS, "ev": EVIDENCE},
         "built": datetime.date.today().isoformat(),
         "capNote": (f"{len(linked_only)} document(s) exceeded the embed cap and are "
                     f"linked rather than inlined: {', '.join(linked_only)}."
                     if linked_only else ""),
-        # Never a silent drop: whatever could not be read is carried into the page.
+        # Never a silent drop: whatever could not be read, and whatever the build had to
+        # work around, are both carried into the page rather than left in a terminal.
         "unreadable": [{"path": p, "why": w} for p, w in unreadable],
+        "notices": [{"path": p, "why": w} for p, w in notices],
     }
     n_topics, n_rows = len(topics_index), len(rows)
+    hint = (f"Searches all {n_topics} topic{'s' if n_topics != 1 else ''} · {n_rows} rows, "
+            f"not just this one." if n_topics else "Nothing to search yet.")
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -434,7 +465,7 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable,
   <p class="rail-h">Study library</p>
   <label class="vh" for="q">Search every topic</label>
   <input class="search" id="q" type="search" placeholder="Search every topic&#8230;" autocomplete="off">
-  <p class="search-hint">Searches all {n_topics} topic{"s" if n_topics != 1 else ""} · {n_rows} rows, not just this one.</p>
+  <p class="search-hint">{hint}</p>
   <nav class="rail-strip" id="nav" aria-label="Topics and reports"></nav>
 </aside>
 <main id="main" tabindex="-1"></main></div>
@@ -456,7 +487,7 @@ def main():
     out = os.path.join(root, "index.html")
 
     (docs, groups, rows, runs, chapters, metas,
-     linked_only, unreadable, embedded) = load_library(root)
+     linked_only, unreadable, notices, embedded) = load_library(root)
     topics = gate_topics(rows, chapters)
     units, topics_index = build_units(rows, chapters, topics, metas)
 
@@ -467,7 +498,7 @@ def main():
         print(f"Nothing found under {root} — writing an empty library.")
 
     page = build_page(docs, groups, rows, runs, chapters, linked_only, unreadable,
-                      topics, units, topics_index)
+                      notices, topics, units, topics_index)
     with open(out, "w", encoding="utf-8") as fh:
         fh.write(page)
 
@@ -516,6 +547,10 @@ def main():
         print(f"\n  COULD NOT READ {len(unreadable)} file(s) — named, not dropped:")
         for p, why in unreadable:
             print(f"    {p}  ({why})")
+    if notices:
+        print(f"\n  NOTICED {len(notices)} thing(s) the build worked around:")
+        for p, why in notices:
+            print(f"    {p}\n      {why}")
     if a.open:
         subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", out], check=False)
 

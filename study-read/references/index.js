@@ -248,7 +248,7 @@
   /* ---------- rail ---------- */
 
   function buildRail() {
-    var html = '<p class="shelf">All topics · A–Z</p>';
+    var html = TOPIC_INDEX.length ? '<p class="shelf">All topics · A–Z</p>' : "";
     TOPIC_INDEX.forEach(function (t) {
       var us = unitsOfTopic(t);
       if (!us.length) return;
@@ -597,15 +597,18 @@
     window.scrollTo(0, 0);
     if (!UNITS.length && !DOCS.length) { main.innerHTML = emptyStateHtml(); return; }
 
+    function disclose(list, lead) {
+      if (!list.length) return "";
+      return '<div class="banner"><b>' + lead + "</b><ul>" + list.map(function (x) {
+        return "<li><code>" + esc(x.path) + "</code> — " + esc(x.why) + "</li>";
+      }).join("") + "</ul></div>";
+    }
     var notes = "";
     if (DATA.capNote) notes += '<p class="banner">' + esc(DATA.capNote) + "</p>";
-    if (DATA.unreadable.length) {
-      notes += '<div class="banner"><b>' + plural(DATA.unreadable.length, "file") +
-        " could not be read</b>, and are named here rather than dropped:<ul>" +
-        DATA.unreadable.map(function (x) {
-          return "<li><code>" + esc(x.path) + "</code> — " + esc(x.why) + "</li>";
-        }).join("") + "</ul></div>";
-    }
+    notes += disclose(DATA.unreadable, plural(DATA.unreadable.length, "file") +
+      " could not be read, and are named here rather than dropped:");
+    notes += disclose(DATA.notices, "The build worked around " +
+      plural(DATA.notices.length, "thing") + ", and says so rather than absorbing it:");
 
     main.innerHTML =
       "<h1>Study library</h1>" +
