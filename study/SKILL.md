@@ -26,9 +26,10 @@ in the v0.1 run it was 58% of the total, more than every sub-agent combined, bec
 conversation gets re-read on every turn. Starting cold is free and beats every other optimization
 available.
 
-**Never render with the model.** The guide is ~160KB of HTML. Emitting it as model output costs
-tens of thousands of tokens; [references/render.py](references/render.py) costs none. The model
-authors only the self-check questions and the honest-limits prose. The script does the rest.
+**Never render with the model.** The library page is hundreds of KB of HTML. Emitting it as model
+output costs tens of thousands of tokens; `study-read`'s
+[build_index.py](../study-read/references/build_index.py) costs none. The model authors the
+chapter warrants and the honest-limits prose. The script does the rest.
 
 ## Store
 
@@ -36,15 +37,18 @@ Reports sit where you can see them; data lives one level down in a `data/` folde
 
 ```
 ~/.claude/study/
-├── index.html                  ← the navigator, built by /study-read
+├── index.html                  ← the whole library, built by /study-read
 ├── COMPARISON-*.md             ← cross-run reports, visible at root
 ├── data/rows.jsonl             ← every row, every topic, append-only
 └── runs/<run-id>/
-    ├── guide.html              ← the reports, immediately visible
-    ├── guide-60m.html
     ├── audit.md · retro.md · harvest-*.md
     └── data/                   ← *.jsonl, plus guide-meta.json and self-check.json
 ```
+
+There is no per-run `guide.html` any more. One page renders every topic from the store, so a
+separately rendered per-run document was a second rendering system that shared nothing with the
+first. Old `guide*.html` files from earlier runs stay on disk untouched and are simply no longer
+listed; they are build artifacts, not data.
 
 Append-only is doing real work: you never rewrite `rows.jsonl`, so a killed row stays in the file
 and the guide is a filter over a preserved whole. Query across topics with DuckDB, no setup:
@@ -99,31 +103,30 @@ Apply its verdicts as grade changes — never by deleting rows. Record every cha
 included. Clean HTML entities (`&lt;` `&gt;` `&amp;`) on the way in — they arrive in agent returns
 and will otherwise ship inside your numbers.
 
-**5 · Process into the guide.** Now, and only now. Write two small files:
+**5 · Write the run's scope record, then build.** Now, and only now.
 
-- `runs/<run-id>/data/self-check.json` — 8–12 questions as `{"q", "a", "ref"}`. Produce-level, not
-  recognize-level. Answers render folded so the reader cannot pass by eye.
 - `runs/<run-id>/data/guide-meta.json` — `{"title", "sub", "scopes": {topic: text}, "empty": {},
   "limits": "<p>…</p>"}`. Honest limits must name what the search came up empty on, any source that
-  could not be verified, and any way the method itself was weakened on this run.
+  could not be verified, and any way the method itself was weakened on this run. `scopes[topic]` is
+  the boundary line printed under the topic's title, so write it for the reader.
+- `runs/<run-id>/data/self-check.json` — 8–12 questions as `{"q", "a", "ref"}`. Produce-level, not
+  recognize-level. **Nothing renders this yet.** The old guide folded the answers; the topic view
+  does not draw self-check at all. Keep writing the file — it is cheap and it is data — but do not
+  tell a reader the questions are waiting for them somewhere.
 
-Then run the renderer:
-
-```bash
-python3 references/render.py <run-id>
-```
-
-It maps depth to reader-facing sections — `orientation`+`operation` → Fundamentals, `judgment` →
-Senior edge, `mechanism` → Extra depth (labeled *cut this first when time-boxed*), traps and
-practice to their own sections — computes the triage line, and emits one self-contained file to `runs/<run-id>/guide.html`.
-
-**Time-boxed cut.** `--minutes N` renders a per-topic reading budget. It is a filter over the same
-rows, not a different analysis, so it costs zero agents and can be re-run at any budget. It keeps
-traps first, then material by depth, and states exactly what it omitted.
+Then rebuild the library:
 
 ```bash
-python3 references/render.py <run-id> --minutes 60
+python3 ../study-read/references/build_index.py --root ~/.claude/study
 ```
+
+It renders every topic in the store as a contents view: chapters in reading order, items inside
+them, each item one expansion from its firsthand source. Chapters come from
+`runs/<run-id>/data/chapters.jsonl`; a run without that file renders flat under a banner saying it
+predates chaptering.
+
+The old per-topic reading budget (`--minutes N`) is gone with the renderer. Reading order now comes
+from chapters, which is a stated structure rather than a depth-ranked filter over one.
 
 **6 · Retro.** Append to `runs/<run-id>/retro.md`: what the schema could not hold, which stage
 produced the least value for its cost, whether the audit changed anything or just agreed, and the
