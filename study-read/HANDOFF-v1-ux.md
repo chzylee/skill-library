@@ -12,6 +12,69 @@ source states, the adaptive run strip, honest absences. Do not redesign those. W
 
 ---
 
+## The frame — settled with the author this session, and it should drive the refine
+
+DESIGN-v1 never names what kind of thing the output is. It says *"a textbook you can't get any
+other way"* and then immediately *"Not authored prose"*, and that unresolved contradiction is
+upstream of the defects in §3: a textbook explains, this refuses to explain, and what shipped
+explains nothing and reads as an index.
+
+**The artifact is a reader.** Not the person — a *reader* in the editorial sense, as in
+`A Graphic Design Reader`: a curated collection of primary sources, selected and ordered to teach
+a subject, with short editorial text introducing each section and saying why its pieces sit
+together. The learning happens in the sources. *Course pack* is the plainer synonym for the same
+object if "reader" is too academic for a product surface.
+
+That word resolves the contradiction. **An editor writes headnotes, not exposition.** So teaching
+material and "not authored prose" were never actually in conflict — the ordering and the
+headnotes *are* the teaching.
+
+**Claude's role, in the author's words: researcher → curator → editor. "Not too opinionated
+beyond structure."** That is a testable line, and it is narrower than it first sounds:
+
+| Opinions that are the job | Opinions that are out of bounds |
+|---|---|
+| what is worth including, and what is not | which framework or tool is better |
+| what groups with what, and why | what the reader should do |
+| what order to meet things in | how important something is to *this* reader |
+| what to notice about an item | any claim about the world without a source |
+
+The right-hand column is already covered by committed constraints — consumer-agnostic analysis
+(§4.1), no rationale the source does not state (§4.3), no priority or importance field on a row
+(§4.6). The left-hand column is the editorial apparatus, and it is the thing that is missing.
+
+**Note the constraint that appears to forbid this and does not.** "Never render with the model"
+means *there is no model path to HTML* — see §3 and §12b of DESIGN-v1. It governs who generates
+markup, not who writes sentences. The model already authors `principle`, `because`, the drill
+rows, and the honest-limits prose. Editorial connective text breaks nothing.
+
+### The apparatus, and where each piece already stands
+
+| Piece | Status |
+|---|---|
+| **General introduction** — what this topic is, its boundary, where to start | Exists. `guide-meta.json` `scopes[topic]` renders as the boundary line. |
+| **Chapter headnote** — what this section is, why these belong together, what to notice | Exists as `because`, median 476 chars, but it is framed as a *warrant* aimed at the Phase 0 checker and crammed onto a collapsed contents line. See §3a — the problem is placement, not length. |
+| **Per-item note** — why this is here and what it does in the sequence | **Missing.** `description` is a faithful summary of the source; `depth_check` explains the tier. Neither says why the item earned its place. This is the gap behind §3b. |
+
+Two of three already exist in the data. One is missing. That is a much smaller job than "improve
+the UX," and it is the job.
+
+### The bar
+
+The author's benchmark, and it is worth adopting as a success criterion because §14 has nothing
+like it. `/study graphic design` must beat **both**:
+
+- **Googling it yourself** — someone already searched, discarded the junk, ordered what survived,
+  and said why each thing is here. And it persists and stays searchable beside every other topic.
+- **Asking a chat model** — you get the same orientation *plus* the page it came from. Fluency is
+  the part you cannot verify; the citation is the part you can.
+
+**The outcome is that the reader learns.** §14's criteria measure organization, structure size,
+traceability and cost. None of them measures whether anyone learned anything. That gap is worth
+closing before another display cycle.
+
+---
+
 ## 1 · Read these, in this order
 
 | File | What it is |
@@ -186,6 +249,8 @@ Re-litigating these burns a session and the reasoning is already written down.
 
 ## 6 · Suggested first moves
 
+0. **Start from the frame above, not from the CSS.** The job is the editorial apparatus: one
+   piece missing, one misplaced, one already working. That is the spine of the refine.
 1. **Look before theorising.** Build, screenshot at both widths, read them. Then read the 47
    chapter titles alone against design rule 5.
 2. **Decide content-vs-display for each defect in §3 before touching CSS.** 3b and 3c are content
