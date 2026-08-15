@@ -6,16 +6,19 @@
 Layout it expects:
     <root>/*.md                     cross-run reports, visible at root
     <root>/data/rows.jsonl          append-only store
-    <root>/runs/<id>/guide*.html    per-run guides
     <root>/runs/<id>/*.md           per-run reports
-    <root>/runs/<id>/data/*.jsonl   per-run data
+    <root>/runs/<id>/data/*.jsonl   per-run rows, chapters, and the run's scope record
 
-Writes <root>/index.html: a sidebar of every readable document, a reading pane that renders
-markdown inline (index.js) and loads guides in a frame, and search across every row of every run.
-The page is assembled from index.css and index.js, which sit next to this script and are inlined
-at build time — the output stays one self-contained file, no server, no external requests.
+Writes <root>/index.html: a rail of every topic you have studied, a topic reading view that
+renders chapters and items from data, the store's markdown reports, and search across every
+row of every run. The page is assembled from index.css and index.js, which sit next to this
+script and are inlined at build time — the output stays one self-contained file, no server,
+no external requests.
 
-Flow: load (discover documents, rows, runs) -> assemble (inline assets + data) -> write.
+Flow: load (documents, rows, runs, chapters, run metadata)
+   -> unitize (one reading unit per run+topic, gated)
+   -> assemble (inline assets + data)
+   -> write.
 """
 import argparse
 import datetime
@@ -70,6 +73,7 @@ def normalize(row, chapter_of=None):
             "when": WHEN_LABEL.get(depth, ""),
             "why": row.get("depth_check") or "",
             "ch": (chapter_of or {}).get(rid, ""),
+            "at": row.get("populated_at") or "",
             "t": row.get("time_estimate_min", 0),
             "grade": row.get("grade", "viable"), "sv": row.get("schema_version", "?")}
 
@@ -99,9 +103,29 @@ def group_label(topics, run_id, taken):
     return f"{base} ({suffix})"
 
 
+def slugify(s):
+    """Stable, readable URL fragment. Used for topic and unit anchors."""
+    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", (s or "").lower())).strip("-") or "topic"
+
+
+def run_tag(topic, run_id):
+    """The token in a run id that the topic name and the date do not already carry.
+
+    'terraform-team-scale-v02-2026-08-07' under topic 'Terraform at team scale' -> 'v02'.
+    Only used to disambiguate a topic studied more than once; a topic with one run never
+    shows a tag.
+    """
+    seen = set(re.split(r"[^a-z0-9]+", (topic or "").lower()))
+    extra = [t for t in run_id.split("-")
+             if t.lower() not in seen and not re.fullmatch(r"\d{2,4}", t)]
+    return "-".join(extra) or run_id[-10:]
+
+
 def load_library(root):
-    """Walk the store; return (docs, groups, rows, runs, chapters, linked_only, unreadable)."""
+    """Walk the store; return (docs, groups, rows, runs, chapters, metas, linked_only,
+    unreadable, embedded)."""
     docs, groups, rows, runs, chapters = [], [], [], [], []
+    metas = {}
     linked_only = []
     unreadable = []
     embedded = 0
@@ -134,12 +158,24 @@ def load_library(root):
         for f in root_md:
             add_md(f, "Library")
 
-    # per-run guides, reports, and rows
+    # per-run reports, rows, and chapters
     for run_dir in sorted(glob.glob(os.path.join(root, "runs", "*")), reverse=True):
         if not os.path.isdir(run_dir):
             continue
         run_id = os.path.basename(run_dir)
         final = os.path.join(run_dir, "data", "final.jsonl")
+
+        # The run's own scope record. `scopes[topic]` is the boundary line the topic page
+        # prints under its title; runs that predate it fall back to `sub`. Optional, and
+        # an unreadable one is named rather than swallowed.
+        meta_path = os.path.join(run_dir, "data", "guide-meta.json")
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, encoding="utf-8") as fh:
+                    metas[run_id] = json.load(fh)
+            except Exception as exc:
+                unreadable.append((os.path.relpath(meta_path, root),
+                                   f"{type(exc).__name__}: {exc}"))
 
         # Chapters are optional. A run without them is a legacy run and renders flat;
         # that is a supported state, not a missing file.
@@ -175,21 +211,18 @@ def load_library(root):
         group = group_label(topics, run_id, groups)
         groups.append(group)
 
-        for g in sorted(glob.glob(os.path.join(run_dir, "guide*.html"))):
-            base = os.path.basename(g)[:-5]
-            docs.append({"i": len(docs), "g": group,
-                         "label": "Guide" if base == "guide" else f"Guide — {base[6:]}",
-                         "kind": "html", "path": os.path.relpath(g, root), "body": ""})
+        # Per-run guide*.html files are NOT listed. The separately rendered guide is
+        # superseded by the topic view, which draws the same rows from the same store
+        # with chapters the guide never had. The files stay on disk — they are past
+        # build artifacts, not data — they just no longer have a door in the library.
         for f in sorted(glob.glob(os.path.join(run_dir, "*.md"))):
             add_md(f, group)
 
-        guide = os.path.join(run_dir, "guide.html")
         unver = sum(1 for r in live if r["ev"] == "asserted")
         runs.append({"id": run_id, "g": group, "topics": topics,
                      "n": len(live), "total": len(run_rows),
                      "mins": sum(r["t"] for r in reading),
-                     "date": max(r.get("populated_at") or "" for r in
-                                 [json.loads(l) for l in open(final)]) if run_rows else "—",
+                     "date": max(r["at"] for r in run_rows) if run_rows else "—",
                      "sv": run_rows[0]["sv"] if run_rows else "?",
                      "wounded": sum(1 for r in run_rows if r["grade"] == "wounded"),
                      "shelved": sum(1 for r in run_rows if r["grade"] in ("killed", "merged")),
@@ -197,21 +230,133 @@ def load_library(root):
                      # The browse facet needs a share, not a count: 2 unverified rows
                      # means something different in a 12-row topic than a 200-row one.
                      "trust": round(1.0 - unver / len(live), 3) if live else 0.0,
-                     "chapters": len(run_chapters),
-                     "guide": os.path.relpath(guide, root) if os.path.exists(guide) else ""})
+                     "chapters": len(run_chapters)})
 
-    return docs, groups, rows, runs, chapters, linked_only, unreadable
+    return docs, groups, rows, runs, chapters, metas, linked_only, unreadable, embedded
 
 
 # ------------------------------------------------------------ assemble
 
 def asset(name):
-    """Inline a sibling asset. shared/tokens.css is optional and precedes index.css."""
+    """Inline a sibling asset, or fail the build naming what is missing.
+
+    This used to return "" for a missing file. `shared/tokens.css` is untracked-prone and
+    carries every colour in the page, so a fresh clone silently built an unstyled library
+    and nothing said so. A stylesheet the page cannot render without is a build input, not
+    an optional extra: absence is an error.
+    """
     path = os.path.join(HERE, name)
     if not os.path.exists(path):
-        return ""
+        raise SystemExit(
+            f"build_index.py: required asset missing: {path}\n"
+            f"  The page cannot be styled without it. Restore the file (it is part of the\n"
+            f"  repo) and build again.")
     with open(path, encoding="utf-8") as fh:
-        return fh.read()
+        text = fh.read()
+    # A <style> or <script> element ends at the first literal "</style" / "</script"
+    # in its text — inside a comment or a string just as much as in live code. A
+    # documentation comment in shared/tokens.css spelled one out and silently
+    # truncated the stylesheet of every page that inlined it. Neutralised here so
+    # no asset can do that again; the backslash is inert in both languages.
+    return (re.sub(r"</(?=style)", r"<\\/", text, flags=re.I)
+            if name.endswith(".css")
+            else re.sub(r"</(?=script)", r"<\\/", text, flags=re.I))
+
+
+def unit_tiers(urows):
+    """Reader-facing `when` composition for one unit, plus what its schema could not say.
+
+    `edge case` has no legacy source — the tier did not exist when these rows were
+    written — so it is reported as absent-by-schema rather than counted as an empty tier
+    the run failed to fill. Calling it empty would flag every legacy topic for a gap that
+    is a property of the schema, not of the research.
+    """
+    counts = {}
+    for r in urows:
+        label = r["when"] or "unclassified"
+        counts[label] = counts.get(label, 0) + 1
+    reachable = list(dict.fromkeys(WHEN_LABEL.values()))
+    tiers = [{"label": lb, "n": counts.get(lb, 0)} for lb in reachable]
+    if counts.get("unclassified"):
+        tiers.append({"label": "unclassified", "n": counts["unclassified"]})
+    absent = [lb for lb in ("edge case",) if lb not in reachable]
+    return tiers, absent
+
+
+def build_units(rows, chapters, topic_gates, metas):
+    """One reading unit per (run, topic) — the same key the gates use.
+
+    A unit, not a topic, is what has chapters: chapters come from one structure stage over
+    one run's rows, so two runs of the same topic are two independent structures over two
+    different row sets. Topics are the index; a topic that was studied twice lists both of
+    its units and opens the newest.
+    """
+    live = [r for r in rows if r["grade"] not in ("killed", "merged")]
+    by_key = {}
+    for r in live:
+        by_key.setdefault((r["run"], r["topic"]), []).append(r)
+
+    chaps_by = {}
+    for c in chapters:
+        chaps_by.setdefault((c.get("run", ""), c.get("topic", "")), []).append(c)
+
+    # A topic name is the index entry; the units under it are its runs.
+    runs_per_topic = {}
+    for run, topic in by_key:
+        runs_per_topic.setdefault(topic, []).append(run)
+
+    units = []
+    for (run, topic), urows in by_key.items():
+        gate = topic_gates.get(f"{run}\t{topic}", {})
+        meta = metas.get(run, {})
+        boundary = (meta.get("scopes") or {}).get(topic) or ""
+        if not boundary and len(set(r["topic"] for r in rows if r["run"] == run)) == 1:
+            # A single-topic run's `sub` describes that topic; a multi-topic run's does
+            # not, so it is only borrowed when it can only mean this topic.
+            boundary = meta.get("sub") or ""
+
+        chs = sorted(chaps_by.get((run, topic), []), key=lambda c: c.get("order", 0))
+        state = gate.get("state", "legacy")
+        by_id = {r["id"]: r for r in urows}
+        out_chs = []
+        for c in chs:
+            members = [m for m in (c.get("members") or []) if m in by_id]
+            out_chs.append({
+                "id": c.get("chapter_id", ""),
+                "principle": c.get("principle", ""),
+                "because": c.get("because", ""),
+                "kind": c.get("kind", "principle"),
+                "members": members,
+                "mins": sum(by_id[m]["t"] for m in members),
+            })
+
+        tiers, absent = unit_tiers(urows)
+        multi = len(runs_per_topic.get(topic, [])) > 1
+        slug = slugify(topic) + ("-" + slugify(run_tag(topic, run)) if multi else "")
+        units.append({
+            "key": f"{run}\t{topic}", "slug": slug, "run": run, "topic": topic,
+            "date": max((r["at"] for r in urows), default=""),
+            "boundary": boundary,
+            "state": state,
+            "failures": gate.get("failures", []), "warnings": gate.get("warnings", []),
+            "n": len(urows), "mins": sum(r["t"] for r in urows),
+            "chapters": out_chs,
+            "tiers": tiers, "absentTiers": absent,
+            "checked": sum(1 for r in urows if r["ev"] == "re-opened"),
+            "unver": sum(1 for r in urows if r["ev"] == "asserted"),
+            "authored": sum(1 for r in urows if r["ev"] == "authored"),
+            "sv": urows[0]["sv"],
+            "runTag": run_tag(topic, run) if multi else "",
+        })
+
+    units.sort(key=lambda u: (u["topic"].lower(), u["date"]), reverse=False)
+    topics_index = []
+    for topic in sorted(runs_per_topic, key=str.lower):
+        mine = [u for u in units if u["topic"] == topic]
+        mine.sort(key=lambda u: u["date"], reverse=True)   # newest first
+        topics_index.append({"name": topic, "slug": slugify(topic),
+                             "units": [u["slug"] for u in mine]})
+    return units, topics_index
 
 
 def gate_topics(rows, chapters):
@@ -257,7 +402,8 @@ def gate_topics(rows, chapters):
     return out
 
 
-def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, topics):
+def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable,
+               gates_by_key, units, topics_index):
     def jsdata(obj):
         # `</` would end the surrounding <script> tag if a body contains it.
         return (json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
@@ -265,7 +411,8 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, topi
 
     data = {
         "docs": docs, "rows": rows, "runs": runs, "groups": groups,
-        "chapters": chapters, "topics": topics,
+        "chapters": chapters, "gates": gates_by_key,
+        "units": units, "topicIndex": topics_index,
         "filters": {"type": TYPES, "depth": DEPTHS, "ev": EVIDENCE},
         "built": datetime.date.today().isoformat(),
         "capNote": (f"{len(linked_only)} document(s) exceeded the embed cap and are "
@@ -274,7 +421,7 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, topi
         # Never a silent drop: whatever could not be read is carried into the page.
         "unreadable": [{"path": p, "why": w} for p, w in unreadable],
     }
-    n_runs, n_rows, n_docs = len(runs), len(rows), len(docs)
+    n_topics, n_rows = len(topics_index), len(rows)
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -284,14 +431,13 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, topi
 {asset("index.css")}
 </style></head><body><div class="wrap">
 <aside>
-  <h1>Study library</h1>
-  <p class="sub">{n_runs} run{"s" if n_runs != 1 else ""} · {n_rows} rows · {n_docs} documents</p>
-  <nav aria-label="Documents">
-    <button class="dl" id="home" aria-current="true">Overview &amp; search</button>
-    <div id="nav"></div>
-  </nav>
+  <p class="rail-h">Study library</p>
+  <label class="vh" for="q">Search every topic</label>
+  <input class="search" id="q" type="search" placeholder="Search every topic&#8230;" autocomplete="off">
+  <p class="search-hint">Searches all {n_topics} topic{"s" if n_topics != 1 else ""} · {n_rows} rows, not just this one.</p>
+  <nav class="rail-strip" id="nav" aria-label="Topics and reports"></nav>
 </aside>
-<main id="main"></main></div>
+<main id="main" tabindex="-1"></main></div>
 <script>window.STUDY_DATA={jsdata(data)}</script>
 <script>
 {asset("index.js")}
@@ -309,8 +455,10 @@ def main():
     root = os.path.expanduser(a.root)
     out = os.path.join(root, "index.html")
 
-    docs, groups, rows, runs, chapters, linked_only, unreadable = load_library(root)
+    (docs, groups, rows, runs, chapters, metas,
+     linked_only, unreadable, embedded) = load_library(root)
     topics = gate_topics(rows, chapters)
+    units, topics_index = build_units(rows, chapters, topics, metas)
 
     # An empty store is a legal state, not an error. Previously this exited 1 without
     # writing anything, so a brand-new user's first experience of the library was a
@@ -318,13 +466,14 @@ def main():
     if not docs:
         print(f"Nothing found under {root} — writing an empty library.")
 
+    page = build_page(docs, groups, rows, runs, chapters, linked_only, unreadable,
+                      topics, units, topics_index)
     with open(out, "w", encoding="utf-8") as fh:
-        fh.write(build_page(docs, groups, rows, runs, chapters,
-                            linked_only, unreadable, topics))
+        fh.write(page)
 
     n_ch = len(chapters)
     print(f"{len(runs)} run(s), {len(rows)} rows, {n_ch} chapters, "
-          f"{len(docs)} documents -> {out}")
+          f"{len(topics_index)} topic(s), {len(docs)} documents -> {out}")
     for r in runs:
         ch = f"{r['chapters']:>3} ch" if r["chapters"] else "  legacy"
         print(f"  {r['date']}  {r['n']:>4} items  {r['mins']:>4}m  {ch}  "
@@ -344,6 +493,23 @@ def main():
         if bad:
             print(f"\n  {len(bad)} topic(s) render flat; the build still succeeded.")
 
+    # Size accounting. EMBED_CAP governs markdown only; row data has never been capped,
+    # and slice 1 widened rows from a 300-char projection to full text. So the number that
+    # actually grows is printed every build rather than discovered at the wall. The fix
+    # (fetch a topic on demand instead of baking every one into the file) lives in slice 3
+    # and is not committed, so visibility is the whole mitigation — say so.
+    rowbytes = len(json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
+    print(f"\n  page {len(page):,} bytes  =  rows {rowbytes:,} + markdown {embedded:,} "
+          f"+ assets/chrome {max(0, len(page) - rowbytes - embedded):,}")
+    print(f"  markdown embed cap {EMBED_CAP:,} bytes · {embedded / EMBED_CAP:.0%} used"
+          + (f" · {len(linked_only)} document(s) linked instead" if linked_only else ""))
+    if units:
+        per = rowbytes / len(units)
+        print(f"  rows cost ~{per:,.0f} bytes per topic-run; "
+              f"{len(units)} here. No cap governs this — a single file is slice 1's shape.")
+    if len(page) > EMBED_CAP:
+        print(f"  NOTE: the page is now larger than EMBED_CAP itself. Nothing breaks, but "
+              f"one file is carrying the whole library.")
     if linked_only:
         print(f"  NOT embedded (over cap): {', '.join(linked_only)}")
     if unreadable:
