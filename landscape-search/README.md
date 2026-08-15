@@ -23,8 +23,8 @@ works on any OS:
 ```text
 Install one skill from https://github.com/chzylee/skill-library for me:
 
-1. Fetch ONLY the folder named landscape-search from the `dev` branch of that
-   repo (shallow clone or GitHub API — your choice).
+1. Fetch ONLY the folder named landscape-search from that repo (shallow clone
+   or GitHub API — your choice).
 2. Copy that folder to ~/.claude/skills/landscape-search, creating directories
    as needed. Change nothing else on my machine, and remove any temporary clone.
 3. Read the skill's description back to me so I can confirm it's what I wanted.
@@ -36,19 +36,26 @@ Then restart Claude Code (or start a new session). No extra setup — but see
 ### Claude Code — manual fallback
 
 ```bash
-git clone -b dev https://github.com/chzylee/skill-library.git
+git clone https://github.com/chzylee/skill-library.git
 cp -r skill-library/landscape-search ~/.claude/skills/landscape-search
 ```
 
 Windows (PowerShell):
 
 ```powershell
-git clone -b dev https://github.com/chzylee/skill-library.git
+git clone https://github.com/chzylee/skill-library.git
 Copy-Item -Recurse skill-library\landscape-search "$HOME\.claude\skills\landscape-search"
 ```
 
 Restart Claude Code (or start a new session). Project-scoped instead? Copy the
 `landscape-search` folder into that project's `.claude/skills/`.
+
+### Claude desktop
+
+Upload `dist/landscape-search.skill` via **Settings → Customize → Skills**, or present it
+in a claude.ai chat and click **Save skill**. Note that the sub-agent dispatch this skill
+relies on is a Claude Code affordance — outside it, the search collapses into the main
+context and you lose the isolation, though the method still holds.
 
 ## What it does
 
@@ -105,8 +112,10 @@ manufactures them.
 
 ## Status
 
-On the `dev` branch — written 2026-08-15, reviewed by a second model against its source,
-not yet run end to end. Treat early runs as a shakedown.
+First version. Written and promoted to `main` 2026-08-15, reviewed by a second model
+against its source — but **not yet run end to end**. Promoted early on purpose, because
+the method it encodes has been exercised inside `office-hours`; what's untested is this
+packaging of it. Treat the first few runs as a shakedown.
 
 Extracted from Phase 2.75 ("Landscape Awareness") of gstack's `office-hours` skill, where
 the capability worked well but was welded to one workflow. The standalone version changes
