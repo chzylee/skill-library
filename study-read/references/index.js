@@ -293,28 +293,26 @@
     return '<span class="srcstate"><span class="g"></span>source checked</span>';
   }
 
-  /* The quote block. A missing quote is stated, never left blank and never dressed
-     up as an authored row: 56 of 238 rows carry one, so absence is the common case
-     and the page has to say which kind of absence it is. */
+  /* The quote block, drawn only when there is a quote.
+     A stated absence was the right rule and the wrong volume: 178 of 230 live rows
+     carry no quote, so the line announcing that was the single most repeated sentence
+     in the product, three items in every four. The absence is also near-uniform
+     WITHIN a run (one run stored 0 of 117, another 52 of 58), which makes it a fact about
+     the run, not about the item. It moves to the run strip, stated once. Nothing is
+     concealed: which kind of absence it is was always readable off the source-state badge
+     already on the row — `not opened` and `authored` say it themselves. */
   function quoteBlock(r) {
-    if (r.quote) return "<blockquote>“" + esc(r.quote) + "”</blockquote>";
-    if (r.ev === "authored") {
-      return '<p class="absent">Authored for this run, so there is no source sentence to quote.</p>';
-    }
-    return '<p class="absent">No quote captured for this row. ' +
-      (r.ev === "asserted"
-        ? "The source was named but never opened, so nothing has been checked against it."
-        : "The source was opened and the claim checked against it, but this run did not " +
-          "store the supporting sentence.") + "</p>";
+    return r.quote ? "<blockquote>“" + esc(r.quote) + "”</blockquote>" : "";
   }
 
+  /* Same rule for the tier reason: 117 of 230 rows have none, and where one run recorded
+     all 58 another recorded none of 117. The classification itself always renders; only
+     the sentence announcing its absence moves to the run strip. */
   function classifLine(r) {
     var kind = r.type || "item";
     var when = r.when || "unclassified";
-    var s = '<p class="classif">A <b>' + esc(kind) + "</b>, tagged <b>" + esc(when) + "</b>. " +
-      (r.why ? esc(r.why)
-             : "This run did not record why it sits at that tier.") + "</p>";
-    return s;
+    return '<p class="classif">A <b>' + esc(kind) + "</b>, tagged <b>" + esc(when) + "</b>." +
+      (r.why ? " " + esc(r.why) : "") + "</p>";
   }
 
   function sourceLine(r) {
@@ -349,21 +347,29 @@
       "</div></details>";
   }
 
-  /* One quiet line per chapter, never an empty panel. The `practicum` record type is
-     designed but not built in this version, so no chapter has one. Where a chapter
-     holds drill or exercise rows, those ARE its practice under this schema and the
-     line says so rather than claiming there is none. */
+  /* Practice, drawn only where there is some. 19 of 47 chapters hold no drill or
+     exercise row, and the `practicum` record type is designed but not built at all, so
+     the "none was authored" line was on every chapter of a topic that has no practicum
+     anywhere. That is a fact about the pipeline, and it is stated once in the run strip.
+     Where a chapter DOES hold drill or exercise rows, those are its practice under this
+     schema and saying so is worth a line. */
   function practiceLine(rows) {
     var n = rows.filter(function (r) { return r.type === "drill" || r.type === "exercise"; }).length;
-    if (n) {
-      return '<p class="prac-none">Practice for this chapter is the ' +
-        plural(n, "drill or exercise item") + " listed above. " +
-        "The separate practicum record is designed but not built in this version.</p>";
-    }
-    return '<p class="prac-none">No practice was authored for this chapter. ' +
-      "The pipeline does not produce practicum yet.</p>";
+    if (!n) return "";
+    return '<p class="prac">Practice for this chapter is the ' +
+      plural(n, "drill or exercise item") + " listed above.</p>";
   }
 
+  /* The chapter, and the one placement decision this view turns on.
+     `because` is the chapter's HEADNOTE — the editorial paragraph that says why these
+     items sit together and what to notice — and it belongs where an editor puts a
+     headnote: at the top of the section it introduces, read once you have opened it.
+     It was on the collapsed contents line, where a median 476 characters of warrant
+     under a median 105-character title made every chapter ~220px tall and put the shape
+     of a 13-chapter topic several screens deep. DESIGN §2 promises "the shape of the
+     whole topic without scrolling" and the contents view could not deliver it.
+     The title still carries the contents line alone, which is design rule 5's own test:
+     these are claim sentences, not category labels, so they can. */
   function chapterHtml(c, n, u, openCh, openRow) {
     var rows = c.members.map(function (m) { return ROW_BY[u.run + "\t" + m]; }).filter(Boolean);
     var open = openCh === c.id ? " open" : "";
@@ -371,10 +377,10 @@
       plural(rows.length, "item") + (c.mins ? " · " + c.mins + "m" : "");
     return '<details class="ch" id="ch-' + esc(c.id) + '"' + open + ">" +
       "<summary>" + MARK +
-      '<span class="ch-n">' + n + "</span><span>" +
+      '<span class="ch-n">' + n + "</span>" +
       '<h2 class="ch-t">' + esc(c.principle) + "</h2>" +
-      '<span class="ch-b">' + esc(c.because) + "</span></span>" +
       '<span class="ch-m">' + esc(meta) + "</span></summary>" +
+      (c.because ? '<p class="ch-head">' + esc(c.because) + "</p>" : "") +
       '<div class="items">' + rows.map(function (r) { return itemHtml(r, openRow); }).join("") +
       "</div>" + practiceLine(rows) + "</details>";
   }
@@ -407,6 +413,37 @@
       (u.unver ? " · " + u.unver + " name a source nobody opened" : "") +
       (u.authored ? " · " + u.authored + " are authored here with no external source" : "") +
       " · schema v" + esc(u.sv) + ".</p>";
+
+    /* What this run did not store, said once for the whole topic instead of on every
+       item. These three were per-row lines and between them were the most repeated text
+       in the product: 178 of 230 rows had no quote, 117 had no tier reason, and no
+       chapter anywhere has a practicum. The rule that produced them — never blank, never
+       mislabelled — is right, and the volume was the defect. They are also run-scoped
+       facts rather than item-scoped ones: one run stored 0 of 117 quotes and another 52
+       of 58, so the honest place to say it is here. */
+    notes += "<p>" + (
+      u.quoted === 0
+        ? "No row in this run stored the sentence its claim came from, so no item shows a " +
+          "quote. What each row says was checked against its source; the supporting " +
+          "sentence itself was not kept."
+        : u.quoted === u.n
+          ? "Every row stored the sentence its claim came from."
+          : u.quoted + " of " + u.n + " rows stored the sentence the claim came from; the " +
+            "rest record the claim and its source without it."
+    ) + " " + (
+      u.tiered === 0
+        ? "No row recorded why it sits at its tier."
+        : u.tiered === u.n
+          ? "Every row recorded why it sits at its tier."
+          : u.tiered + " recorded why they sit at their tier."
+    ) + "</p>";
+
+    notes += "<p>" + (u.prac
+      ? plural(u.prac, "row") + " here " + (u.prac === 1 ? "is a drill or exercise" :
+        "are drills or exercises") + ", listed inside the chapter each one practises. "
+      : "Nothing in this run is a drill or an exercise. ") +
+      "The separate <b>practicum</b> record is designed and not built, so no chapter " +
+      "carries practice of its own.</p>";
     if (u.warnings.length) {
       notes += "<p>Build gates warned, and warnings never block: " +
         u.warnings.map(esc).join("; ") + ".</p>";

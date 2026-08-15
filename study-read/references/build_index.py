@@ -375,6 +375,15 @@ def build_units(rows, chapters, topic_gates, metas):
             "checked": sum(1 for r in urows if r["ev"] == "re-opened"),
             "unver": sum(1 for r in urows if r["ev"] == "asserted"),
             "authored": sum(1 for r in urows if r["ev"] == "authored"),
+            # Absence counted once per unit rather than stated once per row. These three
+            # are near-uniform WITHIN a run and vary wildly between runs — one run stored
+            # 0 of 117 quotes, another 52 of 58 — so they are a property of the run, and
+            # repeating them on every item made the commonest text in the product a
+            # sentence about what is missing. The run strip says it once; the row says
+            # nothing. Nothing is hidden: the counts are the same facts, summed.
+            "quoted": sum(1 for r in urows if r["quote"]),
+            "tiered": sum(1 for r in urows if r["why"]),
+            "prac": sum(1 for r in urows if r["type"] in ("drill", "exercise")),
             "sv": urows[0]["sv"],
             "runTag": run_tag(topic, run) if multi else "",
         })

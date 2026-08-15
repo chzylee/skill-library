@@ -269,6 +269,71 @@ class WhatThePageMayNotClaim(StoreCase):
         self.assertEqual(len(data["rows"]), 8, "the ledger keeps them; the unit does not")
 
 
+class ApparatusPlacement(StoreCase):
+    """Where the editorial text sits, and where absence is stated.
+
+    The contents view has one job — show the shape of a whole topic — and it lost that
+    job to its own apparatus. A median 476-character warrant under a median 105-character
+    title made every chapter row ~220px, so a 13-chapter topic ran several screens. The
+    warrant is a headnote and belongs at the top of the chapter it introduces, not on the
+    line you scan to choose one.
+
+    Absence moved the same way. 178 of 230 rows have no quote and 117 no tier reason, so
+    "this is missing" was the most repeated text in the product. It is also a run-scoped
+    fact — one run stored 0 of 117 quotes, another 52 of 58 — so it is stated once per
+    topic and counted here.
+    """
+
+    def _store(self, **rowkw):
+        rows = [row(f"R-{i:03d}", "Topic", "run-a", **rowkw) for i in range(6)]
+        write_store(self.root, "run-a", rows,
+                    [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
+        return build(self.root)[1]
+
+    def test_the_warrant_is_not_on_the_collapsed_contents_line(self):
+        """Asserted against emittable markup, like the dead-link guard above."""
+        page = self._store()
+        self.assertNotIn('class="ch-b"', page,
+                         "the chapter warrant is back on the contents line; that is the "
+                         "wall DESIGN §2 exists to prevent")
+        self.assertIn('class="ch-head"', page,
+                      "the warrant must still render — as the chapter's headnote")
+
+    def test_absence_is_never_stated_on_a_row(self):
+        """Matches reader-facing prose, so the source comments explaining this change
+        must not quote these sentences verbatim — the inlined assets are part of the
+        page. Same hazard as the dead-link guard, which is why that one matches markup
+        instead. Here the exact sentences are the thing being banned, so prose it is."""
+        page = self._store(quote=None, depth_check=None)
+        for banned in ("No quote captured for this row",
+                       "did not record why it sits at that tier",
+                       "No practice was authored for this chapter"):
+            self.assertNotIn(banned, page,
+                             f"{banned!r} is emitted per row or per chapter; absence is "
+                             f"stated once per topic in the run strip")
+
+    def test_the_run_strip_counts_what_the_run_did_not_store(self):
+        """Dropping the per-row line may not drop the fact. It is carried as a count."""
+        rows = ([row(f"Q-{i:03d}", "Topic", "run-a", quote="the source sentence",
+                     depth_check="operation, not orientation") for i in range(2)]
+                + [row(f"R-{i:03d}", "Topic", "run-a", quote=None, depth_check=None)
+                   for i in range(4)]
+                + [row("D-001", "Topic", "run-a", type="drill", evidence="authored",
+                       origin="model inference")])
+        write_store(self.root, "run-a", rows,
+                    [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
+        u = page_data(build(self.root)[1])["units"][0]
+        self.assertEqual(u["n"], 7)
+        self.assertEqual(u["quoted"], 2, "quotes are counted once for the unit")
+        self.assertEqual(u["tiered"], 2, "tier reasons are counted once for the unit")
+        self.assertEqual(u["prac"], 1, "drills and exercises are counted for the unit")
+
+    def test_a_quote_still_renders_where_one_exists(self):
+        """Consolidating the absence must not consolidate away the presence."""
+        page = self._store(quote="the exact supporting sentence")
+        self.assertIn("the exact supporting sentence", page)
+
+
 class Disclosure(StoreCase):
     def test_an_unreadable_file_is_named_not_dropped(self):
         rows = [row(f"R-{i:03d}", "Topic", "run-a") for i in range(6)]

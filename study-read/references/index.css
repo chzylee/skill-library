@@ -200,18 +200,23 @@ details.ch > summary .mark { margin-top: 9px; }
   transition: color 160ms cubic-bezier(.22, 1, .36, 1);
 }
 details.ch > summary:hover .ch-t { color: var(--accent); }
-.ch-b {
-  display: block; margin-top: 5px; max-width: var(--measure);
-  color: var(--muted); font-size: 0.9375rem; line-height: 1.5; text-wrap: pretty;
+/* The chapter headnote — `because`, read once the chapter is open.
+   Editorial text, so it takes the reading serif and the body ink rather than the
+   metadata grey it wore on the contents line: this is the teaching, not chrome.
+   Indented to the items' rail so it reads as the section's opening paragraph and
+   not as a second title. */
+.ch-head {
+  margin: 0 0 4px; padding: 2px 0 14px 52px; max-width: calc(var(--measure) + 52px);
+  font-size: 0.9375rem; line-height: 1.6; text-wrap: pretty;
 }
 .ch-m {
   padding-top: 7px; white-space: nowrap;
   font-family: var(--font-ui); font-size: 0.75rem; color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-/* practicum is designed but not built in this version: one quiet line per
-   chapter, never an empty panel */
-.prac-none {
+/* drills and exercises, where a chapter has them. Absent practice is stated once
+   per topic in the run strip, not once per chapter. */
+.prac {
   margin: 0 0 16px; padding-left: 52px; max-width: var(--measure);
   font-family: var(--font-ui); font-size: 0.75rem; color: var(--muted); line-height: 1.55;
 }
@@ -369,7 +374,11 @@ mark { background: transparent; color: var(--accent); font-weight: 700; }
    topic you came to read ~450px down the page, so it becomes a compact
    horizontal shelf: search, then topics scrolling sideways in one row. */
 @media (max-width: 860px) {
-  .wrap { grid-template-columns: 1fr; }
+  /* `1fr` is min-content-floored, so the widest unbreakable thing on the page —
+     a rail pill, a nowrap badge — set the track width and the whole page grew past
+     the viewport: 449px of layout inside a 390px screen, clipping every line of body
+     text mid-word. `minmax(0, …)` lets the track shrink to the screen instead. */
+  .wrap { grid-template-columns: minmax(0, 1fr); }
   aside {
     position: static; height: auto; overflow-x: visible;
     border-right: none; border-bottom: 1px solid var(--rule);
@@ -381,6 +390,9 @@ mark { background: transparent; color: var(--accent); font-weight: 700; }
   .rail-strip {
     display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
     -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+    /* same floor, one level down: a flex item will not shrink below its content, so
+       the sideways-scrolling shelf pushed the page wide instead of scrolling. */
+    min-width: 0;
   }
   .rail-strip::-webkit-scrollbar { display: none; }
   aside .rail-item {
@@ -392,7 +404,7 @@ mark { background: transparent; color: var(--accent); font-weight: 700; }
   aside .rail-item .sub { display: none; }
 
   main { padding: 24px 20px 80px; }
-  .items, .prac-none { padding-left: 0; }
+  .items, .prac, .ch-head { padding-left: 0; }
   .it-body { padding-left: 26px; }
   details.ch > summary { grid-template-columns: 15px 22px minmax(0, 1fr); gap: 0 9px; }
   .ch-m { grid-column: 3; padding-top: 7px; }
