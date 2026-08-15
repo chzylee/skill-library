@@ -1,0 +1,12 @@
+# Superseded v0 material, kept on disk for reference and out of the repo.
+# See _archive/README.md. Full history is still in git.
+_archive/
+
+# gstack browse daemon scratch — logs from local QA runs, never source.
+.gstack/
+
+# Machine-local Claude Code settings. .claude/settings.json is shared; this is not.
+.claude/settings.local.json
+
+__pycache__/
+*.pyc

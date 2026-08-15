@@ -1,23 +1,29 @@
 ---
 name: study
-description: 'Research any topic and produce a study guide: a depth-tiered reading list where every item carries a linked source, plus real exercises and self-made drills. Dispatches research sub-agents across canonical sources, practitioner failure literature, and exercise platforms; writes structured rows to a local JSONL store; then renders a self-contained HTML guide from those rows. Trigger on "study X", "what should I study about X", "brief me on X", "make me a study guide for X", "what do I need to know about X", or /study. Takes a topic and nothing else by design — no use case, so the same research serves any reader. Not for studying a specific repo or codebase, and not a live tutoring or mock-interview session.'
+description: 'Research any topic and add it to your study library as a reading path: chapters named for the idea that binds them, items in reading order inside them, every item one click from the source it came from. Dispatches research sub-agents across canonical sources, practitioner failure literature, and exercise platforms; writes structured rows to a local JSONL store; groups them into chapters; then a script rebuilds the library page. Trigger on "study X", "what should I study about X", "brief me on X", "make me a study guide for X", "what do I need to know about X", or /study. Takes a topic and nothing else by design — no use case, so the same research serves any reader. Not for studying a specific repo or codebase, and not a live tutoring or mock-interview session.'
 ---
 
-# study — topic in, study guide out
+# study — topic in, a chaptered reading path out
 
 Two layers, kept separate on purpose:
 
 - **The analysis** ([references/analysis-topic-knowledge.md](references/analysis-topic-knowledge.md))
   searches a topic and produces structured knowledge rows. It does not know who is reading them.
-- **This skill** is the consumer. It runs the analysis, then derives a study guide from the rows.
+- **This skill** is the consumer. It runs the analysis, then groups the rows into chapters and
+  hands them to `/study-read` to draw.
 
 The separation is the point. Rows accumulate across every topic you ever run and stay queryable
-independently of any guide. A second consumer — a different rendering, a shorter cut, an
-onboarding doc — reads the same rows without re-running a single agent. So never write the guide
-first and extract rows after; the rows are the analysis output and the guide is a view over them.
+independently of any rendering. A second consumer — a shorter cut, an onboarding doc — reads the
+same rows without re-running a single agent. So never write a document first and extract rows
+after; the rows are the analysis output and every page is a view over them.
 
-**Development mode.** Schema v0.2, not locked. Every run ends with a short retro. Treat a schema
-problem as a finding to record, not a thing to silently work around mid-run.
+**What organizes the rows is a chapter, not a sort.** Forty correct, sourced, disconnected rows
+are a bad thing to study from, and no ordering of them fixes that. Stage 5 is where the difference
+gets made, and it is the stage most likely to be skipped because the run looks finished without it.
+
+**Development mode.** Schema v0.2, not locked; slice 1 of the v1 redesign adds the `chapter`
+record and nothing else. Every run ends with a short retro. Treat a schema problem as a finding to
+record, not a thing to silently work around mid-run.
 
 ## Two rules that cost nothing and save the most
 
@@ -40,24 +46,29 @@ Reports sit where you can see them; data lives one level down in a `data/` folde
 ├── index.html                  ← the whole library, built by /study-read
 ├── COMPARISON-*.md             ← cross-run reports, visible at root
 ├── data/rows.jsonl             ← every row, every topic, append-only
+├── _archive/                   ← retired v0 build artifacts; nothing reads them
 └── runs/<run-id>/
     ├── audit.md · retro.md · harvest-*.md
-    └── data/                   ← *.jsonl, plus guide-meta.json and self-check.json
+    └── data/
+        ├── final.jsonl         ← the post-audit row set
+        ├── chapters.jsonl      ← what stage 5 writes; without it the topic is flat
+        ├── guide-meta.json · self-check.json
+        └── merged.jsonl · audit-verdicts.jsonl · harvest-*.jsonl
 ```
 
 There is no per-run `guide.html` any more. One page renders every topic from the store, so a
 separately rendered per-run document was a second rendering system that shared nothing with the
-first. Old `guide*.html` files from earlier runs stay on disk untouched and are simply no longer
-listed; they are build artifacts, not data.
+first. Guides from earlier runs were moved to `_archive/`, not deleted; they are build artifacts,
+not data.
 
 Append-only is doing real work: you never rewrite `rows.jsonl`, so a killed row stays in the file
-and the guide is a filter over a preserved whole. Query across topics with DuckDB, no setup:
+and every page is a filter over a preserved whole. Query across topics with DuckDB, no setup:
 
 ```bash
 duckdb -c "select topic, subject, origin from read_json_auto('~/.claude/study/data/rows.jsonl') where evidence = 'asserted'"
 ```
 
-Run `/study-read` after any run to rebuild the navigator.
+Run `/study-read` after any run to rebuild the library page.
 
 ## Procedure
 
@@ -103,7 +114,40 @@ Apply its verdicts as grade changes — never by deleting rows. Record every cha
 included. Clean HTML entities (`&lt;` `&gt;` `&amp;`) on the way in — they arrive in agent returns
 and will otherwise ship inside your numbers.
 
-**5 · Write the run's scope record, then build.** Now, and only now.
+**5 · Structure — one sub-agent per topic.** This is the stage that produces chapters, and
+without it the run lands as a flat list, which is the defect the whole v1 redesign exists to fix.
+It runs **after** the audit, because a chapter's members must all be live rows of the final set —
+chapter a killed row and the build gate rejects the topic.
+
+Give the agent the **absolute path** to `references/structure-legacy.md` and instruct it to read
+that as its first action. Pass the spec by path, never by paste. Write it one input file holding
+only that topic's live rows:
+
+```bash
+python3 -c "
+import json,sys
+src,dst,topic=sys.argv[1:4]
+rows=[json.loads(l) for l in open(src) if l.strip()]
+live=[r for r in rows if r.get('topic')==topic and r.get('grade') not in ('killed','merged')]
+open(dst,'w').write(''.join(json.dumps(r,ensure_ascii=False)+'\n' for r in live))
+print(len(live),'live rows')
+" runs/<run-id>/data/final.jsonl runs/<run-id>/data/structure-input.jsonl "<topic>"
+```
+
+It appends its chapter records to `runs/<run-id>/data/chapters.jsonl` and returns 300 words or
+fewer, including the two chapters it is least confident about. Read that return — it is the only
+signal you get before a reader sees the page, and the chapter warrants are the one thing in this
+pipeline no script can check.
+
+**One agent per topic, never one for the run.** Chapters are only coherent within a topic, and a
+run that covered two topics needs two independent passes writing to the same file.
+
+**The gates run at build time, not here.** A topic whose chapters fail renders flat under a banner
+naming what failed, and every other topic still builds. So a bad structure pass costs you one
+topic's organization, not the run — but it is visible in step 6's output and you should say so
+rather than let it pass as a successful build.
+
+**6 · Write the run's scope record, then build.** Now, and only now.
 
 - `runs/<run-id>/data/guide-meta.json` — `{"title", "sub", "scopes": {topic: text}, "empty": {},
   "limits": "<p>…</p>"}`. Honest limits must name what the search came up empty on, any source that
@@ -128,7 +172,7 @@ predates chaptering.
 The old per-topic reading budget (`--minutes N`) is gone with the renderer. Reading order now comes
 from chapters, which is a stated structure rather than a depth-ranked filter over one.
 
-**6 · Retro.** Append to `runs/<run-id>/retro.md`: what the schema could not hold, which stage
+**7 · Retro.** Append to `runs/<run-id>/retro.md`: what the schema could not hold, which stage
 produced the least value for its cost, whether the audit changed anything or just agreed, and the
 token cost per stage. Development mode — the retro is the instrument, and skipping it is what
 makes a prototype run worthless.
@@ -149,9 +193,15 @@ makes a prototype run worthless.
 
 ## Next iteration
 
-[references/v0.3-efficiency-proposal.md](references/v0.3-efficiency-proposal.md) — proposed and
-unratified. Targets latency (the audit's source re-fetching) rather than cost. Do not adopt it
-until v0.2 has produced at least one run, or the two changes confound each other.
+**Slice 1 (chapters) is what is built.** Slices 2 and 3 are designed, recorded in
+[../study-read/DESIGN-v1.md](../study-read/DESIGN-v1.md), and deliberately **not committed** — the
+decision to build them is re-taken after living with chapters on real topics. Do not let their
+schema (`kind`, `binding`, `binding_warrant`, `supersedes`) leak into a row or a chapter.
+
+| Slice | Would add | Status |
+|---|---|---|
+| 2 · Schema | the two axes, stored reference class, scope interview, cost dials | designed, uncommitted |
+| 3 · Viewer | a served viewer, per-reader progress, notes, tags, the browse facets | designed, uncommitted |
 
 ## License
 

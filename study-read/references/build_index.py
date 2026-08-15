@@ -47,6 +47,12 @@ WHEN_LABEL = {
 }
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# The skill is commonly installed as a symlink into ~/.claude/skills, so the sibling
+# assets sit next to the REAL file while `__file__` reports the link. Both roots are
+# searched: the link's directory first (a copied install has only that), then the
+# resolved one (a symlinked install finds shared/tokens.css back in the repo).
+ROOTS = list(dict.fromkeys([HERE, os.path.dirname(os.path.realpath(__file__))]))
+TOKENS = os.path.join("..", "..", "shared", "tokens.css")
 
 
 # ---------------------------------------------------------------- load
@@ -267,12 +273,14 @@ def asset(name):
     and nothing said so. A stylesheet the page cannot render without is a build input, not
     an optional extra: absence is an error.
     """
-    path = os.path.join(HERE, name)
-    if not os.path.exists(path):
+    tried = [os.path.join(r, name) for r in ROOTS]
+    path = next((p for p in tried if os.path.exists(p)), None)
+    if path is None:
         raise SystemExit(
-            f"build_index.py: required asset missing: {path}\n"
-            f"  The page cannot be styled without it. Restore the file (it is part of the\n"
-            f"  repo) and build again.")
+            "build_index.py: required asset missing: " + name + "\n  Looked in:\n"
+            + "".join(f"    {p}\n" for p in tried)
+            + "  The page cannot be built without it. It ships beside this script in the\n"
+              "  repo (shared/tokens.css lives at the repo root); restore it and build again.")
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
     # A <style> or <script> element ends at the first literal "</style" / "</script"
@@ -458,7 +466,7 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, noti
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Study library</title>
 <style>
-{asset(os.path.join("..", "..", "shared", "tokens.css"))}
+{asset(TOKENS)}
 {asset("index.css")}
 </style></head><body><div class="wrap">
 <aside>
