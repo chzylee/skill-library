@@ -57,6 +57,45 @@ TOKENS = os.path.join("..", "..", "shared", "tokens.css")
 
 # ---------------------------------------------------------------- load
 
+# Pipeline bookkeeping that stage 3 wrote into the reader's prose. 35 live descriptions
+# end in a bracketed verdict — `[AUDIT viable->wounded: …]`, `[ABSENCE: …]`, `[VERIFY: …]`
+# — and one opens with `[MERGED FROM A-040]`. Every one of those verdicts is ALSO in the
+# run's `audit-verdicts.jsonl`, so the append was a duplicate as well as a defect.
+#
+# Split here rather than in the renderer so it is testable without a browser, and because
+# `normalize()` is already where schema variation between v0.1/v0.2/v0.3 rows is absorbed.
+# Nothing is rewritten on disk: `rows.jsonl` is append-only and untouched, and both halves
+# ship to the page. The note is reachable one expansion in, per DESIGN §2.
+LEDGER_RE = re.compile(r"\[(AUDIT|VERIFY|ABSENCE|MERGE[A-Z]*)\b\s*:?\s*")
+
+
+def split_ledger(text):
+    """('reader prose', 'AUDIT', 'the verdict text') — or (text, '', '') if there is none.
+
+    Every block in the store either runs to the end of the description or closes at the
+    first `]`. The terminal reading is only taken when the text actually ends there, so a
+    leading `[MERGED FROM X] prose…` keeps its prose instead of swallowing it.
+    """
+    text = text or ""
+    m = LEDGER_RE.search(text)
+    if not m:
+        return text, "", ""
+    body_at = m.end()
+    stripped = text.rstrip()
+    if stripped.endswith("]"):
+        end = len(stripped) - 1
+    else:
+        rel = text.find("]", body_at)
+        if rel < 0:
+            return text, "", ""          # unbalanced: leave the row exactly as written
+        end = rel
+    if end <= m.start():
+        return text, "", ""
+    note = text[body_at:end].strip()
+    prose = " ".join((text[:m.start()] + " " + text[end + 1:]).split())
+    return prose, m.group(1), note
+
+
 def normalize(row, chapter_of=None):
     """v0.1/v0.2/v0.3 rows coexist in the store; present them uniformly.
 
@@ -69,9 +108,11 @@ def normalize(row, chapter_of=None):
                                  "none": "authored"}.get(row.get("source_status", ""), "asserted")
     rid = row.get("id", "")
     depth = row.get("depth", "")
+    prose, note_tag, note = split_ledger(row.get("description") or "")
     return {"id": rid, "run": row.get("run", ""), "topic": row.get("topic", ""),
             "subject": row.get("subject", ""), "type": row.get("type", "concept"),
-            "d": row.get("description") or "",
+            "d": prose,
+            "note": note, "noteTag": note_tag,
             "quote": row.get("quote") or "",
             "origin": row.get("origin") or "",
             "ev": ev,

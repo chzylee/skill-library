@@ -124,9 +124,16 @@ returns almost nothing *but* `judgment`, that is the bucket failure above.
   claims) · `asserted` (a source is named but you did not open it) · `authored` (no external
   source; a drill or an inference, and `origin` is `model inference`).
 - `grade` — `viable` · `wounded` · `killed` · `merged` · `deferred`. Rows are **never deleted**. A
-  killed row stays in the file with its reason in `description`; the reading view is a filter over
-  a preserved whole. `merged` is new in v0.2: v0.1 had to record an absorbed row as `killed`,
-  which misstated what happened.
+  killed row stays in the file and its reason is recorded **in the audit verdict, not in
+  `description`**; the reading view is a filter over a preserved whole. `merged` is new in v0.2:
+  v0.1 had to record an absorbed row as `killed`, which misstated what happened.
+
+**`description` is the reader's prose and holds nothing else.** No stage appends its own
+bookkeeping to it — no `[AUDIT viable->wounded: …]`, no `[ABSENCE: …]`, no `[VERIFY: …]`, no
+`[MERGED FROM X]`. In v0.2 this happened on 35 live rows and put stage state in the middle of the
+sentence a reader is trying to read. Every one of those verdicts was **already** written to
+`audit-verdicts.jsonl`, so the append was a duplicate as well as a defect. The verdict file is
+the ledger and `grade` is the summary of it; both are rendered, one expansion away from the item.
 
 ---
 

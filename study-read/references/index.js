@@ -334,6 +334,41 @@
       (h && text.indexOf(h) !== 0 ? " · " + esc(h) : "") + tail + "</p>";
   }
 
+  /* Pipeline bookkeeping, pulled back out of the reader's prose.
+     35 live descriptions end in a bracketed block — `[AUDIT viable->wounded: …]`,
+     `[ABSENCE: …]`, `[VERIFY: …]` — and one opens with `[MERGED FROM A-040]`. Those are
+     the audit stage's verdict on the row, and the same verdict is already recorded in
+     the run's `audit-verdicts.jsonl`. Writing it into `description` as well put stage
+     state in the middle of the sentence a reader is trying to read.
+
+     This is a presentation fix over unmigrated data: `rows.jsonl` is append-only and is
+     not touched. The note is not dropped either — DESIGN §2's rule is that traceable
+     means reachable in a known number of clicks, not visible by default, so it becomes
+     its own disclosure on the item. The pipeline stops writing it into the prose going
+     forward; see study/references/analysis-topic-knowledge.md.
+
+     The split itself is done by `split_ledger()` in build_index.py, so `r.d` arrives here
+     as reader prose and `r.note` / `r.noteTag` carry the verdict. It lives there rather
+     than here because it is testable without a browser. */
+  var LEDGER_LABEL = { AUDIT: "Audit note", VERIFY: "Verification note",
+                       ABSENCE: "Absence note", MERGE: "Merge note",
+                       MERGED: "Merge note" };
+
+  function ledgerBlock(r) {
+    var parts = [];
+    if (r.grade && r.grade !== "viable") {
+      parts.push("<p>This row is graded <b>" + esc(r.grade) + "</b> by the audit stage, " +
+        "which re-opened its source independently of the harvest that wrote it.</p>");
+    }
+    if (r.note) {
+      parts.push("<p>" + esc(r.note) + "</p>");
+    }
+    if (!parts.length) return "";
+    var label = LEDGER_LABEL[r.noteTag] || "Audit note";
+    return '<details class="ledger"><summary>' + MARK + esc(label) + "</summary>" +
+      '<div class="ledger-body">' + parts.join("") + "</div></details>";
+  }
+
   function itemHtml(r, openRow) {
     var open = openRow === r.id ? " open" : "";
     return '<details class="it" id="row-' + esc(r.id) + '"' + open + ">" +
@@ -343,7 +378,7 @@
       srcState(r) + "</span></span></summary>" +
       '<div class="it-body">' +
       "<p>" + esc(r.d) + "</p>" +
-      quoteBlock(r) + classifLine(r) + sourceLine(r) +
+      quoteBlock(r) + classifLine(r) + sourceLine(r) + ledgerBlock(r) +
       "</div></details>";
   }
 

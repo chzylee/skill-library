@@ -334,6 +334,67 @@ class ApparatusPlacement(StoreCase):
         self.assertIn("the exact supporting sentence", page)
 
 
+class LedgerSplit(unittest.TestCase):
+    """Stage bookkeeping must leave the reader's prose and land in its own channel.
+
+    35 live descriptions in the real store end in a bracketed audit verdict and one opens
+    with a merge tag. The same verdicts are already in `audit-verdicts.jsonl`, so the
+    append was a duplicate as well as a defect — but nothing may be dropped on the way
+    out, so the split returns both halves and the page renders both.
+    """
+
+    def setUp(self):
+        sys.path.insert(0, HERE)
+        import build_index
+        self.split = build_index.split_ledger
+
+    def test_a_terminal_audit_block_leaves_the_prose(self):
+        prose, tag, note = self.split(
+            "The setting only activates when there is no committed offset. "
+            "[AUDIT viable->wounded: the cited page documents FOUR values; the row "
+            "presents only two.]")
+        self.assertEqual(prose,
+                         "The setting only activates when there is no committed offset.")
+        self.assertEqual(tag, "AUDIT")
+        self.assertIn("documents FOUR values", note)
+
+    def test_a_leading_merge_tag_does_not_swallow_the_prose(self):
+        """`[MERGED FROM A-040] real prose…` — the one non-terminal shape in the store."""
+        prose, tag, note = self.split("[MERGED FROM A-040] The underlying reason is that "
+                                      "a Streams application reads two topics.")
+        self.assertEqual(prose, "The underlying reason is that a Streams application "
+                                "reads two topics.")
+        self.assertEqual(tag, "MERGED")
+        self.assertEqual(note, "FROM A-040")
+
+    def test_every_tag_in_the_store_is_recognised(self):
+        for tag in ("AUDIT", "VERIFY", "ABSENCE", "MERGE"):
+            prose, got, note = self.split(f"Reader prose. [{tag}: the verdict text.]")
+            self.assertEqual(prose, "Reader prose.", f"{tag} was not split off")
+            self.assertEqual(got, tag)
+
+    def test_a_row_with_no_annotation_is_returned_untouched(self):
+        text = "A plain description with [brackets] that are not a stage tag."
+        self.assertEqual(self.split(text), (text, "", ""))
+
+    def test_an_unbalanced_block_is_left_exactly_as_written(self):
+        """Better to show one ugly row than to guess where a malformed block ends."""
+        text = "Prose here. [AUDIT: someone forgot the closing bracket"
+        self.assertEqual(self.split(text), (text, "", ""))
+
+    def test_the_note_is_carried_to_the_page_not_discarded(self):
+        root = tempfile.mkdtemp(prefix="study-ledger-test-")
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        rows = [row(f"R-{i:03d}", "Topic", "run-a") for i in range(6)]
+        rows[0]["description"] = "Reader prose. [AUDIT: the verdict text.]"
+        write_store(root, "run-a", rows,
+                    [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
+        r = page_data(build(root)[1])["rows"][0]
+        self.assertEqual(r["d"], "Reader prose.")
+        self.assertEqual(r["note"], "the verdict text.")
+        self.assertEqual(r["noteTag"], "AUDIT")
+
+
 class Disclosure(StoreCase):
     def test_an_unreadable_file_is_named_not_dropped(self):
         rows = [row(f"R-{i:03d}", "Topic", "run-a") for i in range(6)]

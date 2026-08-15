@@ -264,6 +264,26 @@ blockquote {
 .it-body p.absent {
   font-family: var(--font-ui); font-size: 0.75rem; color: var(--muted); line-height: 1.55;
 }
+/* The audit stage's verdict on a row: its own channel, one expansion in.
+   It used to sit inside `description`, mid-sentence, which is where the reader is.
+   Kept reachable rather than visible — DESIGN §2, traceable means a known number of
+   clicks. Quiet register: this is apparatus, not the claim. */
+details.ledger { margin: 9px 0 0; }
+details.ledger > summary {
+  list-style: none; cursor: pointer; min-height: var(--tap);
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--font-ui); font-size: 0.75rem; color: var(--muted);
+}
+details.ledger > summary::-webkit-details-marker { display: none; }
+details.ledger > summary:hover { color: var(--fg); }
+.ledger-body {
+  padding: 2px 0 4px 16px; border-left: 1px solid var(--rule); max-width: var(--measure);
+  font-family: var(--font-ui); font-size: 0.75rem; color: var(--muted); line-height: 1.6;
+}
+.ledger-body p { margin: 0 0 7px; }
+.ledger-body p:last-child { margin: 0; }
+.ledger-body b { color: var(--fg); font-weight: 650; }
+
 .classif {
   margin: 0 0 11px; line-height: 1.55;
   font-family: var(--font-ui); font-size: 0.75rem; color: var(--muted);

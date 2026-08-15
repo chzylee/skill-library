@@ -114,7 +114,11 @@ failure-signature table, author the drill rows, fill lineage.
 is the weakest form of independence, and a tier contrast is the fallback. Give it the merged rows
 by path. It writes `audit-verdicts.jsonl`.
 
-Apply its verdicts as grade changes — never by deleting rows. Record every change on the row.
+Apply its verdicts as grade changes — never by deleting rows. **The change is recorded by the
+verdict record and the new `grade`, not by editing `description`.** The row's prose is what a
+reader reads; appending `[AUDIT viable->wounded: …]` to it puts pipeline state mid-sentence, and
+`audit-verdicts.jsonl` already holds that text. `/study-read` renders the grade and the verdict as
+their own disclosure on the item.
 
 **4 · Commit the rows.** Append every row to `~/.claude/study/data/rows.jsonl` in one batched
 write, killed rows
