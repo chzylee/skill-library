@@ -17,8 +17,13 @@ Read-only over the store. It writes exactly one file, `~/.claude/study/index.htm
 1. **Build and open:**
 
    ```bash
-   python3 references/build_index.py --open
+   python3 ~/.claude/skills/study-read/references/build_index.py --open
    ```
+
+   **Paths here are absolute on purpose.** A skill runs in whatever directory the user is
+   working in, not in its own folder, so `python3 references/build_index.py` fails. If this
+   skill is installed somewhere other than `~/.claude/skills/study-read`, use that location —
+   every path below is relative to the folder holding this file, never to the working directory.
 
    `--root` points at a different store; drop `--open` to build without launching a browser. The
    script inlines its sibling `index.css` and `index.js` and the repo's `shared/tokens.css`, so the

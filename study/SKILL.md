@@ -72,6 +72,11 @@ Run `/study-read` after any run to rebuild the library page.
 
 ## Procedure
 
+**Paths in this file are relative to the folder holding it**, which is normally
+`~/.claude/skills/study/`. A skill runs in whatever directory the user is working in, not in its
+own folder, so write every command and every spec path absolutely. The examples below use the
+default install location; if this skill lives somewhere else, substitute that.
+
 **0 · Scope.** Restate the topic precisely and write four things: the boundary, the
 excluded-adjacent list (near topics deliberately out of scope), the reference class (a protocol, a
 tool, a body of theory — this determines which sources exist), and a `run-id` of
@@ -84,8 +89,9 @@ agents, makes the telemetry unattributable to either topic, and produces a guide
 one takes Stage 1B (Failure and Practice). Independence by construction, not instruction.
 
 Each prompt must be self-contained and must:
-- Give the **absolute path** to `references/analysis-topic-knowledge.md` and instruct the agent to
-  read it as its first action — pass the spec by path, never by paste. Name which section is
+- Give the **absolute path** to the analysis spec —
+  `~/.claude/skills/study/references/analysis-topic-knowledge.md` — and instruct the agent to
+  read it as its first action. Pass the spec by path, never by paste. Name which section is
   theirs and state that the others are not their brief.
 - State the topic, boundary, excluded-adjacent list, and reference class from step 0.
 - Require rows in the v0.2 schema, executive summary of 400 words or fewer first.
@@ -93,9 +99,9 @@ Each prompt must be self-contained and must:
   same turn; do not attach a rationale the source does not state; return `none, because <reason>`
   rather than inventing anything.
 
-Write each agent's raw return to `runs/<run-id>/` **before** using it (prose reports at the run
-root, `.jsonl` under `runs/<run-id>/data/`). If a return file already
-exists for a stage, that agent already ran — read the file, do not re-dispatch.
+Write each agent's raw return to `~/.claude/study/runs/<run-id>/` **before** using it (prose
+reports at the run root, `.jsonl` under `~/.claude/study/runs/<run-id>/data/`). If a return file
+already exists for a stage, that agent already ran — read the file, do not re-dispatch.
 
 **2 · Merge and tier — one sub-agent.** Not you. In v0.1 the orchestrator did this inline and it
 became the single largest cost in the run. Give it both harvest files by path; it writes
@@ -110,7 +116,8 @@ by path. It writes `audit-verdicts.jsonl`.
 
 Apply its verdicts as grade changes — never by deleting rows. Record every change on the row.
 
-**4 · Commit the rows.** Append every row to `rows.jsonl` in one batched write, killed rows
+**4 · Commit the rows.** Append every row to `~/.claude/study/data/rows.jsonl` in one batched
+write, killed rows
 included. Clean HTML entities (`&lt;` `&gt;` `&amp;`) on the way in — they arrive in agent returns
 and will otherwise ship inside your numbers.
 
@@ -119,11 +126,13 @@ without it the run lands as a flat list, which is the defect the whole v1 redesi
 It runs **after** the audit, because a chapter's members must all be live rows of the final set —
 chapter a killed row and the build gate rejects the topic.
 
-Give the agent the **absolute path** to `references/structure-legacy.md` and instruct it to read
-that as its first action. Pass the spec by path, never by paste. Write it one input file holding
-only that topic's live rows:
+Give the agent the **absolute path** to the structure brief —
+`~/.claude/skills/study/references/structure-legacy.md` — and instruct it to read that as its
+first action. Pass the spec by path, never by paste. Write it one input file holding only that
+topic's live rows:
 
 ```bash
+RUN=~/.claude/study/runs/<run-id>/data
 python3 -c "
 import json,sys
 src,dst,topic=sys.argv[1:4]
@@ -131,10 +140,12 @@ rows=[json.loads(l) for l in open(src) if l.strip()]
 live=[r for r in rows if r.get('topic')==topic and r.get('grade') not in ('killed','merged')]
 open(dst,'w').write(''.join(json.dumps(r,ensure_ascii=False)+'\n' for r in live))
 print(len(live),'live rows')
-" runs/<run-id>/data/final.jsonl runs/<run-id>/data/structure-input.jsonl "<topic>"
+" "$RUN/final.jsonl" "$RUN/structure-input.jsonl" "<topic>"
 ```
 
-It appends its chapter records to `runs/<run-id>/data/chapters.jsonl` and returns 300 words or
+Tell it to write chapter records to `$RUN/chapters.jsonl` — again as an absolute path.
+
+It appends its chapter records to `~/.claude/study/runs/<run-id>/data/chapters.jsonl` and returns 300 words or
 fewer, including the two chapters it is least confident about. Read that return — it is the only
 signal you get before a reader sees the page, and the chapter warrants are the one thing in this
 pipeline no script can check.
@@ -149,11 +160,11 @@ rather than let it pass as a successful build.
 
 **6 · Write the run's scope record, then build.** Now, and only now.
 
-- `runs/<run-id>/data/guide-meta.json` — `{"title", "sub", "scopes": {topic: text}, "empty": {},
+- `~/.claude/study/runs/<run-id>/data/guide-meta.json` — `{"title", "sub", "scopes": {topic: text}, "empty": {},
   "limits": "<p>…</p>"}`. Honest limits must name what the search came up empty on, any source that
   could not be verified, and any way the method itself was weakened on this run. `scopes[topic]` is
   the boundary line printed under the topic's title, so write it for the reader.
-- `runs/<run-id>/data/self-check.json` — 8–12 questions as `{"q", "a", "ref"}`. Produce-level, not
+- `~/.claude/study/runs/<run-id>/data/self-check.json` — 8–12 questions as `{"q", "a", "ref"}`. Produce-level, not
   recognize-level. **Nothing renders this yet.** The old guide folded the answers; the topic view
   does not draw self-check at all. Keep writing the file — it is cheap and it is data — but do not
   tell a reader the questions are waiting for them somewhere.
@@ -161,18 +172,18 @@ rather than let it pass as a successful build.
 Then rebuild the library:
 
 ```bash
-python3 ../study-read/references/build_index.py --root ~/.claude/study
+python3 ~/.claude/skills/study-read/references/build_index.py --root ~/.claude/study --open
 ```
 
 It renders every topic in the store as a contents view: chapters in reading order, items inside
 them, each item one expansion from its firsthand source. Chapters come from
-`runs/<run-id>/data/chapters.jsonl`; a run without that file renders flat under a banner saying it
+`~/.claude/study/runs/<run-id>/data/chapters.jsonl`; a run without that file renders flat under a banner saying it
 predates chaptering.
 
 The old per-topic reading budget (`--minutes N`) is gone with the renderer. Reading order now comes
 from chapters, which is a stated structure rather than a depth-ranked filter over one.
 
-**7 · Retro.** Append to `runs/<run-id>/retro.md`: what the schema could not hold, which stage
+**7 · Retro.** Append to `~/.claude/study/runs/<run-id>/retro.md`: what the schema could not hold, which stage
 produced the least value for its cost, whether the audit changed anything or just agreed, and the
 token cost per stage. Development mode — the retro is the instrument, and skipping it is what
 makes a prototype run worthless.
