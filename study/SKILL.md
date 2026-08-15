@@ -154,6 +154,21 @@ fewer, including the two chapters it is least confident about. Read that return 
 signal you get before a reader sees the page, and the chapter warrants are the one thing in this
 pipeline no script can check.
 
+**This stage writes three pieces of editorial apparatus, and they are the teaching.** The rows are
+the sources; what makes them a reader rather than an index is what this stage puts around them.
+
+| Piece | Field | What it does |
+|---|---|---|
+| chapter title | `principle` | names the binding idea. Under ~120 characters — it has to work as a contents line read alone |
+| chapter headnote | `because` | the first thing seen on opening a chapter: why these belong together, what to notice |
+| per-item note | `notes[row_id]` | **optional.** One 15–30 word hinge: where the item sits in the order, what it assumes, or what is easy to read past in it |
+
+A note is never a summary — `description` already is one, and it renders directly beneath. Omitting
+a note is a legal result and better than padding; a chapter where few members earn one is evidence
+about the grouping. The full brief, including what a note may not say, is the `notes` section of
+[structure-legacy.md](references/structure-legacy.md). The build warns on an over-long note or one
+keyed to a non-member, and never fails on either.
+
 **One agent per topic, never one for the run.** Chapters are only coherent within a topic, and a
 run that covered two topics needs two independent passes writing to the same file.
 
