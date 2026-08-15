@@ -1,0 +1,74 @@
+{
+  "topic": "Terraform at team scale",
+  "instructions": "For each cluster write a fluent, confident `because` of at least 80 characters that reads like a real governing principle. Do NOT reveal that the rows were grouped by a shared word. Do NOT hedge. This text is a control and is supposed to be persuasive prose over a bad grouping.",
+  "clusters": [
+    {
+      "shared_word": "modules",
+      "members": [
+        "T3-012",
+        "T3-016",
+        "T3-017",
+        "T3-048",
+        "T3-050"
+      ],
+      "member_text": [
+        {
+          "subject": "Modules should be opinionated and single-purpose",
+          "description": "HashiCorp's module-creation pattern guidance says a good module does one thing well and is deliberately opinionated; if you struggle to explain what a module's purpose is, that itself signals the module has taken on too much complexity to be reusable."
+        },
+        {
+          "subject": "Composition: modules receive dependencies rather than embedding them",
+          "description": "In the composition pattern, a module does not create and manage its own private copy of a dependency; instead it receives that dependency as an input from the root module. This is what lets the same root module wire the same child modules together differently to produce different systems."
+        },
+        {
+          "subject": "Avoid thin-wrapper modules; raise the abstraction level",
+          "description": "A well-designed module should introduce a new concept in your architecture built out of underlying provider resource types, rather than being a thin wrapper around a single resource type that adds no real abstraction."
+        },
+        {
+          "subject": "Terraform Associate practice exercises (state, modules, meta-arguments)",
+          "description": "A third-party GitHub Pages set of six hands-on exercises for Terraform Associate prep covering AWS/GCP: first configuration, variables/outputs, resource dependencies, working with state (remote state and state locking), modules (creation/versioning/registry), and meta-arguments (count, for_each, lifecycle, dynamic blocks). Each exercise directory includes a README and a working solution."
+        },
+        {
+          "subject": "Drill: refactor a mega-module into scoped, composed modules",
+          "description": "Take a single flat root configuration that manages several unrelated pieces of infrastructure as one module (e.g. a VPC, a compute service, and a database). Split it into separate modules scoped by HashiCorp's own encapsulation, privilege, and volatility criteria (T3-013); wire them together via composition, with the root module passing outputs as inputs rather than any module embedding its own provider or a dependency it doesn't own (T3-016); keep nesting to no more than two levels (T3-014); and audit the result for thin-wrapper modules \u2014 any module that is just one resource with no real abstraction \u2014 eliminating or merging them (T3-017)."
+        }
+      ],
+      "principle": "A module's boundary is set by the abstraction it introduces, not by the resources it happens to wrap",
+      "because": "The guidance to keep modules opinionated and single-purpose, the composition pattern where dependencies are received rather than created, the warning against thin wrappers that add no real concept, and the exam-prep and refactoring drills that rehearse this boundary-drawing skill are the same design discipline applied at different stages: a module earns its existence only when it names a concept the underlying provider resources do not already name on their own."
+    },
+    {
+      "shared_word": "provider",
+      "members": [
+        "T3-018",
+        "T3-024",
+        "T3-032",
+        "T3-039",
+        "T3-054"
+      ],
+      "member_text": [
+        {
+          "subject": "Dependency lock file remembers provider version decisions",
+          "description": "After Terraform selects a specific version for each provider dependency, it records that decision in a dependency lock file (.terraform.lock.hcl) so that, by default, future `terraform init` runs reselect the same version instead of drifting to a newer one automatically."
+        },
+        {
+          "subject": "Static provider credentials are a risk even with rotation",
+          "description": "HCP Terraform's own docs frame static credentials as a security risk in themselves, not just a risk when unrotated \u2014 the guidance explicitly states rotating static credentials regularly does not eliminate the risk, which is the stated motivation for using OIDC-based dynamic credentials instead. [Stage 2: absorbed a true duplicate from Stage 1B, T3-041 (\"OIDC/dynamic credentials vs. static long-lived credentials\"), which cited the identical quote. See merge log.]"
+        },
+        {
+          "subject": "Provider/Terraform version bumps cascade through every module",
+          "description": "Because each module pins or inherits its own required_providers and required_version constraints, upgrading the Terraform CLI or a provider version for a team's codebase means walking every module that uses it and bumping its constraint too - teams that treat this as a one-line change get blocked mid-upgrade by a module several layers down still pinned to the old version."
+        },
+        {
+          "subject": "A shared module with its own provider block can't be called with count/for_each/depends_on",
+          "description": "A module meant to be called by other modules must not define its own provider blocks; if it does, Terraform rejects using that module call with the for_each, count, or depends_on meta-arguments, because provider configurations are global to the whole configuration and can't be parameterized per-instance the way those arguments imply."
+        },
+        {
+          "subject": "Drill: intentionally break and repair a multi-module provider-version upgrade",
+          "description": "In a repo with at least two modules that each declare their own required_providers constraints, bump the provider version constraint in only the root module and run `terraform init` \u2014 observe it fail or resolve inconsistently because the child modules are still pinned to the old constraint (T3-032). Commit the resulting `.terraform.lock.hcl` change and practice reading a lock-file diff the way a PR reviewer would (T3-018, T3-019). Then correctly walk every module, bump each constraint in turn, and re-run `init` to confirm the lock file re-resolves cleanly across the whole tree."
+        }
+      ],
+      "principle": "Provider configuration is global to the whole run, and every constraint here follows from that fact",
+      "because": "The dependency lock file pinning a version decision, the elevated risk assigned to static provider credentials, version bumps cascading through every module that declares its own required_providers, and the ban on count/for_each/depends_on for modules with their own provider block are all consequences of one rule: a provider configuration cannot be parameterized per module instance, because Terraform resolves providers once for the entire configuration rather than once per module."
+    }
+  ]
+}

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Study library</title>
+<style>
+/* ============================================================
+   Study library — BROWSE view (the landing screen)
+   Served locally, rebuilt from the JSONL store on launch.
+   Tokens inlined from shared/tokens.css at build time.
+
+   Deliberately a dense list, not a tile grid. Card grids are banned
+   here, and a file browser's list view is the more honest reference
+   anyway: it carries facets, tags, dates and progress in one scan.
+   ============================================================ */
+/* --- inlined from shared/tokens.css --- */
+:root {
+  --bg: #fbfaf8; --fg: #1f1d1a; --muted: #6b6862; --rule: #e3e0da;
+  --card: #ffffff; --side: #f5f2ed; --chip: #f2efe9;
+  --accent: #7a4b2a; --accent-ink: #fbfaf8; --warn: #8a3d2e; --ok: #2f6b4f;
+  --font-ui: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-reading: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius-s: 6px; --pill: 999px; --measure: 66ch; --tap: 44px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#161513; --fg:#eae7e1; --muted:#a19c93; --rule:#2e2c28;
+    --card:#1e1d1a; --side:#1b1a17; --chip:#26241f;
+    --accent:#d8a074; --accent-ink:#161513; --warn:#e08a76; --ok:#7fc2a0; }
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+/* --- end shared tokens --- */
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:1rem/1.55 var(--font-reading);-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+.page{max-width:920px;margin:0 auto;padding:44px 32px 110px}
+
+header h1{font-size:1.75rem;margin:0 0 5px;font-weight:650;letter-spacing:-.015em}
+.tally{font-family:var(--font-ui);font-size:.8125rem;color:var(--muted);margin:0 0 22px}
+
+/* ---------- search + facets ---------- */
+.controls{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  padding:14px 0;margin:0 0 6px}
+.search{width:100%;min-height:var(--tap);padding:9px 12px;border:1px solid var(--rule);
+  border-radius:var(--radius-s);background:var(--card);color:var(--fg);
+  font:.9375rem/1.4 var(--font-ui);margin:0 0 12px}
+.search::placeholder{color:var(--muted)}
+.facets{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
+.fgroup{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.flabel{font-family:var(--font-ui);font-size:.6875rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);margin-right:2px}
+.chip{font-family:var(--font-ui);font-size:.75rem;color:var(--muted);
+  border:1px solid var(--rule);border-radius:var(--pill);padding:3px 10px;
+  cursor:pointer;background:none;min-height:28px;
+  transition:color 160ms ease,border-color 160ms ease}
+.chip:hover{color:var(--fg)}
+.chip[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+.sortline{font-family:var(--font-ui);font-size:.75rem;color:var(--muted);
+  padding:9px 0 3px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+
+/* ---------- the list ---------- */
+.list{border-top:1px solid var(--rule)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 116px 128px;gap:0 18px;
+  padding:15px 0;border-bottom:1px solid var(--rule);align-items:start;
+  text-decoration:none;color:inherit}
+.row:hover .name{color:var(--accent)}
+.name{display:block;font-size:1.0625rem;font-weight:650;line-height:1.32;
+  letter-spacing:-.005em;transition:color 160ms ease}
+.bound{display:block;color:var(--muted);font-size:.875rem;line-height:1.5;
+  margin-top:3px;max-width:var(--measure)}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.tag{font-family:var(--font-ui);font-size:.6875rem;color:var(--muted);
+  background:var(--chip);border-radius:var(--pill);padding:2px 8px}
+.tag.add{background:none;border:1px dashed var(--rule)}
+
+.mid{font-family:var(--font-ui);font-size:.75rem;color:var(--muted);line-height:1.65;
+  padding-top:3px}
+.mid .rc{color:var(--fg)}
+.right{font-family:var(--font-ui);font-size:.75rem;color:var(--muted);line-height:1.65;
+  padding-top:3px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* progress: unlocked by serving the viewer — read marks live in the store */
+.prog{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:3px}
+.bar{width:44px;height:3px;background:var(--rule);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.trust{display:flex;align-items:center;gap:4px;justify-content:flex-end;
+  margin-top:2px;white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.dot.part{background:var(--warn);opacity:.75}
+.flagline{color:var(--warn)}
+
+/* ---------- states ---------- */
+.states{margin-top:64px;border-top:2px solid var(--rule);padding-top:10px}
+.states>p{font-family:var(--font-ui);font-size:.6875rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted)}
+.state{border:1px dashed var(--rule);border-radius:var(--radius-s);padding:26px 26px 28px;
+  margin:14px 0 0}
+.state h2{font-size:1.25rem;margin:0 0 8px;font-weight:650}
+.state p{margin:0 0 12px;color:var(--muted);font-size:.9375rem;line-height:1.6;
+  max-width:var(--measure)}
+.state p.lead{color:var(--fg)}
+.state code{font-family:var(--font-mono);font-size:.85em;background:var(--chip);
+  padding:2px 6px;border-radius:3px}
+.state .cap{font-family:var(--font-ui);font-size:.6875rem;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+
+@media (max-width:720px){
+  .page{padding:26px 18px 80px}
+  .row{grid-template-columns:minmax(0,1fr);gap:0}
+  .mid,.right{text-align:left;padding-top:6px}
+  .prog{justify-content:flex-start}
+  .trust{justify-content:flex-start}
+}
+</style></head><body>
+<div class="page">
+
+<header>
+  <h1>Study library</h1>
+  <p class="tally">3 topics · 159 items · 14 chapters · last studied 7 Aug 2026</p>
+</header>
+
+<div class="controls">
+  <label for="q" style="position:absolute;left:-9999px">Search every topic</label>
+  <input class="search" id="q" type="search"
+         placeholder="Search every item in every topic…">
+  <div class="facets">
+    <div class="fgroup">
+      <span class="flabel">Kind</span>
+      <button class="chip" aria-pressed="false">tool</button>
+      <button class="chip" aria-pressed="false">protocol</button>
+      <button class="chip" aria-pressed="false">theory</button>
+    </div>
+    <div class="fgroup">
+      <span class="flabel">Trust</span>
+      <button class="chip" aria-pressed="false">fully verified</button>
+      <button class="chip" aria-pressed="false">has gaps</button>
+    </div>
+    <div class="fgroup">
+      <span class="flabel">Tags</span>
+      <button class="chip" aria-pressed="true">interview prep</button>
+      <button class="chip" aria-pressed="false">work</button>
+    </div>
+  </div>
+</div>
+
+<p class="sortline"><span>Sorted A–Z</span><span>Newest · Least finished · Largest</span></p>
+
+<nav class="list" aria-label="All topics">
+
+  <a class="row" href="#">
+    <span>
+      <span class="name">API contract governance</span>
+      <span class="bound">Versioning, deprecation, and compatibility policy. Excludes
+      transport and auth.</span>
+      <span class="tags"><span class="tag">work</span><span class="tag add">+ tag</span></span>
+    </span>
+    <span class="mid"><span class="rc">protocol</span><br>18 Jul 2026</span>
+    <span class="right">41 items · 3 ch
+      <span class="prog"><span class="bar"><i style="width:100%"></i></span>3/3</span>
+      <span class="trust"><span class="dot"></span>all open</span>
+    </span>
+  </a>
+
+  <a class="row" href="#">
+    <span>
+      <span class="name">Kafka consumer groups</span>
+      <span class="bound">Consumer groups, partition assignment, offset management, delivery
+      semantics. Excludes brokers, replication, Streams.</span>
+      <span class="tags"><span class="tag">interview prep</span><span class="tag add">+ tag</span></span>
+    </span>
+    <span class="mid"><span class="rc">tool</span><br>6 Aug 2026</span>
+    <span class="right">56 items · 5 ch
+      <span class="prog"><span class="bar"><i style="width:40%"></i></span>2/5</span>
+      <span class="trust"><span class="dot part"></span>1 dead link</span>
+    </span>
+  </a>
+
+  <a class="row" href="#">
+    <span>
+      <span class="name">Terraform at team scale</span>
+      <span class="bound">State, modules, and workflow when more than one person applies.
+      Excludes provider authoring.</span>
+      <span class="tags"><span class="tag add">+ tag</span></span>
+    </span>
+    <span class="mid"><span class="rc">tool</span><br>7 Aug 2026</span>
+    <span class="right">62 items · 6 ch
+      <span class="prog"><span class="bar"><i style="width:0%"></i></span>0/6</span>
+      <span class="trust"><span class="dot part"></span>2 unopened</span>
+    </span>
+  </a>
+
+</nav>
+
+<!-- ============================================================
+     STATES. Drawn rather than described, per design review pass 2.
+     These render in place of the list above; they are stacked here
+     only so the prototype documents them in one file.
+     ============================================================ -->
+<section class="states">
+  <p>States this screen must handle</p>
+
+  <div class="state">
+    <p class="cap">Empty — first run ever</p>
+    <h2>Nothing studied yet</h2>
+    <p class="lead">Every topic you research lands here and stays. Over time this becomes a
+    reference library you can search across, where every claim is one click from the page it
+    came from.</p>
+    <p>A topic arrives as chapters, each named for the idea that binds its items, in reading
+    order. Nothing is written from memory: every item carries the sentence its source
+    actually said.</p>
+    <p>Start one: <code>/study kafka consumer groups</code></p>
+  </div>
+
+  <div class="state">
+    <p class="cap">No search results</p>
+    <h2>Nothing matches “idempotent”</h2>
+    <p>Searched every item in all 3 topics, including killed and superseded rows.</p>
+    <p>One tag filter is narrowing this. <a href="#">Clear filters</a> and search again, or
+    research it: <code>/study idempotent consumers</code></p>
+  </div>
+
+  <div class="state">
+    <p class="cap">Legacy topic — predates chapters</p>
+    <h2>API contract governance</h2>
+    <p>Researched 18 Jul 2026, before chaptering existed, so this one is a flat list rather
+    than a reading order. Its rows and sources are unaffected.</p>
+    <p><a href="#">Restructure it</a> to get chapters without re-searching, or re-run it in
+    full to also pick up the tiers the old harvest never looked for.</p>
+  </div>
+</section>
+
+</div>
+</body></html>

@@ -1,0 +1,69 @@
+{
+  "topic": "Terraform at team scale",
+  "instructions": "For each cluster write a fluent, confident `because` of at least 80 characters that reads like a real governing principle. Do NOT reveal that the rows were grouped by a shared word. Do NOT hedge. This text is a control and is supposed to be persuasive prose over a bad grouping.",
+  "clusters": [
+    {
+      "shared_word": "drift",
+      "members": [
+        "T-024",
+        "T-025",
+        "T-039",
+        "T-043",
+        "T-052"
+      ],
+      "member_text": [
+        {
+          "subject": "Health assessments / automated drift detection mechanics",
+          "description": "HCP Terraform health assessments run periodic, non-actionable refresh-only Terraform plans in configured workspaces to compare real infrastructure against the state file. A health assessment never interrupts or interferes with runs - if a new run starts during an assessment, the assessment cancels and reschedules. Requirements: Terraform 0.15.4+ for drift detection alone (1.3.0+ for drift plus continuous validation), remote or agent execution mode, and the workspace's latest run must have been successful. Available only in Standard and Premium HCP Terraform editions."
+        },
+        {
+          "subject": "Configuration drift vs. state drift distinction",
+          "description": "HCP Terraform's docs draw an explicit distinction: 'Configuration drift differs from state drift. Drift detection does not detect state drift.' Configuration drift is a mismatch between real infrastructure and the Terraform configuration; state drift involves external changes that don't necessarily invalidate configuration. When configuration drift is found, HCP Terraform proposes the changes needed to bring infrastructure back in sync with configuration."
+        },
+        {
+          "subject": "Assuming Terraform detects drift automatically",
+          "description": "A long-time Terraform user's GitHub issue lists 'no in-built, pull-based, GitOps friendly, automatic drift detection and synchronisation' as a core operational gap: detecting drift requires manually running terraform plan (or -refresh-only), and 'automated reconciliation via cron jobs is unreliable' when configuration is complex. Terraform does not watch infrastructure and flag changes on its own - someone or something has to run a plan for drift to surface at all. [AUDIT viable->wounded: the second quoted phrase is not a quotation. The row presents \"automated reconciliation via cron jobs is unreliable\" in quotation marks as source text; the GitHub issue (hashicorp/terraform#31736) instead says 'You cannot reliably implement a cron job, because a lot of times an automatic Terraform apply can fail.' A paraphrase presented as a quotation, with a substituted rationale ('when configuration is complex' vs. the source's 'an automatic Terraform apply can fail'). The first quoted phrase ('no in-built, pull-based, GitOps friendly, automatic drift detection and synchronisation') is verbatim-correct and the headline claim stands.]"
+        },
+        {
+          "subject": "Detecting and reconciling drift with -refresh-only and import",
+          "description": "Official HashiCorp tutorial: 'Manage resource drift.' Provisions an EC2 instance, key pair, and security group with Terraform, then intentionally introduces drift by modifying the security group via the AWS CLI outside Terraform. Detects the change with terraform plan -refresh-only, applies the refresh to sync state without touching infrastructure, imports a manually-created security group into management, then runs terraform apply to reconcile configuration and infrastructure, verifying with SSH/HTTP checks."
+        },
+        {
+          "subject": "Drill: drift detection and configuration-drift-vs-state-drift classification",
+          "description": "Provision a small resource set with Terraform (e.g. a security group and an EC2 instance). Outside Terraform, make two separate changes: (1) modify a resource attribute directly via the cloud CLI (configuration drift - the live resource no longer matches your .tf files), and (2) construct a scenario where the state file alone diverges from configuration without any live change (state drift, per T-025's distinction). Run `terraform plan -refresh-only` to detect and apply the refresh for case (1), then explain in one sentence why the same command would not have caught case (2) - grounding your answer in T-025's stated distinction that 'drift detection does not detect state drift.' [AUDIT viable->wounded: case (2) teaches a definition its own cited row contradicts. The drill asks the reader to 'construct a scenario where the state file alone diverges from configuration without any live change (state drift, per T-025's distinction)' -- but T-025 and its source (HCP health-assessments docs) define state drift as external changes to real infrastructure that do not invalidate configuration, i.e. still a live change. A state file diverging from configuration with no live change is just an ordinary pending change any 'terraform plan' reports, not state drift, and is not constructible as described. Case (1) (configuration drift via cloud CLI, detected with -refresh-only) is sound and stands on its own.]"
+        }
+      ],
+      "principle": "Terraform only sees drift the instant something asks it to look",
+      "because": "Health assessments scheduling periodic refresh-only plans, the configuration-drift-versus-state-drift distinction, the operational gap of having no automatic detection, and the refresh-only-plus-import reconciliation tutorial all trace back to the same architectural fact: Terraform is a pull-based, run-triggered tool with no standing watch on real infrastructure, so every practice here exists solely to manufacture the moment of looking that Terraform will never generate on its own."
+    },
+    {
+      "shared_word": "locking",
+      "members": [
+        "T-004",
+        "T-029",
+        "T-046",
+        "T-048"
+      ],
+      "member_text": [
+        {
+          "subject": "Automatic state locking on write operations",
+          "description": "State locking happens automatically on all operations that could write state, with no message shown when it succeeds. If state locking fails, Terraform does not continue. Not all backends support locking, so the guarantee is backend-dependent. Most commands support a -lock=false flag to disable locking, which the docs advise against using."
+        },
+        {
+          "subject": "State locking and force-unlock",
+          "description": "Terraform locks state automatically before any write operation; if state locking fails, Terraform does not continue. Teams hit this when a CI runner is killed mid-apply (OOM, timeout, spot termination) or someone Ctrl+C's a long-running apply, leaving a stale lock. The trap is reaching for `terraform force-unlock` without first confirming no other process actually holds the lock: HashiCorp's own docs warn 'Be very careful with this command. If you unlock the state when someone else is holding the lock it could cause multiple writers,' and specify force-unlock is meant only to clear your own lock after automatic unlocking failed."
+        },
+        {
+          "subject": "Setting up S3 remote state with DynamoDB locking, then migrating",
+          "description": "Official HashiCorp tutorial: 'Migrate state from S3 to HCP Terraform.' Has the reader create an S3 bucket and DynamoDB table for state storage and locking, deploy an EC2 instance against that backend, create CLI workspaces (default and dev), then replace the S3 backend configuration with HCP Terraform's cloud block, rename workspaces, assign a variable set with AWS credentials to the new workspaces, and run plan/apply remotely through HCP Terraform before cleaning up."
+        },
+        {
+          "subject": "Drill: state locking and plan/apply staleness",
+          "description": "Stand up a shared backend (S3+DynamoDB, or HCP Terraform) with two local checkouts simulating two team members. From checkout A, start a long apply against a resource with a deliberate delay (e.g. a null_resource with a sleep provisioner) so the lock is held. From checkout B, attempt a second apply and observe the lock error (T-004). Kill checkout A's process mid-apply to leave a stale lock, then decide - and write down your reasoning before running the command - whether it is safe to `terraform force-unlock` using the lock ID Terraform reports, given what you can and cannot verify about whether A's process is truly dead (T-005, T-029). Separately, generate and save a plan file, let five minutes pass while manually changing a tagged resource outside Terraform, then apply the saved file and observe that it applies the stale plan rather than current reality - demonstrating why the docs say to always re-check the final plan (T-007). [AUDIT viable->wounded: the closing segment inverts the distinction it cites. It has the reader save a plan file, let a resource change out of band, then apply the saved file and 'observe that it applies the stale plan rather than current reality -- demonstrating why the docs say to always re-check the final plan (T-007)'. T-007's warning is specifically about SPECULATIVE plans (not saved to a file); applying a saved plan file is the opposite case T-036 covers (apply exactly what's in the file, no re-planning). The predicted observation is also unreliable, since a saved plan is lineage/serial-checked against state and is likelier to error than silently apply stale. The locking half of the drill (T-004/T-005/T-029) is sound.]"
+        }
+      ],
+      "principle": "State locking serializes writers; it says nothing about whether what they write is current",
+      "because": "Automatic locking on every write operation, the force-unlock danger when a lock outlives its holder, the S3-plus-DynamoDB backend pattern that supplies the locking primitive in the first place, and the staleness drill showing a saved plan still applies against changed reality are one mechanism viewed from four angles: locking guarantees mutual exclusion between concurrent runs, not correctness of any single run's view of infrastructure."
+    }
+  ]
+}
