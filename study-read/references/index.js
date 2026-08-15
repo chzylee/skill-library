@@ -369,11 +369,26 @@
       '<div class="ledger-body">' + parts.join("") + "</div></details>";
   }
 
-  function itemHtml(r, openRow) {
+  /* The item, and the editorial line that makes a chapter read as taught.
+     `subject` is a scanning label — 137 of 230 are short noun phrases like "Purpose of
+     Terraform state" — and `description` is a faithful summary of the source. Neither
+     says why the item is here, in this chapter, at this point in the order. Without that
+     line an opened chapter is an index with correct entries.
+
+     `note` is a hinge: it relates the item to what came before it, to the chapter's
+     principle, or to what is easy to read past in it. Never a summary — the summary is
+     one expansion below and is longer. It sits on the scannable row rather than in the
+     expanded body because the row is where the index reads as an index.
+
+     Absent on every chapter written before the field existed, and nothing renders where
+     there is none. Omitting one is a legal result, so there is no absent-state line
+     here — that lesson is §3d, one commit ago. */
+  function itemHtml(r, openRow, note) {
     var open = openRow === r.id ? " open" : "";
     return '<details class="it" id="row-' + esc(r.id) + '"' + open + ">" +
       "<summary>" + MARK + "<span>" +
       '<h3 class="it-t">' + esc(r.subject) + "</h3>" +
+      (note ? '<span class="it-note">' + esc(note) + "</span>" : "") +
       '<span class="it-tags"><span class="when">' + esc(r.when || "unclassified") + "</span>" +
       srcState(r) + "</span></span></summary>" +
       '<div class="it-body">' +
@@ -416,7 +431,9 @@
       '<h2 class="ch-t">' + esc(c.principle) + "</h2>" +
       '<span class="ch-m">' + esc(meta) + "</span></summary>" +
       (c.because ? '<p class="ch-head">' + esc(c.because) + "</p>" : "") +
-      '<div class="items">' + rows.map(function (r) { return itemHtml(r, openRow); }).join("") +
+      '<div class="items">' + rows.map(function (r) {
+        return itemHtml(r, openRow, (c.notes || {})[r.id]);
+      }).join("") +
       "</div>" + practiceLine(rows) + "</details>";
   }
 

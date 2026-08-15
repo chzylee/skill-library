@@ -334,6 +334,64 @@ class ApparatusPlacement(StoreCase):
         self.assertIn("the exact supporting sentence", page)
 
 
+class PerItemNotes(StoreCase):
+    """The editorial hinge under an item's label — optional, and silent when absent.
+
+    Stored on the chapter, not the row, and that is the load-bearing choice: rows.jsonl is
+    append-only so it cannot be backfilled, chapters.jsonl is safe to regenerate, and a
+    note describes the (chapter, row) pairing rather than the row — a re-run that groups
+    differently needs a different note.
+    """
+
+    def _build(self, notes, members=None):
+        rows = [row(f"R-{i:03d}", "Topic", "run-a") for i in range(6)]
+        ch = chapter("ch-01", "Topic", members or [r["id"] for r in rows], 1, notes=notes)
+        write_store(self.root, "run-a", rows, [ch])
+        return build(self.root)
+
+    def test_a_note_reaches_the_page_keyed_to_its_member(self):
+        out, page = self._build({"R-002": "Once the commit point is fixed, this is what "
+                                          "the interval does to it."})
+        u = page_data(page)["units"][0]
+        self.assertEqual(u["chapters"][0]["notes"],
+                         {"R-002": "Once the commit point is fixed, this is what the "
+                                   "interval does to it."})
+        self.assertNotIn("warn", out.lower().replace("warnings", ""))
+
+    def test_a_chapter_with_no_notes_carries_an_empty_map_not_a_placeholder(self):
+        _, page = self._build(None)
+        self.assertEqual(page_data(page)["units"][0]["chapters"][0]["notes"], {})
+
+    def test_absence_draws_nothing(self):
+        """§3d's lesson, applied before it can be repeated: no 'no note recorded' line."""
+        _, page = self._build({"R-000": "A note on the first item only."})
+        for banned in ("no note", "No note", "not annotated", "nothing was noted"):
+            self.assertNotIn(banned, page)
+
+    def test_a_note_for_a_non_member_warns_and_never_renders(self):
+        out, page = self._build({"R-999": "keyed to a row that is not in this chapter"})
+        self.assertEqual(page_data(page)["units"][0]["chapters"][0]["notes"], {},
+                         "a note must not render against a row that is not a member")
+        self.assertEqual(page_data(page)["units"][0]["state"], "ok",
+                         "a misfiled note may not render a whole topic flat")
+        self.assertIn("not a member", out)
+
+    def test_a_note_long_enough_to_replace_its_item_warns_and_still_renders(self):
+        """The failure is substitution — a reader settling for the note. It warns rather
+        than fails, because one wordy sentence must not flatten 12 good chapters."""
+        long_note = "This item " + "and a great deal more besides " * 12
+        out, page = self._build({"R-001": long_note})
+        u = page_data(page)["units"][0]
+        self.assertEqual(u["state"], "ok")
+        self.assertEqual(u["chapters"][0]["notes"]["R-001"], long_note)
+        self.assertIn("over the", out)
+
+    def test_a_malformed_notes_field_warns_and_does_not_crash_the_build(self):
+        out, page = self._build(["not", "an", "object"])
+        self.assertEqual(page_data(page)["units"][0]["chapters"][0]["notes"], {})
+        self.assertIn("not an object keyed by row id", out)
+
+
 class LedgerSplit(unittest.TestCase):
     """Stage bookkeeping must leave the reader's prose and land in its own channel.
 

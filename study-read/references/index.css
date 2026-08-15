@@ -237,6 +237,13 @@ details.it > summary .mark { margin-top: 7px; }
   text-wrap: pretty; transition: color 160ms cubic-bezier(.22, 1, .36, 1);
 }
 details.it > summary:hover .it-t { color: var(--accent); }
+/* The editorial hinge under an item's label. Reading serif, muted ink: it is the
+   editor speaking, not the source, and rule 4 says apparatus never competes with the
+   text it annotates. Absent on most rows, and absence draws nothing at all. */
+.it-note {
+  display: block; margin-top: 3px; max-width: var(--measure);
+  color: var(--muted); font-size: 0.875rem; line-height: 1.5; text-wrap: pretty;
+}
 .it-tags { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 5px; }
 
 /* one axis on the scannable row: WHEN it matters. "what kind" lives in the detail. */

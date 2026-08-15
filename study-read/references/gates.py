@@ -28,6 +28,14 @@ MIN_ROWS_FOR_MIN_CHAPTERS = 15
 MAX_SUBJECT_OVERLAP = 0.60
 MAX_REFERENCE_SHARE = 0.20
 THIN_CHAPTER = 2
+# A per-member note is a hinge — where the item sits, what it assumes, what to notice.
+# 30 words is the brief's ceiling; this is the slack-adjusted byte form of it. WARNING
+# only, and deliberately: a note long enough to be read INSTEAD of its item is the failure
+# (anthology editing's own name for it is readers settling for the headnote and never
+# reaching the selection), but a long note is still a note, and failing a whole topic over
+# one wordy sentence would render 12 good chapters flat. Absence is not checked at all —
+# omitting a note is a legal result and every chapter written before notes existed has none.
+MAX_NOTE_CHARS = 220
 
 STOP = {
     "the", "a", "an", "and", "or", "of", "to", "in", "for", "on", "with", "is", "are",
@@ -138,6 +146,22 @@ def check_topic(topic, live_rows, chapters):
                 r.failures.append(f"{cid}: member {m} already in {seen[m]}")
             else:
                 seen[m] = cid
+
+        # Notes are optional and keyed by member. A note on a row that is not a member of
+        # this chapter is a real mistake — it would never render and nothing else would
+        # say so — but it is still not worth rendering 12 chapters flat over, so it warns.
+        notes = c.get("notes") or {}
+        if isinstance(notes, dict):
+            for rid, text in notes.items():
+                if rid not in members:
+                    r.warnings.append(f"{cid}: note for {rid}, which is not a member")
+                elif len(text or "") > MAX_NOTE_CHARS:
+                    r.warnings.append(
+                        f"{cid}: note for {rid} is {len(text)} chars, over the "
+                        f"{MAX_NOTE_CHARS} guideline — long enough to be read instead "
+                        f"of the item")
+        elif notes:
+            r.warnings.append(f"{cid}: notes is not an object keyed by row id")
 
     orphans = sorted(ids - set(seen))
     if orphans:

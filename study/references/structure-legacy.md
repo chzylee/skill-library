@@ -46,6 +46,12 @@ One JSON object per line, written to the path you are given.
   "principle": "Everything that follows from committing offsets after processing",
   "because": "All five are consequences of one ordering choice: the offset is written after the handler returns, not before. The redelivery window, the duplicate-handling burden, and the entire exactly-once discussion fall out of that single decision.",
   "members": ["K-014", "K-031", "K-008", "K-052", "K-019"],
+  "notes": {
+    "K-014": "Start here: the commit point is the one fact the other four are consequences of.",
+    "K-031": "The interval turns that commit point into a measurable window of redone work.",
+    "K-008": "Same window, seen from the other side — what a rebalance does to work already in flight.",
+    "K-052": "Where the two previous items stop being a tuning question and become a delivery guarantee."
+  },
   "order": 3,
   "kind": "principle"
 }
@@ -53,13 +59,76 @@ One JSON object per line, written to the path you are given.
 
 - `chapter_id` — `ch-NN`, unique within the topic.
 - `principle` — the chapter's name. A sentence fragment naming the binding idea, not a
-  category label.
-- `because` — the warrant. See the test below. Minimum 80 characters.
+  category label. **Aim under 120 characters.** It has to work as a contents line read on
+  its own; past about 200 it stops being a title and starts being a paragraph.
+- `because` — the warrant, and also the chapter's **headnote**: it is what a reader sees
+  first on opening the chapter. See the test below. Minimum 80 characters.
 - `members` — row `id`s **in reading order**. Order matters: earlier members should be
   assumed by later ones where any such relationship exists.
+- `notes` — **optional**, and the subject of the next section. One short line per member,
+  keyed by row id. Omit the key for any member you have nothing real to say about; omit
+  the whole field rather than filling it.
 - `order` — where this chapter sits in the topic. Chapters are read in this order.
 - `kind` — `principle` for a real chapter, `reference` for the one permitted exception
   below.
+
+---
+
+## `notes` — the one line that makes a chapter read as teaching
+
+Without this, an opened chapter is a list of labels. `subject` is a scanning label
+("Purpose of Terraform state", "commitSync vs commitAsync") and `description` is a
+faithful summary of the source. Neither says why the item is *here*, in *this* chapter,
+at *this* point in the order. That sentence is the whole difference between a taught
+section and an index, and you are the only stage that can write it: you are the one
+holding every row of the topic at once and choosing the sequence.
+
+**A note is a hinge, not a summary.** It relates the item to what came before it, to the
+chapter's principle, or to what the reader should be watching for in it. It never
+restates what the item says — `description` already does that, sits right underneath, and
+is longer than anything you would write.
+
+Each note does **one** of exactly three jobs:
+
+| Job | What it says | Shape |
+|---|---|---|
+| **Place it in the sequence** | why it comes here, what the previous item set up | *"Once the commit point is fixed, this is what the interval does to it."* |
+| **Name what it depends on** | what has to be true or understood first | *"Assumes the graph from the item above; without it the parallelism claim reads as arbitrary."* |
+| **Say what to notice** | the thing in the item that is easy to read past | *"The word doing the work here is 'binding' — it is a record of what was, not a statement of what should be."* |
+
+**15 to 30 words. One sentence.** This is a hard ceiling, not a target, and the reason is
+specific: an annotation long enough to stand in for the item gets read *instead of* it.
+That failure has a name in anthology editing — readers settle for the headnote and never
+reach the selection — and it is the exact failure this whole tool exists to avoid, since
+the premise is that every path bottoms out at a firsthand source. A note that could
+replace its item has broken the product, however well written it is.
+
+### Prohibited in a note
+
+1. **No summary of the item.** If the note would still make sense with the item deleted,
+   it is a summary. Rewrite it as a relation.
+2. **No judgment of importance.** Not "the most important item here", not "essential", not
+   "you can skip this". How much something matters depends on who is reading, and this
+   stage does not know that. It is a prohibited field on a row and it is prohibited here.
+3. **No advice.** Not "make sure you", not "always", not "be careful to". You are placing
+   the item, not instructing the reader.
+4. **No comparison of tools or frameworks.** Not "better than", not "the modern way".
+5. **No claim about the world that is not already in the member rows.** A note reasons
+   over rows you were given. It is not a place to add knowledge, and you have opened no
+   sources.
+6. **No second person.** Write about the material, not to the reader.
+
+### When to omit
+
+**Omitting a note is a legal, expected result** and is better than writing a filler one.
+Leave the key out when the item's place in the order is obvious, or when the honest answer
+is "it is also true and it goes somewhere." A chapter with three notes on five members is
+a better chapter than one with five notes of which two are padding. If you find you can
+write nothing for most of a chapter's members, say so in your summary — that is real
+evidence the grouping is weaker than its `because` claims.
+
+Notes are optional in the schema, and every chapter written before this section existed
+has none. Nothing renders where there is no note; no build gate requires one.
 
 ---
 
@@ -105,6 +174,8 @@ If a set of rows genuinely shares no binding idea, saying so is the correct resu
    of its own members.
 5. **Chapters are ordered.** If chapter B assumes something established in chapter A, A comes
    first. Where no dependency exists, order by what a reader should meet first.
+6. **A note is at most 30 words** and belongs to one member of one chapter. The build
+   warns above roughly 220 characters; it never fails on a note.
 
 ### The `reference` exception, and its limits
 
@@ -135,6 +206,8 @@ fewer**:
 - How many chapters, and the member count of each.
 - Any topic-level observation about how the rows did or did not want to group.
 - If you emitted a `reference` chapter: how many rows, and why they resisted.
+- **How many members got a note, out of how many members** — and if a chapter got few,
+  which one and why. A low note count is information about the grouping, not a failure.
 - The two chapters you are **least** confident about, named, with one line each on why.
 
 That last item is not optional and it is not a formality. A stage that reports uniform

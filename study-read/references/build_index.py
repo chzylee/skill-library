@@ -392,12 +392,22 @@ def build_units(rows, chapters, topic_gates, metas):
         out_chs = []
         for c in chs:
             members = [m for m in (c.get("members") or []) if m in by_id]
+            # Per-member editorial notes, optional. They live on the CHAPTER rather than
+            # on the row for three reasons: `rows.jsonl` is append-only and cannot be
+            # backfilled, `chapters.jsonl` is safe to regenerate, and the note is a
+            # property of the (chapter, row) pairing rather than of the row — a re-run
+            # that groups differently needs a different note, so storing it on the row
+            # would be wrong even if the store were writable.
+            raw_notes = c.get("notes")
+            notes = {m: raw_notes[m] for m in members
+                     if isinstance(raw_notes, dict) and raw_notes.get(m)}
             out_chs.append({
                 "id": c.get("chapter_id", ""),
                 "principle": c.get("principle", ""),
                 "because": c.get("because", ""),
                 "kind": c.get("kind", "principle"),
                 "members": members,
+                "notes": notes,
                 "mins": sum(by_id[m]["t"] for m in members),
             })
 
