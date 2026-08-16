@@ -461,5 +461,12 @@ mark { background: transparent; color: var(--accent); font-weight: 700; }
   aside, .chips { display: none; }
   .wrap { display: block; }
   main { max-width: none; padding: 0; }
-  details { open: open; }
+  /* Print everything, expanded. The previous rule here was `details { open: open }`,
+     which is not CSS — `open` is an HTML attribute, not a property — so it silently
+     did nothing and a printed topic lost every collapsed chapter and item. CSS cannot
+     set the attribute, but it can make the closed content renderable: `::details-content`
+     is the element that slots a <details>' body. Where a browser does not know the
+     pseudo-element yet, the rule is ignored and printing keeps today's behaviour
+     (only what the reader expanded), which is the honest fallback. */
+  details::details-content { content-visibility: visible; display: block; }
 }
