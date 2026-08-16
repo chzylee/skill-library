@@ -62,11 +62,25 @@ first. Guides from earlier runs were moved to `_archive/`, not deleted; they are
 not data.
 
 Append-only is doing real work: you never rewrite `rows.jsonl`, so a killed row stays in the file
-and every page is a filter over a preserved whole. Query across topics with DuckDB, no setup:
+and every page is a filter over a preserved whole. The file is queryable as it sits — stdlib,
+nothing installed. Every source ever cited but never opened, across every topic ever run:
 
 ```bash
-duckdb -c "select topic, subject, origin from read_json_auto('~/.claude/study/data/rows.jsonl') where evidence = 'asserted'"
+python3 -c "
+import json, os
+for l in open(os.path.expanduser('~/.claude/study/data/rows.jsonl')):
+    r = json.loads(l)
+    if r.get('evidence', r.get('source_status')) in ('asserted', 'asserted-only'):
+        print(r['topic'], '|', r['subject'], '|', r['origin'])
+"
 ```
+
+The previous example here — DuckDB with `where evidence = 'asserted'` — failed twice over,
+and both failures are worth keeping as warnings: the `duckdb` CLI is not installed and nothing
+in this pipeline may assume tools beyond the Python stdlib; and a raw query sees the **stored**
+enums, which vary by schema version — v0.1 rows say `source_status: asserted-only`, v0.2+ say
+`evidence: asserted` — so a filter on one spelling silently misses the other. `/study-read`
+normalizes this for display; a raw query has to do it itself.
 
 Run `/study-read` after any run to rebuild the library page.
 

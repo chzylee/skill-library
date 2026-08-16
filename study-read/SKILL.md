@@ -57,7 +57,9 @@ Read-only over the store. It writes exactly one file, `~/.claude/study/index.htm
 - **Three source states, and only three:** `source checked`, `not opened`, `authored`. Nothing in
   the store records a link check, so the page has no dead-link state and does not invent one. A row
   with no stored quote says so, and says which kind of absence it is.
-- **Search across every row of every run**, filtered by type, depth, and evidence. This is the
+- **Search across every row of every run**, filtered by type, depth, and source state — the
+  facet groups the page labels `type`, `how deep`, and `source`, speaking the badge's words
+  rather than the pipeline's enums. This is the
   payoff of storing rows rather than documents: *"every trap I have ever collected"* or
   *"everything at judgment depth about rebalancing"* is one query spanning topics researched weeks
   apart. A hit opens that item, expanded, inside its chapter.
