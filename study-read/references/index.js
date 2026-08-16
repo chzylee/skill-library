@@ -392,7 +392,9 @@
       '<span class="it-tags"><span class="when">' + esc(r.when || "unclassified") + "</span>" +
       srcState(r) + "</span></span></summary>" +
       '<div class="it-body">' +
-      "<p>" + esc(r.d) + "</p>" +
+      // `d` is a list of paragraphs; the build reflowed it at sentence boundaries and
+      // changed no word. Joining with a space restores the stored text exactly.
+      r.d.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") +
       quoteBlock(r) + classifLine(r) + sourceLine(r) + ledgerBlock(r) +
       "</div></details>";
   }
@@ -464,7 +466,7 @@
       " rows carry a source that was opened and checked" +
       (u.unver ? " · " + u.unver + " name a source nobody opened" : "") +
       (u.authored ? " · " + u.authored + " are authored here with no external source" : "") +
-      " · schema v" + esc(u.sv) + ".</p>";
+      ".</p>";
 
     /* What this run did not store, said once for the whole topic instead of on every
        item. These three were per-row lines and between them were the most repeated text
@@ -496,10 +498,25 @@
       : "Nothing in this run is a drill or an exercise. ") +
       "The separate <b>practicum</b> record is designed and not built, so no chapter " +
       "carries practice of its own.</p>";
+    /* Build state, one expansion further in than provenance — because it is a different
+       audience. Everything above is what a reader needs to judge a claim: when it was
+       researched, how many sources were opened, what was not stored. What follows is
+       what the build thought of its own output: the schema these rows were written
+       under, and gate warnings like "ch-02: only 2 members".
+
+       That last one is worse than noise on a reader's page. Fragmentation warns rather
+       than fails precisely because Phase 0 measured it and the MOST fragmented arm
+       scored HIGHEST, so it is a shape the project suspects and has no evidence for.
+       Telling a reader about it invites a conclusion the project's own data does not
+       support. Nothing is hidden — a gate FAILURE still renders as a banner above the
+       chapters, because that one changes what the reader is looking at. */
+    var build = "<p>Rows written under schema v" + esc(u.sv) + ".</p>";
     if (u.warnings.length) {
-      notes += "<p>Build gates warned, and warnings never block: " +
+      build += "<p>Gates warned, and a warning never blocks a build: " +
         u.warnings.map(esc).join("; ") + ".</p>";
     }
+    notes += '<details class="build"><summary>' + MARK + "How this page was built</summary>" +
+      '<div class="build-body">' + build + "</div></details>";
 
     return '<details class="run' + (flagged ? " flag" : "") + '"' + (flagged ? " open" : "") + ">" +
       "<summary>" + MARK + "<span><b>" + plural(u.n, "item") + "</b>" +
@@ -644,7 +661,10 @@
     return '<div class="hit">' +
       (href ? '<a href="' + href + '">' + highlight(r.subject, t) + "</a>"
             : '<span class="subject">' + highlight(r.subject, t) + "</span>") +
-      "<p>" + highlight(r.d.length > 240 ? r.d.slice(0, 240) + "…" : r.d, t) + "</p>" +
+      // search reads the whole description as one run of text, paragraphs rejoined
+      "<p>" + highlight(function (d) {
+        return d.length > 240 ? d.slice(0, 240) + "…" : d;
+      }(r.d.join(" ")), t) + "</p>" +
       '<div class="hmeta"><span class="tag">' + esc(r.type) + "</span>" +
       '<span class="tag">' + esc(r.when || r.depth) + "</span>" +
       (r.ev !== "re-opened" ? '<span class="tag w">' + esc(r.ev) + "</span>" : "") +
@@ -741,7 +761,7 @@
       if (active[k].size) hits = hits.filter(function (r) { return active[k].has(r[k]); });
     });
     if (t) hits = hits.filter(function (r) {
-      return (r.subject + " " + r.d + " " + r.topic).toLowerCase().indexOf(t) >= 0;
+      return (r.subject + " " + r.d.join(" ") + " " + r.topic).toLowerCase().indexOf(t) >= 0;
     });
     if (!t && !active.type.size && !active.depth.size && !active.ev.size) {
       results.innerHTML = "";

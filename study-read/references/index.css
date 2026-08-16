@@ -147,6 +147,22 @@ details.run.flag > summary, details.run.flag > summary b { color: var(--warn); }
 .runbody p { margin: 0 0 8px; }
 .runbody p:last-child { margin: 0; }
 .runbody b { color: var(--fg); }
+/* Build state, nested inside the run strip. Two audiences were sharing one panel:
+   provenance is what a reader needs to judge a claim, build state is what the build
+   thought of its own output. A reader who landed on this page has no use for
+   "ch-02: only 2 members" — and Phase 0 found fragmentation did not predict quality,
+   so surfacing it invites a conclusion the data does not support. */
+details.build { margin: 10px 0 0; }
+details.build > summary {
+  list-style: none; cursor: pointer; min-height: var(--tap);
+  display: flex; align-items: center; gap: 7px; color: var(--muted);
+}
+details.build > summary::-webkit-details-marker { display: none; }
+details.build > summary:hover { color: var(--fg); }
+.build-body { padding: 2px 0 2px 16px; border-left: 1px solid var(--rule); }
+.build-body p { margin: 0 0 6px; }
+.build-body p:last-child { margin: 0; }
+
 .tiers { margin: 0 0 8px; padding: 0; list-style: none; }
 .tiers li { padding: 2px 0; }
 .tiers b { color: var(--fg); font-variant-numeric: tabular-nums; }

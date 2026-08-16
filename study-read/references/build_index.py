@@ -96,6 +96,76 @@ def split_ledger(text):
     return prose, m.group(1), note
 
 
+# Reflowing a description into paragraphs. Not one word is changed and no sentence is
+# ever broken — this only decides where a paragraph ends.
+#
+# Zero of 230 stored descriptions contain a single line break, and 53 render as 13 or more
+# unbroken lines, the longest at 35. A wall that size is the difference between a page
+# somebody reads and a page somebody bounces off, and it is purely typographic: the
+# harvest wrote one paragraph because nothing ever told it not to (the spec now does).
+#
+# A paragraph break asserts only "these sentences group", which is why the rule closes a
+# paragraph at a sentence boundary and never inside one. Where a single sentence runs 835
+# characters — one does — nothing here helps, and that is the honest limit rather than a
+# reason to cut mid-sentence.
+PARA_TARGET = 350        # close a paragraph once it has reached about this much
+PARA_MIN_TOTAL = 700     # below this a single paragraph is ~10 lines and reads fine
+PARA_ORPHAN = 120        # a shorter tail joins the paragraph above instead of dangling
+
+# Periods that do not end a sentence. `max.poll.interval.ms` is safe without listing —
+# the split requires whitespace after the period — but "e.g. when" is not.
+ABBREV = {"e.g", "i.e", "vs", "cf", "etc", "al", "fig", "approx", "ca", "no"}
+# The closing quote or bracket is part of the sentence, not part of the separator. A
+# lookbehind that matched only the period silently ate it — 25 of 230 real descriptions
+# lost a character that way, none of them in the synthetic fixtures.
+_SPLIT_AT = re.compile(r'[.!?]["\'’”)\]]?\s+')
+
+
+def _sentences(text):
+    """Split on sentence boundaries, skipping abbreviations and initials."""
+    out, start = [], 0
+    for m in _SPLIT_AT.finditer(text):
+        head = text[start:m.end()].strip()          # punctuation and closer included
+        word = re.split(r"[\s(]", text[start:m.start()])[-1].lower().rstrip(".")
+        nxt = text[m.end():m.end() + 1]
+        # A real boundary: not an abbreviation, not an initial, and what follows opens
+        # like a new sentence rather than continuing the old one.
+        if word in ABBREV or len(word) == 1:
+            continue
+        if nxt and not (nxt.isupper() or nxt.isdigit() or nxt in "\"'“("):
+            continue
+        out.append(head)
+        start = m.end()
+    tail = text[start:].strip()
+    if tail:
+        out.append(tail)
+    return [s for s in out if s]
+
+
+def paragraphs(text):
+    """['para', 'para', ...]. Always non-empty; joining with ' ' restores the input."""
+    text = (text or "").strip()
+    if not text:
+        return [""]
+    if len(text) <= PARA_MIN_TOTAL:
+        return [text]
+    sents = _sentences(text)
+    if len(sents) < 2:
+        return [text]                    # one enormous sentence stays one paragraph
+    out, cur = [], ""
+    for s in sents:
+        cur = f"{cur} {s}" if cur else s
+        if len(cur) >= PARA_TARGET:
+            out.append(cur)
+            cur = ""
+    if cur:
+        if out and len(cur) < PARA_ORPHAN:
+            out[-1] += " " + cur
+        else:
+            out.append(cur)
+    return out or [text]
+
+
 def normalize(row, chapter_of=None):
     """v0.1/v0.2/v0.3 rows coexist in the store; present them uniformly.
 
@@ -111,7 +181,9 @@ def normalize(row, chapter_of=None):
     prose, note_tag, note = split_ledger(row.get("description") or "")
     return {"id": rid, "run": row.get("run", ""), "topic": row.get("topic", ""),
             "subject": row.get("subject", ""), "type": row.get("type", "concept"),
-            "d": prose,
+            # A LIST of paragraphs, not a string. Joining with a space restores the
+            # stored text exactly; nothing is added, removed, or reordered.
+            "d": paragraphs(prose),
             "note": note, "noteTag": note_tag,
             "quote": row.get("quote") or "",
             "origin": row.get("origin") or "",

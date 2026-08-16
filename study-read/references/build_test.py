@@ -248,9 +248,13 @@ class WhatThePageMayNotClaim(StoreCase):
                          "a row with no quote must not be relabelled as authored")
 
     def test_full_description_survives_untruncated(self):
+        """`d` is now a LIST of paragraphs rather than a string — the build reflows long
+        prose at sentence boundaries. The guarantee this test exists for is unchanged:
+        joining the paragraphs must return every character that was stored."""
         long = "x" * 2000
         _, r = self._one_row(description=long)
-        self.assertEqual(r["d"], long, "descriptions must not be re-truncated to 300")
+        self.assertEqual(" ".join(r["d"]), long,
+                         "descriptions must not be re-truncated to 300")
 
     def test_authored_rows_keep_their_non_url_origin(self):
         _, r = self._one_row(evidence="authored", origin="model inference")
@@ -392,6 +396,107 @@ class PerItemNotes(StoreCase):
         self.assertIn("not an object keyed by row id", out)
 
 
+class Reflow(unittest.TestCase):
+    """Long descriptions become paragraphs. No word changes and no sentence is split.
+
+    Zero of 230 stored descriptions contain a line break and 53 render as 13+ unbroken
+    lines, the longest at 35. The reflow is typographic only, so the binding property is
+    that joining the output returns the input — asserted on every case below.
+    """
+
+    def setUp(self):
+        sys.path.insert(0, HERE)
+        import build_index
+        self.paras = build_index.paragraphs
+
+    def _roundtrip(self, text):
+        """The invariant, stated exactly: rejoining the paragraphs returns every
+        character of the input, with runs of whitespace collapsed to one space. That is
+        what typographic reflow means, and it is the only thing this may do. An earlier
+        version failed it on 25 of 230 real rows by eating the closing quote at a
+        sentence boundary — a character no synthetic fixture happened to contain."""
+        out = self.paras(text)
+        self.assertEqual(" ".join(out), " ".join(text.split()),
+                         "reflow changed the text; it may only decide where paragraphs end")
+        return out
+
+    def test_short_prose_stays_one_paragraph(self):
+        text = "One sentence. Then a second one. And a third to finish it off."
+        self.assertEqual(self._roundtrip(text), [text])
+
+    def test_long_prose_breaks_at_sentence_boundaries(self):
+        s = ("The coordinator waits for a heartbeat before declaring a member dead and "
+             "starting a rebalance across the whole group. ")
+        out = self._roundtrip((s * 6).strip())
+        self.assertGreater(len(out), 1, "a six-sentence wall must not stay one paragraph")
+        for p in out:
+            self.assertTrue(p.endswith("."), f"paragraph ends mid-sentence: {p[-40:]!r}")
+
+    def test_one_enormous_sentence_is_left_alone(self):
+        """A single 900-character sentence exists in the real store. Nothing can help it,
+        and cutting mid-sentence would be worse than the wall."""
+        text = "This clause runs on and on " * 40
+        self.assertEqual(len(self.paras(text)), 1)
+
+    def test_an_abbreviation_does_not_end_a_paragraph(self):
+        text = ("Consumers may lag behind the log end, e.g. when a handler blocks on a "
+                "slow downstream call for longer than the poll interval allows. " * 4)
+        for p in self._roundtrip(text.strip()):
+            self.assertFalse(p.endswith("e.g."), "split after an abbreviation")
+
+    def test_a_dotted_config_key_is_never_a_boundary(self):
+        text = ("Setting max.poll.interval.ms above the handler's worst case keeps the "
+                "member alive while it works through a slow batch of records. " * 5)
+        for p in self._roundtrip(text.strip()):
+            self.assertNotIn("max.poll.interval.\n", p)
+            self.assertFalse(p.rstrip().endswith("max.poll.interval.ms above the"))
+
+    def test_a_short_tail_joins_the_paragraph_above_rather_than_dangling(self):
+        body = ("The group coordinator tracks every member of the consumer group and "
+                "revokes partitions when one of them stops sending heartbeats. " * 5)
+        out = self._roundtrip((body + "It stops there.").strip())
+        self.assertNotEqual(out[-1], "It stops there.",
+                            "a 16-character orphan paragraph should have been absorbed")
+
+    def test_a_closing_quote_at_a_boundary_is_not_eaten(self):
+        """The real-data bug. Every quote mark that went in must come out."""
+        text = ('The page states only that state exists to "keep track of metadata." '
+                'The row attributes a mechanism the source never gives, so the clause '
+                'is an unsourced rationale under prohibition two. ') * 3
+        out = self._roundtrip(text.strip())
+        self.assertEqual(sum(p.count('"') for p in out), text.count('"'))
+
+    def test_empty_description_is_one_empty_paragraph(self):
+        self.assertEqual(self.paras(""), [""])
+        self.assertEqual(self.paras(None), [""])
+
+    def test_every_row_in_the_real_store_survives_reflow(self):
+        """The synthetic fixtures above missed a defect that 230 real rows caught."""
+        store = os.path.expanduser("~/.claude/study/runs")
+        if not os.path.isdir(store):
+            self.skipTest("no local study store on this machine")
+        sys.path.insert(0, HERE)
+        import build_index
+        checked = 0
+        for run in os.listdir(store):
+            final = os.path.join(store, run, "data", "final.jsonl")
+            if not os.path.exists(final):
+                continue
+            with open(final, encoding="utf-8") as fh:
+                for line in fh:
+                    if not line.strip():
+                        continue
+                    r = json.loads(line)
+                    if r.get("grade") in ("killed", "merged"):
+                        continue
+                    prose = build_index.split_ledger(r.get("description") or "")[0]
+                    self.assertEqual(" ".join(build_index.paragraphs(prose)),
+                                     " ".join(prose.split()),
+                                     f"row {r.get('id')} lost or gained text in reflow")
+                    checked += 1
+        self.assertGreater(checked, 0)
+
+
 class LedgerSplit(unittest.TestCase):
     """Stage bookkeeping must leave the reader's prose and land in its own channel.
 
@@ -448,7 +553,7 @@ class LedgerSplit(unittest.TestCase):
         write_store(root, "run-a", rows,
                     [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
         r = page_data(build(root)[1])["rows"][0]
-        self.assertEqual(r["d"], "Reader prose.")
+        self.assertEqual(r["d"], ["Reader prose."])   # `d` is a list of paragraphs
         self.assertEqual(r["note"], "the verdict text.")
         self.assertEqual(r["noteTag"], "AUDIT")
 
