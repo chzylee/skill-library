@@ -110,8 +110,11 @@ what it may never do is explain the subject in place of the source.
   stack — the rail becomes a horizontal shelf so the topic you came to read is not pushed
   ~450px down the page.
 - **`prefers-reduced-motion` is honoured** in `shared/tokens.css` for every transition.
-- **Dark mode is inherited** from shared tokens and has never been rendered or checked. A
-  known gap, recorded rather than claimed (`DESIGN-v1.md` Open Question 8).
+- **Dark mode is verified**, not assumed. Rendered and checked for the first time 2026-08-16
+  (`DESIGN-v1.md` Open Question 8, now closed): every text pair clears 4.5:1 in both themes,
+  and every light token is redefined for dark so none silently survives onto a dark
+  background. Both facts are asserted by `build_test.py::Contrast` rather than stated in a
+  comment.
 - **The page requires JavaScript.** The topic view is rendered by `index.js` into an empty
   `<main>`, so with JS off there is no content. The original prototype worked without it;
   the real app does not. Recorded here rather than quietly dropped.
