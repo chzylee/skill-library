@@ -542,10 +542,16 @@
   function legendHtml(u) {
     var labels = {};
     (UNIT_ROWS[u.slug] || []).forEach(function (r) { labels[r.when || "unclassified"] = 1; });
+    /* Each definition must describe how the tier was actually assigned. "judgment
+       call" used to read "Sources disagree" — but that is slice 2's `choice` tier,
+       defined by observed disagreement between sources; the legacy `judgment` rows
+       this label speaks for were assigned by failure signature (you use it correctly
+       and still choose wrongly, and the error surfaces late). A legend that names a
+       cause the data does not record is a claim without a traceable cause. */
     var DEF = {
       "every time": "You cannot use the thing correctly without this.",
       "edge case": "Fine until a specific condition fires, then it bites.",
-      "judgment call": "Sources disagree. There is no single right answer, so you have to choose.",
+      "judgment call": "Using it correctly is not enough — there is a choice to make, and a wrong one surfaces late, at scale or in an incident.",
       "how it works": "Internals. Only needed to predict behaviour nobody documented.",
       "unclassified": "This row carries no tier."
     };

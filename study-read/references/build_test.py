@@ -241,6 +241,16 @@ class WhatThePageMayNotClaim(StoreCase):
         for label in ("source checked", "not opened", "authored"):
             self.assertIn(label, page, f"the {label!r} state is not reachable")
 
+    def test_the_legend_does_not_claim_sources_disagreed(self):
+        """"Sources disagree" is how slice 2's `choice` tier will be assigned — by an
+        observed disagreement. The legacy `judgment` rows the "judgment call" label
+        speaks for were assigned by failure signature, so a legend defining them by
+        disagreement names a cause the data does not record."""
+        page, _ = self._one_row()
+        self.assertNotIn("Sources disagree", page,
+                         "the legend claims a tier was assigned by source "
+                         "disagreement; nothing in the store records one")
+
     def test_evidence_is_spoken_in_the_badge_vocabulary(self):
         """The search chips and hit tags filter on the stored enum but must not SHOW
         it: `re-opened` on a chip and `source checked` on the badge it filters is the
