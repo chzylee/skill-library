@@ -542,12 +542,14 @@
   function legendHtml(u) {
     var labels = {};
     (UNIT_ROWS[u.slug] || []).forEach(function (r) { labels[r.when || "unclassified"] = 1; });
-    /* Each definition must describe how the tier was actually assigned. "judgment
-       call" used to read "Sources disagree" — but that is slice 2's `choice` tier,
-       defined by observed disagreement between sources; the legacy `judgment` rows
-       this label speaks for were assigned by failure signature (you use it correctly
-       and still choose wrongly, and the error surfaces late). A legend that names a
-       cause the data does not record is a claim without a traceable cause. */
+    /* Each definition must describe how the tier was actually assigned. The old
+       "judgment call" line defined it by sources disagreeing — but that is slice 2's
+       `choice` tier, assigned from an observed disagreement; the legacy `judgment`
+       rows this label speaks for were assigned by failure signature (you use it
+       correctly and still choose wrongly, and the error surfaces late). A legend that
+       names a cause the data does not record is a claim without a traceable cause.
+       NB: this comment ships inside the page, so it must not quote the banned
+       sentence verbatim — a test bans the exact phrase. */
     var DEF = {
       "every time": "You cannot use the thing correctly without this.",
       "edge case": "Fine until a specific condition fires, then it bites.",
