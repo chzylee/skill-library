@@ -988,6 +988,40 @@ Reuse rather than rebuild.
    that happens to be thin. The artifact states its own tier composition and names what was
    declined.
 
+8. **Every presentation decision traces to evidence about what actually teaches, or is
+   marked as craft.** *(Added 2026-08-15, after this document was approved. Recorded as an
+   amendment rather than folded in silently.)*
+
+   The bar for this product is **that the reader learns**, and criteria 1 through 7 measure
+   organization, structure size, traceability and cost. None of them measures learning. That
+   gap was recorded twice and closed neither time, because measuring it directly needs
+   learners, a control and a post-test — which this project does not have and is not going
+   to build. A criterion nobody can run is not a criterion.
+
+   So the claim moves one level down, to where it can be checked. This document's governing
+   principle is **no claim should be made without a traceable cause**, written for claims
+   about the world: every row traces to a source. Criterion 8 extends the identical
+   discipline to claims about **presentation**: every decision about how material is put on
+   the page names the finding behind it, or says plainly that it is craft judgment.
+
+   **Checkable by audit, not by assertion.** Open
+   [`design/EVIDENCE-presentation.md`](design/EVIDENCE-presentation.md), take any decision
+   visible on the page, and ask two questions: is it in the table, and does the cited finding
+   actually say what the decision claims? A decision that is in neither the evidence table
+   nor the craft table fails this criterion.
+
+   **What this criterion does not claim, stated so nobody reads more into it.** It does not
+   say the artifact teaches. Nothing in the evidence file was measured on this artifact —
+   every finding is about resources that demonstrably teach, or about how comparable
+   artifacts fail, and that the same moves work here is an inference. The evidence file also
+   carries the case *against* its own approach, including a result suggesting that a
+   synthesis suppresses source-opening even when the source is one click away, which if it
+   holds is a problem for this design rather than support for it.
+
+   The honest summary of criterion 8 is therefore: **the presentation is data-informed and
+   the data is on the table where it can be argued with.** That is less than proof of
+   learning and considerably more than taste.
+
 ---
 
 ## 15. Distribution Plan
