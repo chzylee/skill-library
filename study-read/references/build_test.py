@@ -265,6 +265,40 @@ class WhatThePageMayNotClaim(StoreCase):
                           "authored": "authored"},
                          "the filter must speak the same words as the badge it filters")
 
+    def test_depth_is_spoken_in_reader_words_not_the_harvest_brief_s(self):
+        """`orientation`/`operation`/`judgment`/`mechanism` is the vocabulary the harvest
+        brief uses to assign a tier. It is not a vocabulary a stranger who landed on this
+        page can parse, and the facet was showing it raw.
+
+        The labels name a KIND of understanding, never a level. DESIGN §9 cites the
+        evidence against reading a taxonomy as a sequence and the harvest brief forbids
+        assigning by how advanced something sounds, so no label may claim a difficulty, a
+        prerequisite, or a reading order — reading order lives in chapters."""
+        page, _ = self._one_row()
+        data = page_data(page)
+        self.assertEqual(set(data["depthLabel"]), set(data["filters"]["depth"]),
+                         "every depth value must carry a reader-facing label")
+        for banned in ("beginner", "advanced", "intermediate", "level ", "start here",
+                       "prerequisite", "first", "then"):
+            for label in data["depthLabel"].values():
+                self.assertNotIn(banned, label.lower(),
+                                 f"{label!r} claims a level or an order; depth "
+                                 f"classifies and does not sequence")
+
+    def test_no_pipeline_word_reaches_the_reader_through_a_facet(self):
+        """Named one by one rather than as "the label must differ from the enum", because
+        `authored` is deliberately the same on both sides — it is already the plain word
+        and the badge uses it too. The invariant is not "always rename", it is "these
+        specific words are the pipeline's and a reader never sees them"."""
+        page, _ = self._one_row()
+        data = page_data(page)
+        spoken = dict(data["depthLabel"], **data["evLabel"])
+        for jargon in ("re-opened", "asserted", "orientation", "operation",
+                       "judgment", "mechanism"):
+            self.assertNotIn(jargon, spoken.values(),
+                             f"{jargon!r} is harvest-brief vocabulary and reaches the "
+                             f"reader through a facet")
+
     def test_a_missing_quote_is_carried_as_empty_not_invented(self):
         _, r = self._one_row(quote=None)
         self.assertEqual(r["quote"], "")

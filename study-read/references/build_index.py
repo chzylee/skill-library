@@ -54,6 +54,29 @@ WHEN_LABEL = {
 # this is only how it is spoken, same contract as WHEN_LABEL above.
 EV_LABEL = {"re-opened": "source checked", "asserted": "not opened", "authored": "authored"}
 
+# Reader-facing label for `depth`, on the same contract: the enum stays the stored value
+# and the filter key, this is only how the facet speaks. `orientation`/`operation`/
+# `judgment`/`mechanism` are the harvest brief's vocabulary and mean nothing to someone
+# who landed on this page.
+#
+# These name the KIND of understanding, never a level. That distinction is load-bearing:
+# DESIGN §9 cites the evidence against reading a taxonomy as a sequence, and the harvest
+# brief says in as many words "do not assign by how advanced the item sounds" — a tier
+# comes from a failure signature visible in the source. Read in store order these do run
+# from plain to deep, which is what makes the facet legible, but no label claims a
+# difficulty, a prerequisite, or a reading order. Reading order lives in chapters.
+#
+# Two of the four are the words the row's own badge uses. The other two are the pair
+# WHEN_LABEL collapses into "every time" — the facet can separate them and the badge
+# cannot, which is a real difference between the two questions rather than a second
+# vocabulary for one fact.
+DEPTH_LABEL = {
+    "orientation": "what it is",
+    "operation": "using it",
+    "judgment": "judgment call",
+    "mechanism": "how it works",
+}
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 # The skill is commonly installed as a symlink into ~/.claude/skills, so the sibling
 # assets sit next to the REAL file while `__file__` reports the link. Both roots are
@@ -605,7 +628,7 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, noti
         "docs": docs, "rows": rows, "groups": groups,
         "gates": gates_by_key, "units": units, "topicIndex": topics_index,
         "filters": {"type": TYPES, "depth": DEPTHS, "ev": EVIDENCE},
-        "evLabel": EV_LABEL,
+        "evLabel": EV_LABEL, "depthLabel": DEPTH_LABEL,
         "built": datetime.date.today().isoformat(),
         "capNote": (f"{len(linked_only)} document(s) exceeded the embed cap and are "
                     f"linked rather than inlined: {', '.join(linked_only)}."

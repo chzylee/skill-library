@@ -28,6 +28,13 @@
   var EV_LABEL = DATA.evLabel || {};
   function evLabel(v) { return EV_LABEL[v] || v; }
 
+  /* Depth, same contract. `orientation`/`operation`/`judgment`/`mechanism` is the
+     harvest brief's vocabulary; a stranger cannot parse it and should not have to.
+     The labels name a KIND of understanding and never a level — see DEPTH_LABEL in
+     build_index.py for why that distinction is load-bearing. */
+  var DEPTH_LABEL = DATA.depthLabel || {};
+  function depthLabel(v) { return DEPTH_LABEL[v] || v; }
+
   /* ---------- utilities ---------- */
 
   function esc(s) {
@@ -688,7 +695,9 @@
         return d.length > 240 ? d.slice(0, 240) + "…" : d;
       }(r.d.join(" ")), t) + "</p>" +
       '<div class="hmeta"><span class="tag">' + esc(r.type) + "</span>" +
-      '<span class="tag">' + esc(r.when || r.depth) + "</span>" +
+      // `when` is the badge's word; where a legacy row has none, speak the depth rather
+      // than falling through to the stored enum
+      '<span class="tag">' + esc(r.when || depthLabel(r.depth)) + "</span>" +
       (r.ev !== "re-opened" ? '<span class="tag w">' + esc(evLabel(r.ev)) + "</span>" : "") +
       (r.grade !== "viable" ? '<span class="tag w">' + esc(r.grade) + "</span>" : "") +
       '<span class="muted">' + esc(r.topic) + "</span></div></div>";
@@ -755,13 +764,17 @@
 
     var chips = document.getElementById("chips");
     var chipHtml = "";
+    // The facet group's own name is spoken too: "depth" is the schema's word for it and
+    // "how deeply you need it" is what it actually filters on.
+    var GROUP = { ev: "source", depth: "how deep", type: "type" };
+    var SPOKEN = { ev: evLabel, depth: depthLabel };
     Object.keys(FILTERS).forEach(function (k) {
-      chipHtml += '<span class="lbl">' + (k === "ev" ? "source" : k) + "</span>";
+      chipHtml += '<span class="lbl">' + esc(GROUP[k] || k) + "</span>";
       FILTERS[k].forEach(function (v) {
         // data-v stays the stored enum — it is the filter key; only the text is spoken
         chipHtml += '<button class="chip" data-k="' + k + '" data-v="' + esc(v) +
           '" aria-pressed="' + active[k].has(v) + '">' +
-          esc(k === "ev" ? evLabel(v) : v) + "</button>";
+          esc((SPOKEN[k] || function (x) { return x; })(v)) + "</button>";
       });
     });
     chips.innerHTML = chipHtml;
