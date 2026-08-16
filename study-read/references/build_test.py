@@ -503,6 +503,90 @@ class PerItemNotes(StoreCase):
         self.assertIn("not an object keyed by row id", out)
 
 
+class Contrast(unittest.TestCase):
+    """WCAG contrast on the shared tokens, in BOTH themes.
+
+    `shared/tokens.css` states its ratios in comments and nothing checked them. Its own
+    house rule is "text contrast floor is 4.5:1 against its own background, including
+    metadata, badges, and input placeholders — `--muted` is the lightest value that
+    clears it; do not invent anything lighter for text." That rule is one careless
+    lightening away from being false, and the failure is invisible in review: muted grey
+    on a warm near-white is the single most common way a page becomes hard to read.
+
+    Dark mode is checked here for the reason it most needs checking — it was inherited
+    from two shipping viewers and, per DESIGN-v1 Open Question 8, had never been
+    rendered by either study viewer until 2026-08-15. It passes; this keeps it passing.
+    """
+
+    # (text token, background token, what actually uses this pair)
+    TEXT_PAIRS = [
+        ("fg", "bg", "body prose"),
+        ("muted", "bg", "metadata, badges, per-item notes, the run strip"),
+        ("accent", "bg", "outbound source links"),
+        ("warn", "bg", "flagged run strip and banners"),
+        ("muted", "chip", "legend body, set on a tinted panel"),
+        ("fg", "chip", "legend strong text"),
+        ("muted", "side", "rail items"),
+        ("fg", "side", "rail current item"),
+        ("muted", "card", "search placeholder"),
+        ("fg", "card", "search input text"),
+    ]
+    FLOOR = 4.5
+
+    def setUp(self):
+        path = None
+        for r in (HERE, os.path.dirname(os.path.realpath(BUILD))):
+            p = os.path.join(r, "..", "..", "shared", "tokens.css")
+            if os.path.exists(p):
+                path = p
+                break
+        self.assertIsNotNone(path, "shared/tokens.css not found")
+        self.css = open(path, encoding="utf-8").read()
+
+    @staticmethod
+    def _ratio(hex_a, hex_b):
+        def lum(h):
+            h = h.lstrip("#")
+            chans = []
+            for i in (0, 2, 4):
+                c = int(h[i:i + 2], 16) / 255
+                chans.append(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
+            return 0.2126 * chans[0] + 0.7152 * chans[1] + 0.0722 * chans[2]
+        a, b = sorted((lum(hex_a), lum(hex_b)), reverse=True)
+        return (a + 0.05) / (b + 0.05)
+
+    def _theme(self, dark):
+        """Light is the bare :root block; dark is the prefers-color-scheme override."""
+        if dark:
+            m = re.search(r"prefers-color-scheme:\s*dark.*?:root\s*\{(.*?)\}", self.css,
+                          re.S)
+        else:
+            m = re.search(r"^:root\s*\{(.*?)\}", self.css, re.S | re.M)
+        self.assertIsNotNone(m, f"could not find the {'dark' if dark else 'light'} block")
+        return dict(re.findall(r"--([\w-]+):\s*(#[0-9a-fA-F]{6})", m.group(1)))
+
+    def test_every_text_pair_clears_the_floor_in_both_themes(self):
+        for dark in (False, True):
+            tokens = self._theme(dark)
+            name = "dark" if dark else "light"
+            for fg, bg, use in self.TEXT_PAIRS:
+                self.assertIn(fg, tokens, f"--{fg} missing from the {name} theme")
+                self.assertIn(bg, tokens, f"--{bg} missing from the {name} theme")
+                r = self._ratio(tokens[fg], tokens[bg])
+                self.assertGreaterEqual(
+                    round(r, 2), self.FLOOR,
+                    f"{name}: --{fg} on --{bg} is {r:.2f}:1, under {self.FLOOR}:1 — "
+                    f"used for {use}")
+
+    def test_dark_mode_defines_every_colour_the_light_theme_does(self):
+        """A token defined only in light silently keeps its light value in dark."""
+        light, dark = self._theme(False), self._theme(True)
+        missing = sorted(set(light) - set(dark))
+        self.assertEqual(missing, [],
+                         f"{missing} are not redefined for dark mode, so they keep their "
+                         f"light values against a dark background")
+
+
 class Reflow(unittest.TestCase):
     """Long descriptions become paragraphs. No word changes and no sentence is split.
 

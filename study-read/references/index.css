@@ -446,6 +446,17 @@ mark { background: transparent; color: var(--accent); font-weight: 700; }
   aside .rail-item[aria-current="page"] { border-color: var(--muted); }
   aside .rail-item .sub { display: none; }
 
+  /* The filter chips were the only interactive elements on the page below the 44px
+     floor `--tap` defines and PRODUCT.md commits to: 26px, against 44 on every
+     summary, rail item and input. (26px clears WCAG 2.5.8's 24px minimum, so this
+     is the project's own stricter rule failing, not the standard's.)
+     A transparent 44px hit overlay would keep the visual size, but these wrap onto
+     rows 5px apart, so the overlays would collide and the wrong chip would take the
+     tap. Being genuinely tall on touch is the honest fix; the pointer size on
+     desktop is unchanged, where 26px is not a problem worth solving. */
+  .chips { align-items: center; gap: 8px 6px; }
+  .chip { min-height: var(--tap); display: inline-flex; align-items: center; }
+
   main { padding: 24px 20px 80px; }
   .items, .prac, .ch-head { padding-left: 0; }
   .it-body { padding-left: 26px; }

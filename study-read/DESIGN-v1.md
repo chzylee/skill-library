@@ -925,9 +925,14 @@ collecting `linked_only` and naming those documents. Unreadable files join that 
 7. **Five interaction states remain undrawn** (bot-walled source, chapter with one member,
    item with no quote, chapter with no practicum, run failed mid-pipeline). Specified in the
    state table, never rendered.
-8. **Dark mode is inherited but never rendered.** The tokens are lifted verbatim from two
-   shipping viewers so the values are proven, but neither study prototype has been viewed in
-   it.
+8. ~~**Dark mode is inherited but never rendered.**~~ **CLOSED 2026-08-16.** Rendered for
+   the first time and checked at 1280x900: the topic contents view, an open chapter, an
+   expanded item, the source link and the tinted legend panel all hold. Every text token
+   pair clears 4.5:1 in *both* themes — the tightest is `--muted` on `--chip` at 4.84:1 in
+   light and 5.68:1 in dark — and every light token is redefined for dark, so none silently
+   keeps a light value against a dark background. Both facts are now asserted by
+   `build_test.py::Contrast` rather than stated in a comment, because the tokens file
+   claimed its ratios and nothing checked them.
 9. **The viewer server does not exist yet.** `life-ledger-view/viewer-server.mjs` is the
    reference implementation; `/study-read` needs its own with the same lifecycle including
    self-shutdown on tab close.
