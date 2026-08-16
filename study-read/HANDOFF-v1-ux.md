@@ -1,15 +1,16 @@
-# Handoff — /study v1, after the editorial-apparatus pass
+# Handoff — /study v1, consolidated and ready for the author's retest
 
-Rewritten 2026-08-15 at the end of the refine session. The previous version of this file
-opened *"/study v1 is built and reads badly"* and diagnosed why. That diagnosis was acted
-on; this records what changed, what it taught, and the one finding that is **not** acted on
-because it is the author's call.
+Rewritten 2026-08-16 at the end of the consolidation session. The previous version of this
+file was written mid-refine and predates nine commits: the description reflow, the run-strip
+split, the facet relabels, SC8 and its evidence file, PRODUCT.md, dark mode being verified,
+and the chip tap-target fix. All of that is folded in below; what was no longer true was cut
+rather than corrected in place.
 
 Nothing here needs the prior conversation.
 
 ---
 
-## The frame — settled, and it drove the refine
+## The frame — settled, and it drove everything since
 
 **The artifact is a reader.** Not the person — a *reader* in the editorial sense, as in
 `A Graphic Design Reader`: a curated collection of primary sources, selected and ordered to
@@ -27,25 +28,29 @@ synonym.
 | what to notice about an item | any claim about the world without a source |
 
 The right column is covered by committed constraints (§4.1 consumer-agnostic, §4.3 no
-unstated rationale, §4.6 no priority field). The left column is the editorial apparatus,
-and it is what this session built.
+unstated rationale, §4.6 no priority field). The left column is the editorial apparatus.
 
 **"Never render with the model"** means there is no model path to HTML. It governs who
 generates markup, not who writes sentences.
 
-### The apparatus, and where each piece stands now
+### The apparatus, and where each piece stands
 
 | Piece | Field | Status |
 |---|---|---|
-| **General introduction** | `guide-meta.json` `scopes[topic]` | Was already there. Renders as the boundary line under the title. Unchanged. |
-| **Chapter headnote** | `because` | **Moved.** Was crammed onto the collapsed contents line; now opens the chapter it introduces. |
-| **Per-item note** | `notes[row_id]` on the chapter | **Built.** Optional, 15–30 words, 188 written across the 47 existing chapters. |
+| **General introduction** | `guide-meta.json` `scopes[topic]` | Renders as the boundary line under the title. |
+| **Chapter headnote** | `because` | Opens the chapter it introduces. It was moved off the collapsed contents line, which now carries the title alone. |
+| **Per-item note** | `notes[row_id]` on the chapter | Optional, 15–30 words, 188 written across the 47 existing chapters. A hinge, never a summary. |
 
 ### The bar
 
 `/study <topic>` must beat **both** googling it yourself and asking a chat model. **The
-outcome is that the reader learns.** §14's criteria measure organization, structure size,
-traceability and cost; none measures whether anyone learned. That gap is still open.
+outcome is that the reader learns.** That cannot be measured here — no learners, no control,
+no post-test — so the checkable form is **Success Criterion 8** (`DESIGN-v1.md` §14, added
+2026-08-15 as a recorded amendment): every presentation decision names the finding behind it
+or says plainly that it is craft. `design/EVIDENCE-presentation.md` is the record — seven
+evidence-backed decisions with sources, five marked as craft, and the case *against* the
+whole approach kept where it can be seen. SC8 does not claim the artifact teaches; nothing
+in that file was measured on this artifact, and it says so before the table.
 
 ---
 
@@ -53,40 +58,55 @@ traceability and cost; none measures whether anyone learned. That gap is still o
 
 | File | What it is |
 |---|---|
-| this file | what was done and what it taught |
-| `study-read/DESIGN-v1.md` §6, §8, §11 | the spec. Sections 6 (schema), 8 (display), 11 (approach) are live |
-| `study-read/design/topic-view-prototype.html` | the visual target. **Now partly superseded** — see §3a; it draws `because` on the contents line and that is exactly what was removed |
+| this file | current state, what was done, and what it taught |
+| `PRODUCT.md` (repo root) | scope, register, users, principles, accessibility commitments. Scoped to this surface only |
+| `study-read/DESIGN-v1.md` §6, §8, §11, §14 | the spec. Schema, display, approach, success criteria (SC8 is the newest) |
+| `study-read/design/EVIDENCE-presentation.md` | the evidence behind each presentation decision, and the case against it |
 | `study-read/validation/VERDICT.md` | what Phase 0 proved, cost, and explicitly did NOT establish |
+
+`study-read/design/topic-view-prototype.html` was the visual target and is now **partly
+superseded** — it draws `because` on the contents line, which is exactly what was removed. It
+also carries its own inline copy of the tokens, so it drifts; trust `index.css`.
 
 **Only slice 1 is committed.** Slices 2 and 3 are designed and deliberately uncommitted. Do
 not build them, and do not let their schema (`kind`, `binding`, `binding_warrant`,
 `supersedes`) leak into anything.
 
-## 2 · State
+## 2 · State, and how to verify it
 
 Branch `study-v1-phase0-20260814`, nothing pushed. Both skills are symlinked into
-`~/.claude/skills/` and load. `/study` is wired but **has still never been run end to end on
-the v1 pipeline** — stage 5 remains untested against a live run, and it now writes one more
-thing than it ever has.
+`~/.claude/skills/` and load. Working tree clean apart from `.dev-build.conf`, which is a
+local modification that stays uncommitted.
 
 ```bash
 python3 study-read/references/gates_test.py    # 26 tests
-python3 study-read/references/build_test.py    # 35 tests
+python3 study-read/references/build_test.py    # 54 tests
 python3 ~/.claude/skills/study-read/references/build_index.py --root ~/.claude/study
 ```
 
 Expect: 3 topics, 238 rows, 47 chapters, 4 topic/run units all `ok`, 7 fragmentation
-warnings, ~697 KB.
+warnings, ~706 KB. Every command the two SKILL.md files hand a user was verified as written
+on 2026-08-16 — paths, flags, the stage-5 filter one-liner, the store layout, the
+`guide-meta.json` and `self-check.json` formats.
 
 To look at it: copy the built file into `/private/tmp` and open it with
 `~/.claude/skills/gstack/browse/dist/browse`. Screenshot at 1280x900 and 390x844 and
-**read the screenshots** — every defect in the previous handoff was found that way, plus one
-it missed. **Reload after copying**; the browser holds a stale render of a replaced
-`file://` page and it will cost you twenty minutes.
+**read the screenshots** — every display defect in this project's history was found that
+way. **Reload after copying**: the browser holds a stale render of a replaced `file://`
+page, and if what you see contradicts the source you are looking at a stale page. Topic
+hash routes come from `browse js "STUDY_DATA.units.map(u => u.slug).join()"`.
+
+Dark mode cannot be toggled from JS (`prefers-color-scheme` is not scriptable): copy the
+built page and append a `<style>` block before `</head>` redefining the dark token values on
+a bare `:root`. Inspection only; never commit that copy.
+
+**`/study` has still never been run end to end on the v1 pipeline.** Stage 5 has never
+written `notes` against a live run — the 188 existing notes came from a one-off backfill.
+That retest is the author's next move, and it is the author's because it costs real money.
 
 ## 3 · What was wrong, and what was done
 
-The original diagnosis holds and is worth keeping: **the prototype was designed against text
+The founding diagnosis holds and is worth keeping: **the prototype was designed against text
 roughly three times shorter than the store holds.** A fit problem between design and data,
 not a taste problem.
 
@@ -98,95 +118,106 @@ not a taste problem.
 | Item body — `description` | *not drawn* | 634 | 1089 | **2352** |
 | Per-item note — `notes` | *did not exist* | 22 words | — | 27 words |
 
-### 3a · The contents view — FIXED (display, content cause)
+### 3a · The apparatus pass (commits `678615c` → `74d1593`)
 
-`because` came off the collapsed chapter row and became the chapter's headnote, read once
-you open it. The title carries the contents line alone, which is design rule 5's own test —
-these are claim sentences, not category labels, so they can. Eight to nine chapters now fit
-on one screen where three and a half did.
+- **Contents view:** `because` came off the collapsed chapter row and became the headnote
+  read on opening. Eight to nine chapters fit on one screen where three and a half did. The
+  292-character titles were **not** rewritten — that would be re-chaptering, and Phase 0
+  validated what is there. The brief asks for under ~120 characters going forward.
+- **Item titles:** `subject` is a scanning label and stays one — in a reader, a source keeps
+  its own title. The missing piece was the editor's line underneath: `notes`, optional,
+  15–30 words, on the chapter record.
+- **Pipeline bookkeeping left the prose:** 35 descriptions ended in `[AUDIT …]` /
+  `[ABSENCE: …]` appendages. The pipeline stopped writing them (the verdict was already in
+  `audit-verdicts.jsonl`); `split_ledger()` in `build_index.py` renders the ones already
+  stored as their own collapsed disclosure, and `grade` became visible for the first time.
+  `rows.jsonl` untouched.
+- **Absence consolidated:** no-quote / no-tier-reason / no-practicum are run-scoped facts,
+  stated once in the run strip and counted, not repeated 178 times on rows.
 
-The 292-character titles were **not** rewritten. They are still too long and the brief now
-asks for under ~120 characters going forward, but rewriting 47 existing titles would be
-re-chaptering and Phase 0 validated what is there.
+### 3b · The display pass (commits `b52db0e` → `3426b7f`)
 
-### 3b · Item titles were labels, not claims — FIXED, but not the way the old handoff framed it
+- **Descriptions reflowed into paragraphs** at sentence boundaries. Zero of 230 stored
+  descriptions contain a line break; 53 rendered as 13+ unbroken lines. The build ships `d`
+  as a list of paragraphs; rejoining returns the input with whitespace collapsed, asserted
+  on every fixture and on all 230 real rows (a lookbehind bug that ate closing quotes on 25
+  real rows was caught exactly that way, so the real-store check is now a test). Not one
+  word changes. The harvest spec now tells agents to write paragraph breaks.
+- **The run strip split by audience.** Provenance (when researched, sources opened, what the
+  run did not store) stays where the reader is; build state (schema version, gate warnings
+  like "ch-02: only 2 members") nests one expansion deeper under "How this page was built".
+  Fragmentation warnings in particular invite a conclusion Phase 0's own data contradicts.
+  A gate FAILURE still banners above the chapters.
+- **The strip's open policy moved into the build** (`stripFlag` / `stripOpen` on the unit),
+  so it is testable without a browser. An unopened source colours the strip and leads its
+  collapsed line but no longer auto-opens it — that trigger was never one of DESIGN §8's
+  decided ones, and effectively every real run has one unchecked source, so the
+  shape-without-scrolling promise was failing by default.
+- **The facets speak the badge's words, not the pipeline's.** `EV_LABEL` and `WHEN_LABEL`
+  ship from the build under one contract: the enum stays the stored value and the filter
+  key; only the spoken word changes. Evidence chips say "source checked" / "not opened"
+  under the group heading "source"; depth chips say "what it is / using it / judgment call /
+  how it works" under "how deep". No label may claim a level (no "beginner", "advanced",
+  "first" — a test bans the vocabulary), because a tier comes from a failure signature, not
+  difficulty, and reading order lives in chapters.
+- **The legend stopped claiming sources disagreed** — that is slice 2's `choice` tier, whose
+  data does not exist. Reworded to the failure-signature definition; a test bans the
+  disagreement claim. Corollary learned twice now: inlined JS means a comment quoting a
+  banned phrase IS the phrase reaching the page — paraphrase in comments near guards.
+- **Print:** `details { open: open }` was not CSS and silently did nothing. Now
+  `details::details-content { content-visibility: visible }` expands everything at print
+  time; browsers that don't know the pseudo-element keep today's behaviour. No test — print
+  output is not observable from the build, which is why the defect survived.
 
-The old handoff offered three options: render the first clause of `description`, have a
-stage write a claim-shaped title, or accept labels and change the layout. **All three were
-wrong, and the research says why.**
+### 3c · The audit pass (commits `92abc94`, `c3dcb69`)
 
-`subject` is a scanning label and that is fine — in a reader, a source keeps its own title.
-What was missing was the editor's line *underneath* it. So `subject` was left alone and
-`notes` was added. One field fixed 3b and supplied the missing apparatus piece at once.
+- **SC8 + `EVIDENCE-presentation.md`** — see "The bar" above.
+- **PRODUCT.md written** (repo root, scoped to this surface). Register: brand. Personality:
+  quiet, durable, trustworthy. The brand playbook's pushes (imagery, ambitious motion) were
+  audited and rejected for reasons the playbook itself states.
+- **Dark mode verified for the first time in the project's life** (Open Question 8, closed).
+  Every text pair clears 4.5:1 in both themes — tightest is `--muted` on `--chip`, 4.84:1
+  light / 5.68:1 dark — and every light token is redefined for dark.
+  `build_test.py::Contrast` now asserts both facts, because the tokens file used to state
+  its ratios in a comment and nothing checked them.
+- **Filter chips 44px on touch.** They were 26px — the only interactive elements below the
+  floor `--tap` defines and PRODUCT.md commits to. Genuinely tall on mobile rather than a
+  hit-overlay, because the chips wrap onto rows 5px apart and overlays would collide.
+  Desktop unchanged.
 
-### 3c · Internal bookkeeping in the prose — FIXED (both sides)
+### 3d · The consolidation pass (2026-08-16, this session)
 
-35 live descriptions ended in `[AUDIT viable->wounded: …]`, `[ABSENCE: …]` or `[VERIFY: …]`,
-and one opened with `[MERGED FROM A-040]`.
-
-**The pipeline stopped writing it.** The instruction that caused it was the spec's "a killed
-row stays in the file with its reason in `description`" plus SKILL.md's "record every change
-on the row", naming no field. Every one of those verdicts was **already** in the run's
-`audit-verdicts.jsonl`, so the append was a duplicate as well as a defect. No new row field
-was needed and none was added.
-
-**The renderer handles the rows already written that way.** `split_ledger()` in
-`build_index.py` separates prose from verdict; the verdict renders as its own collapsed
-disclosure below the source line, alongside the `grade` — which was invisible until now, so
-23 wounded rows read exactly like the 207 viable ones. `rows.jsonl` untouched.
-
-### 3d · Absence chrome outnumbered content — FIXED (display, content cause)
-
-178 of 230 rows have no quote, 117 no tier reason, and no chapter anywhere has a practicum.
-Each line was individually correct; together they were the most repeated text in the
-product.
-
-They are also **run-scoped facts, not item-scoped ones** — one run stored 0 of 117 quotes,
-another 52 of 58 — so the run strip states each once and counts it, and the row says
-nothing. Which kind of absence a row has was always readable off the source-state badge the
-row already carries.
-
-### 3e · Connective tissue — PARTLY FIXED
-
-`notes` is the connective tissue at the item level and it does move a reader through a
-chapter. Between chapters there is still nothing, and **no practicum exists in v1** — that is
-now stated once per topic instead of once per chapter.
-
-### 3f · Horizontal overflow at 390px — FIXED (was not in the old handoff)
-
-The page laid out 449px inside a 390px screen, clipping every line of body text mid-word.
-`1fr` is min-content-floored, so the widest rail pill set the track width. Two one-line CSS
-fixes. Invisible in the source; found by reading a screenshot.
+- **Every user-facing command in both SKILL.md files verified as written.** Two doc defects:
+  the DuckDB query example ran on a tool that is not installed AND filtered on a value no
+  stored row carries (`evidence = 'asserted'`; v0.1 rows spell it
+  `source_status: asserted-only`). Replaced with a verified stdlib one-liner that handles
+  both spellings, with the double failure kept as a warning. And `study-read/SKILL.md`
+  still described the facets as "type, depth, and evidence" — pipeline vocabulary the page
+  no longer speaks.
+- **PRODUCT.md's dark-mode bullet was born stale** — written in the very commit that
+  verified dark mode. Corrected.
+- **The type-token inconsistency resolved** — see §5, "the type-size split".
 
 ## 4 · What the research established
 
-Eight agents, in two instruments. Findings, not theory — DESIGN §9 already scanned the
-pedagogy literature and re-running it returns the same names.
+Eight agents, 2026-08-15, in two instruments. Findings, not theory — DESIGN §9 already
+scanned the pedagogy literature and re-running it returns the same names. The full record
+with sources and provenance grading is `design/EVIDENCE-presentation.md`; the short form:
 
-**Four exemplar agents** read working teaching resources and extracted structure: Norton
-Anthology of Theory and Criticism, The Morning Paper, Crafting Interpreters, Beej's Guide,
-teachyourselfcs.com, Bret Victor's Links, Stanford Encyclopedia of Philosophy, MDN.
+1. **The per-item line is a hinge, not a summary.** Colyer, Norton, Nystrom, Beej — every
+   working exemplar spends the item's first apparatus sentence on adjacency.
+2. **Summarising is the rarest job a curator does with that line** — ~6% across two
+   annotated reading lists, against ~38% positioning and ~27% what-to-notice.
+3. **Order is argued, not assumed.**
+4. **Two channels, one privileged** — authority lives offstage and the main column keeps
+   moving. This is the pattern the ledger and the run strip follow.
+5. **The named failure mode is substitution** — Norton's students settling for the headnote
+   and never arriving at the selection. That is why the note is capped at 15–30 words, and
+   the cap is the point.
 
-1. **The per-item line is a hinge, not a summary.** Colyer opens each paper with *"second of
-   three… yesterday we saw X… today, the harder problem"*; Norton's headnotes *"position the
-   authors in relation to other figures… not a string of isolated pearls but a mosaic"*;
-   Nystrom's sections open *"now that we're comfortable with longer lexemes"*; Beej's open
-   *"once you have a socket"*. Every one is relational.
-2. **Summarising is the rarest job a curator does with that line** — about 6% across two
-   annotated reading lists, against ~38% for positioning against alternatives and ~27% for
-   saying what to notice. The obvious move is the one they avoid.
-3. **Order is argued, not assumed.** Both technical exemplars state why a unit sits where it
-   sits, and name dependencies at the item's opening.
-4. **Two channels, one privileged.** Nystrom's margin asides, Beej's footnoted RFCs, SEP's
-   exiled bibliography: authority lives offstage and the main column keeps moving. This is
-   the pattern 3c and 3d now follow.
-5. **The named failure mode is substitution.** Norton's own protocol specified 750–2,000-word
-   headnotes and shipped an average of ~2,200; the critical literature reports students
-   *settling for the headnote and never arriving at the selection*. That is why the note is
-   capped at 15–30 words, and the cap is the point rather than a style preference.
-
-**Four `/landscape-search` agents** ran a prior-art pass. Layer 2 sources are in the session
-transcript. The load-bearing one is in §6 below.
+Provenance is graded honestly in the evidence file: the four exemplar agents read primary
+material and are the stronger half; the four landscape agents read search highlights and are
+the weaker half, with two figures flagged as self-published or vendor marketing.
 
 ## 5 · Settled. Do not re-open.
 
@@ -200,14 +231,32 @@ transcript. The load-bearing one is in §6 below.
 - Python 3 stdlib only. Never render HTML with a model. `rows.jsonl` is append-only and
   irreplaceable; `chapters.jsonl` is safe to regenerate.
 - Never weaken or delete a test to make it pass.
-- **New: `notes` lives on the chapter, not the row.** `rows.jsonl` cannot be backfilled,
-  `chapters.jsonl` can, and a note describes the *(chapter, row)* pairing rather than the row
-  — a re-run that groups differently needs a different note. Do not move it.
+- **`notes` lives on the chapter, not the row.** `rows.jsonl` cannot be backfilled,
+  `chapters.jsonl` can, and a note describes the *(chapter, row)* pairing — a re-run that
+  groups differently needs a different note. Do not move it.
+- **The label contract.** Stored enums are filter keys and data attributes; readers see only
+  `EV_LABEL` / `WHEN_LABEL` words. Tests hold the vocabularies equal and force any future
+  enum to arrive labelled. Do not print a raw enum at a reader; do not change a stored
+  value to match a label.
+- **The run strip's open policy is the build's** (`stripFlag` / `stripOpen`), and only a
+  structural problem (gates failed, legacy, an empty tier) auto-opens it. Four tests pin it.
+- **SC8 discipline:** a new presentation decision either lands in the evidence table with a
+  finding, or in the craft table saying so. `EVIDENCE-presentation.md` states its own
+  re-run trigger, and it is the only one.
+- **The type-size split** (resolved 2026-08-16, either way was legal): `shared/tokens.css`
+  published a seven-step scale the topic view does not use — the view sets ~11 sizes per
+  element in `index.css`, and `--fs-s` was consumed by nothing anywhere. Resolved by
+  correcting the token file rather than forcing consumption, because full consumption means
+  either changing rendered sizes or mirroring one stylesheet's bespoke values into the
+  shared file. `--fs-s` is deleted; `--fs-h3 = --fs-r` is documented as deliberate; both
+  files now state which surface each step feeds. Rendered sizes unchanged. Do not "fix"
+  `--fs-h3` apart from `--fs-r`, and do not reintroduce a step nothing consumes.
 
 ## 6 · The open finding — the author's call, not a bug to fix
 
 **This is recorded, not acted on.** It proposes changing the character of a committed field
-and that is a decision, not a refinement.
+and that is a decision, not a refinement. It is also case 3 in
+`EVIDENCE-presentation.md`'s case-against section.
 
 A controlled result surfaced by the landscape pass: across seven experiments and >10,000
 participants, learners given LLM syntheses developed **shallower** knowledge than those
@@ -231,7 +280,7 @@ The same failure appears independently in anthology editing, where it has a name
 settle for the apparatus and never reach the selection.
 
 **If it holds, the lever is `description` length, not link placement.** Every apparatus
-decision this session made pushed that way for the same reason arrived at independently.
+decision this project made pushed that way for the same reason arrived at independently.
 `description` is the one field nobody has touched.
 
 **The honest counter**, from the same landscape pass: novices lack the prior knowledge to
@@ -241,24 +290,27 @@ says where the line is.
 
 ## 7 · Known gaps, recorded not fixed
 
-- `self-check.json` is written by `/study` and rendered by nothing.
-- `practicum` is designed and not built. Stated once per topic now.
-- `EMBED_CAP` governs markdown only; row data is uncapped. The real fix is slice 3.
-- No steady-state chapter audit, and now no audit of note quality either. The 188 notes were
-  validated mechanically (length, membership, banned constructions) and read in sample, not
-  scored by an independent checker the way Phase 0 scored warrants.
+- `/study` has never been run end to end on the v1 pipeline, and stage 5 has never written
+  `notes` live. This is the biggest untested surface and the author's retest covers it.
+- `self-check.json` is written by `/study` and rendered by nothing. Both SKILL.md files say
+  so, so nobody promises a reader the questions are waiting somewhere.
+- `practicum` is designed and not built. Stated once per topic in the run strip.
+- `EMBED_CAP` governs markdown only; row data is uncapped and the build prints what it
+  costs. The real fix is slice 3.
+- No steady-state chapter audit, and no audit of note quality. The 188 notes were validated
+  mechanically and read in sample, not scored by an independent checker the way Phase 0
+  scored warrants.
 - **Apparatus scales with chapter size, which nothing in the design predicted.** All five of
   terraform-v02's noteless chapters are two-member chapters whose `because` already states
-  the relation between its two members. A note there paraphrases the headnote two lines
-  above it.
+  the relation between its two members.
 - **Better rows need fewer notes.** terraform-v03 came in lowest at 37 of 58 because that
-  harvest did real synthesis — rows cite each other by id and state their chapter's binding
-  idea outright. VERDICT.md §4 found the same tension from the other side. This is the benign
-  form: a note is optional and a warrant is not.
-- The one-off backfill script (agent writes `{chapter_id: {row_id: note}}`, a merge script
-  writes only the `notes` key) is not committed. DESIGN §6 names restructure-only as the
-  upgrade path for a legacy topic and this is half of it.
-- `/study` has never been run end to end on the v1 pipeline.
+  harvest did real synthesis. VERDICT.md §4 found the same tension from the other side. This
+  is the benign form: a note is optional and a warrant is not.
+- The one-off notes-backfill script (agent writes `{chapter_id: {row_id: note}}`, a merge
+  script writes only the `notes` key) is not committed. DESIGN §6 names restructure-only as
+  the upgrade path for a legacy topic and this is half of it.
+- No test covers print output — it is not observable from the build.
+- Five interaction states remain undrawn (DESIGN Open Question 7).
 
 ## 8 · Do not
 
@@ -269,3 +321,17 @@ says where the line is.
 - Do not add a fourth source state, a hard fragmentation floor, or a dependency.
 - Do not make `notes` required, or draw anything where a note is absent. Omitting one is a
   legal result and 42 of 230 members correctly have none.
+- Do not run `/study` on the author's behalf. It dispatches paid research agents; the retest
+  is theirs.
+
+## 9 · What to do next
+
+1. **The author reruns `/study <topic>` end to end** — the first live exercise of the v1
+   pipeline, and the first time stage 5 writes `notes` against a real run. Watch: the
+   structure agent's 300-word return (the only pre-reader signal), whether harvest agents
+   now write paragraph breaks and sub-120-char titles as the briefs ask, and whether any
+   slice-2 vocabulary leaks.
+2. **Then `/study-read`**, and read the page the way §2 says — screenshots, both widths,
+   reload after copy.
+3. If both hold, the open decisions are §6 (description length) and DESIGN's Open
+   Questions — in that order of consequence.
