@@ -62,16 +62,32 @@
   --warn: #8a3d2e;       /* dead sources, failures */
   --ok: #2f6b4f;         /* verified, confirmed */
 
-  /* ---- type ---- */
+  /* ---- type ----
+     The font stacks are the whole contract: everything consumes them. The size
+     steps below are NOT the topic view's scale and do not claim to be —
+     study-read/references/index.css sets that surface's sizes per element,
+     deliberately: a dense reading page uses ~11 distinct sizes, and forcing
+     them through a seven-step scale either changes what renders or turns this
+     file into a mirror of one stylesheet. What each step actually feeds:
+
+       --fs-xs           tags, chips, badges — consumed wherever those appear
+       --fs-m            UI text (the search input)
+       --fs-r, --fs-h1/h2/h3   rendered markdown documents (.md blocks), the
+                         one surface that runs on this scale end to end
+
+     --fs-h3 equals --fs-r on purpose: a markdown h3 is body-size, and the sans
+     stack plus heading weight do the differentiating. Do not "fix" them apart.
+     (--fs-s, 0.78rem, once sat here for metadata/captions; nothing in the repo
+     consumed it, so it was deleted rather than left as a published claim
+     nobody exercises.) */
   --font-ui: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-reading: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --fs-xs: 0.6875rem;    /* tags, flags */
-  --fs-s: 0.78rem;       /* metadata, captions */
   --fs-m: 0.875rem;      /* UI text, sidebar */
   --fs-r: 1.0625rem;     /* reading body */
-  --fs-h3: 1.0625rem;
+  --fs-h3: 1.0625rem;    /* = --fs-r, see above */
   --fs-h2: 1.3125rem;
   --fs-h1: 1.75rem;
 

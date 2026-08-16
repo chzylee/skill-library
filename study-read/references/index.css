@@ -1,7 +1,12 @@
 /* Study library — index.html styles.
    Inlined into the output by build_index.py, AFTER shared/tokens.css, which
-   supplies every colour, type stack and geometry value used below. This file
-   defines no tokens of its own; if you need a new one it belongs in shared.
+   supplies every colour, font stack and geometry value used below. Type SIZES
+   are split on purpose: the shared steps cover chrome and rendered markdown
+   (--fs-xs, --fs-m, --fs-r, --fs-h1/h2/h3), while the topic view's sizes are
+   set per element right here — the reading surface uses finer grain than the
+   shared scale carries, and shared/tokens.css documents the split. This file
+   still defines no tokens of its own; a new colour or geometry value belongs
+   in shared.
 
    Ported from study-read/design/topic-view-prototype.html, which is the
    normative visual spec. The load-bearing rules it encodes:
