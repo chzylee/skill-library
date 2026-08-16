@@ -338,6 +338,55 @@ class ApparatusPlacement(StoreCase):
         self.assertIn("the exact supporting sentence", page)
 
 
+class RunStrip(StoreCase):
+    """When the run-quality strip opens itself, and when it only changes colour.
+
+    DESIGN §8's decided triggers for auto-expansion are structural — gates failed,
+    legacy, an empty tier. An unopened source is deliberately NOT one: it colours the
+    strip and leads its collapsed line, but auto-opening on it meant a run with one
+    asserted source among 58 checked ones paid its entire first screen for a fact the
+    collapsed line already states, against §2's shape-without-scrolling promise.
+    The policy lives in the build (stripFlag / stripOpen) so it is testable here.
+    """
+
+    def _unit(self, rows, chapters):
+        write_store(self.root, "run-a", rows, chapters)
+        return page_data(build(self.root)[1])["units"][0]
+
+    def _rows(self, **kw):
+        # Every depth present, so no tier is empty unless a test empties one.
+        return [row(f"R-{i:03d}", "Topic", "run-a",
+                    depth=["orientation", "operation", "judgment", "mechanism"][i % 4],
+                    **kw) for i in range(8)]
+
+    def test_a_healthy_run_is_quiet(self):
+        rows = self._rows()
+        u = self._unit(rows, [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
+        self.assertFalse(u["stripFlag"])
+        self.assertFalse(u["stripOpen"])
+
+    def test_an_unopened_source_colours_the_strip_but_does_not_open_it(self):
+        rows = self._rows()
+        rows[0]["evidence"] = "asserted"
+        u = self._unit(rows, [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
+        self.assertTrue(u["stripFlag"], "an incomplete run must not look healthy")
+        self.assertFalse(u["stripOpen"],
+                         "one unopened source must not spend the reader's first screen")
+
+    def test_an_empty_tier_opens_the_strip(self):
+        rows = [row(f"R-{i:03d}", "Topic", "run-a", depth="operation") for i in range(8)]
+        u = self._unit(rows, [chapter("ch-01", "Topic", [r["id"] for r in rows], 1)])
+        self.assertTrue(u["stripOpen"], "an empty tier is a structural gap; it cannot hide")
+
+    def test_legacy_and_degraded_open_the_strip(self):
+        u = self._unit(self._rows(), None)                       # no chapters: legacy
+        self.assertTrue(u["stripOpen"])
+        rows = self._rows()
+        bad = chapter("ch-01", "Topic", [r["id"] for r in rows], 1, because="short")
+        u = self._unit(rows, [bad])                              # gates fail: degraded
+        self.assertTrue(u["stripOpen"])
+
+
 class PerItemNotes(StoreCase):
     """The editorial hinge under an item's label — optional, and silent when absent.
 

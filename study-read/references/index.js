@@ -440,14 +440,21 @@
   }
 
   /* The run-quality strip. Quiet when the run is healthy, open when it is not: a
-     complete run gets out of the way, an incomplete one cannot hide. */
+     complete run gets out of the way, an incomplete one cannot hide.
+
+     FLAG and OPEN are decided by the build (u.stripFlag / u.stripOpen), not here, so
+     the policy is testable without a browser. They differ on unopened sources: those
+     colour the strip and lead its collapsed line, but only a structural problem —
+     gates failed, legacy, an empty tier — expands it. Auto-opening on one asserted
+     source among 58 checked ones spent the whole first screen restating what the
+     collapsed line already says, against §2's shape-without-scrolling promise. */
   function runStrip(u) {
     var empty = u.tiers.filter(function (t) { return !t.n; });
-    var flagged = u.state !== "ok" || u.unver > 0 || empty.length > 0;
     var head;
     if (u.state === "legacy") head = "this run predates chaptering";
     else if (u.state === "degraded") head = "chapter structure did not pass its gates";
-    else if (empty.length) head = "one tier came back empty";
+    else if (empty.length) head = (empty.length === 1 ? "one tier" : empty.length + " tiers") +
+      " came back empty";
     else if (u.unver) head = plural(u.unver, "source") + " named but never opened";
     else head = "every source opened and checked";
 
@@ -518,7 +525,7 @@
     notes += '<details class="build"><summary>' + MARK + "How this page was built</summary>" +
       '<div class="build-body">' + build + "</div></details>";
 
-    return '<details class="run' + (flagged ? " flag" : "") + '"' + (flagged ? " open" : "") + ">" +
+    return '<details class="run' + (u.stripFlag ? " flag" : "") + '"' + (u.stripOpen ? " open" : "") + ">" +
       "<summary>" + MARK + "<span><b>" + plural(u.n, "item") + "</b>" +
       (u.chapters.length ? " in " + plural(u.chapters.length, "chapter") : "") +
       " · " + esc(head) + "</span></summary>" +

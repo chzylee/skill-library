@@ -49,9 +49,11 @@ Read-only over the store. It writes exactly one file, `~/.claude/study/index.htm
   description, the sentence the claim came from, its classification, and the link out. Click depth
   is 1 to a chapter, 2 to an item, 3 to leave for the source.
 - **The run-quality strip is adaptive.** One quiet line when the run is healthy; it opens itself
-  when the topic is unchaptered, when its gates failed, when a tier came back empty, or when a
-  source was named and never opened. A complete run gets out of the way; an incomplete one cannot
-  hide.
+  when the topic is unchaptered, when its gates failed, or when a tier came back empty. A source
+  named and never opened colours the strip and leads its collapsed line but does not open it —
+  that fact is already stated where it sits, and auto-opening on it spent the whole first screen
+  against the shape-without-scrolling promise. A complete run gets out of the way; an incomplete
+  one cannot hide.
 - **Three source states, and only three:** `source checked`, `not opened`, `authored`. Nothing in
   the store records a link check, so the page has no dead-link state and does not invent one. A row
   with no stored quote says so, and says which kind of absence it is.

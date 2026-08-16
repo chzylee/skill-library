@@ -484,6 +484,20 @@ def build_units(rows, chapters, topic_gates, metas):
             })
 
         tiers, absent = unit_tiers(urows)
+        # The run strip's two states, decided here rather than in the renderer so they
+        # are testable without a browser (same reason split_ledger lives here).
+        #
+        # FLAG (warn colour) and OPEN (expanded on load) are separate on purpose.
+        # DESIGN §8's decided triggers for auto-expansion are structural: a declined or
+        # empty tier, gates failed, legacy. An unopened source is not one of them — and
+        # treating it as one meant a run with 1 asserted source among 58 checked ones
+        # paid its entire first screen for a fact the collapsed line already states,
+        # which is exactly the "shape of the whole topic without scrolling" promise
+        # (§2) the contents view exists to keep. So unopened sources still colour the
+        # strip and still lead its collapsed line — an incomplete run cannot hide —
+        # but only a structural problem opens it.
+        unver = sum(1 for r in urows if r["ev"] == "asserted")
+        strip_open = state != "ok" or any(not t["n"] for t in tiers)
         multi = len(runs_per_topic.get(topic, [])) > 1
         slug = slugify(topic) + ("-" + slugify(run_tag(topic, run)) if multi else "")
         units.append({
@@ -495,8 +509,10 @@ def build_units(rows, chapters, topic_gates, metas):
             "n": len(urows), "mins": sum(r["t"] for r in urows),
             "chapters": out_chs,
             "tiers": tiers, "absentTiers": absent,
+            "stripOpen": strip_open,
+            "stripFlag": strip_open or unver > 0,
             "checked": sum(1 for r in urows if r["ev"] == "re-opened"),
-            "unver": sum(1 for r in urows if r["ev"] == "asserted"),
+            "unver": unver,
             "authored": sum(1 for r in urows if r["ev"] == "authored"),
             # Absence counted once per unit rather than stated once per row. These three
             # are near-uniform WITHIN a run and vary wildly between runs — one run stored
