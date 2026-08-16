@@ -241,6 +241,20 @@ class WhatThePageMayNotClaim(StoreCase):
         for label in ("source checked", "not opened", "authored"):
             self.assertIn(label, page, f"the {label!r} state is not reachable")
 
+    def test_evidence_is_spoken_in_the_badge_vocabulary(self):
+        """The search chips and hit tags filter on the stored enum but must not SHOW
+        it: `re-opened` on a chip and `source checked` on the badge it filters is the
+        same fact wearing two names, one of them pipeline vocabulary. The map ships
+        from the build so a new evidence value cannot arrive unlabelled."""
+        page, _ = self._one_row()
+        data = page_data(page)
+        self.assertEqual(set(data["evLabel"]), set(data["filters"]["ev"]),
+                         "every evidence value must carry a reader-facing label")
+        self.assertEqual(data["evLabel"],
+                         {"re-opened": "source checked", "asserted": "not opened",
+                          "authored": "authored"},
+                         "the filter must speak the same words as the badge it filters")
+
     def test_a_missing_quote_is_carried_as_empty_not_invented(self):
         _, r = self._one_row(quote=None)
         self.assertEqual(r["quote"], "")

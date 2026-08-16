@@ -46,6 +46,14 @@ WHEN_LABEL = {
     "mechanism": "how it works",
 }
 
+# Reader-facing label for `evidence`, and it must match the source-state badge the
+# topic view draws (`source checked` / `not opened` / `authored`). The search chips
+# and hit tags used to show the raw enum — `re-opened`, `asserted` — so the same fact
+# wore two names on one page, and the name on the filter was pipeline vocabulary a
+# stranger has no way to parse. The enum stays the stored value and the filter key;
+# this is only how it is spoken, same contract as WHEN_LABEL above.
+EV_LABEL = {"re-opened": "source checked", "asserted": "not opened", "authored": "authored"}
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 # The skill is commonly installed as a symlink into ~/.claude/skills, so the sibling
 # assets sit next to the REAL file while `__file__` reports the link. Both roots are
@@ -597,6 +605,7 @@ def build_page(docs, groups, rows, runs, chapters, linked_only, unreadable, noti
         "docs": docs, "rows": rows, "groups": groups,
         "gates": gates_by_key, "units": units, "topicIndex": topics_index,
         "filters": {"type": TYPES, "depth": DEPTHS, "ev": EVIDENCE},
+        "evLabel": EV_LABEL,
         "built": datetime.date.today().isoformat(),
         "capNote": (f"{len(linked_only)} document(s) exceeded the embed cap and are "
                     f"linked rather than inlined: {', '.join(linked_only)}."

@@ -20,6 +20,13 @@
   var DOCS = DATA.docs, ROWS = DATA.rows, GROUPS = DATA.groups;
   var UNITS = DATA.units, TOPIC_INDEX = DATA.topicIndex;
   var FILTERS = DATA.filters; // { type: [...], depth: [...], ev: [...] }
+  /* Evidence spoken in the badge's words. The chips and hit tags filter on the raw
+     enum but must not SHOW it: "re-opened" on the chip and "source checked" on the
+     badge it filters is the same fact wearing two names, and only one of them is a
+     name a stranger can parse. The map ships from the build (EV_LABEL) so a new
+     evidence value cannot arrive unlabelled — a test holds the two vocabularies equal. */
+  var EV_LABEL = DATA.evLabel || {};
+  function evLabel(v) { return EV_LABEL[v] || v; }
 
   /* ---------- utilities ---------- */
 
@@ -674,7 +681,7 @@
       }(r.d.join(" ")), t) + "</p>" +
       '<div class="hmeta"><span class="tag">' + esc(r.type) + "</span>" +
       '<span class="tag">' + esc(r.when || r.depth) + "</span>" +
-      (r.ev !== "re-opened" ? '<span class="tag w">' + esc(r.ev) + "</span>" : "") +
+      (r.ev !== "re-opened" ? '<span class="tag w">' + esc(evLabel(r.ev)) + "</span>" : "") +
       (r.grade !== "viable" ? '<span class="tag w">' + esc(r.grade) + "</span>" : "") +
       '<span class="muted">' + esc(r.topic) + "</span></div></div>";
   }
@@ -741,10 +748,12 @@
     var chips = document.getElementById("chips");
     var chipHtml = "";
     Object.keys(FILTERS).forEach(function (k) {
-      chipHtml += '<span class="lbl">' + (k === "ev" ? "evidence" : k) + "</span>";
+      chipHtml += '<span class="lbl">' + (k === "ev" ? "source" : k) + "</span>";
       FILTERS[k].forEach(function (v) {
+        // data-v stays the stored enum — it is the filter key; only the text is spoken
         chipHtml += '<button class="chip" data-k="' + k + '" data-v="' + esc(v) +
-          '" aria-pressed="' + active[k].has(v) + '">' + esc(v) + "</button>";
+          '" aria-pressed="' + active[k].has(v) + '">' +
+          esc(k === "ev" ? evLabel(v) : v) + "</button>";
       });
     });
     chips.innerHTML = chipHtml;
