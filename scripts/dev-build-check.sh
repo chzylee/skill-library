@@ -31,9 +31,9 @@ for d in "$SKILLS_DIR"/*-dev; do
     || continue
   sha=$(sed -n 's/^generated-from: *//p' "$f" | head -1)
   if ! git -C "$REPO" cat-file -e "$dev_branch:$prefix$skill/SKILL.md" 2>/dev/null; then
-    echo "dev-build: '$base' is an ORPHAN ('$skill' not on $dev_branch) — run /dev-build status"
+    echo "dev-build: '$base' is an ORPHAN ('$skill' not on $dev_branch) — run /skill-ops status"
   elif [ -z "$sha" ] || ! git -C "$REPO" diff --quiet "$sha" "$dev_branch" -- "$prefix$skill" 2>/dev/null; then
-    echo "dev-build: '$base' is STALE vs $dev_branch — run /dev-build deploy $skill"
+    echo "dev-build: '$base' is STALE vs $dev_branch — run /skill-ops deploy $skill"
   fi
 done
 

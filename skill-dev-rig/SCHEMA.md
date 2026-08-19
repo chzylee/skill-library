@@ -58,8 +58,17 @@ Each group renders as a titled section: its **settings** (fields to fill) then i
 
 ```json
 { "id": "create-audit-results", "label": "Audit results page created",
-  "help": "...", "optional": false }
+  "help": "...", "optional": false, "provides": "audit_results_home" }
 ```
+
+`provides` names a **setting key this task would fill in**, and it is load-bearing rather than
+decorative. When it names a setting that is visible in the same group, the engine renders the task
+inline directly under that field, so "paste a link you already have" and "create one for me" sit
+together as one choice. It also drives two behaviors you get for free: once the field has a value
+the checkbox relabels from *set up now* to *create a new one instead*, and field and checkbox
+become mutually exclusive — filling one greys the other, so the user cannot ask for both. A task
+whose `provides` names no visible field still renders, at the bottom of its group. Omit `provides`
+for a task that fills in nothing (registering a cron job, installing a hook).
 
 The engine **does not run tasks** — it renders each task's status and a "set up now" checkbox,
 and on submit reports which tasks the user checked. The **consuming skill runs them**, because

@@ -83,3 +83,45 @@ test('missing --schema/--out is a precondition failure: _ERROR on stdout, exit 2
   assert.match(outS, /CONFIG_FORM_ERROR /);
   cleanup(tmp);
 });
+
+// `provides` pairs a task with the setting it would fill in. SCHEMA.md documents it;
+// nothing pinned it until now, so a rewrite of renderTask could silently drop the
+// pairing and every test would still pass.
+test('provides renders a task inline under the visible field it fills, and still renders when there is no such field', async () => {
+  const tmp = makeTmp();
+  const { srv: srvP } = launch(tmp);
+  const srv = await srvP;
+  try {
+    const page = await raw(srv, `/?token=${srv.token}`);
+    assert.equal(page.status, 200);
+
+    // create-audit-results provides audit_results_url, which IS a visible setting in its
+    // group: the checkbox carries the pairing and an inline task block exists.
+    assert.match(page.text, /data-provides="audit_results_url"/, 'paired task carries data-provides');
+    assert.match(page.text, /class="tasks inline"/, 'paired task renders inline under its field');
+
+    // install-standard provides registry_url, which is NOT a visible setting: it must
+    // still render rather than vanish.
+    assert.match(page.text, /data-provides="registry_url"/, 'unpaired-but-providing task still renders');
+
+    // With no value yet, the offer reads "set up now" for both.
+    assert.match(page.text, /set up now/);
+    assert.doesNotMatch(page.text, /create a new one instead/);
+  } finally { srv.child.kill('SIGKILL'); cleanup(tmp); }
+});
+
+test('a paired field that already holds a value flips its task to "create a new one instead"', async () => {
+  const tmp = makeTmp();
+  const prior = join(tmp, 'values.json');
+  writeFileSync(prior, JSON.stringify({ audit_results_url: 'https://notion.so/already-have-one' }));
+  const { srv: srvP } = launch(tmp, ['--values', prior]);
+  const srv = await srvP;
+  try {
+    const page = await raw(srv, `/?token=${srv.token}`);
+    assert.equal(page.status, 200);
+    // The user already pasted a link, so the task stops offering to do it for them and
+    // offers the deliberate override instead. This is the mutual-exclusivity SCHEMA.md promises.
+    assert.match(page.text, /create a new one instead/, 'filled field flips the offer');
+    assert.match(page.text, /data-provides="audit_results_url"/, 'pairing survives the flip');
+  } finally { srv.child.kill('SIGKILL'); cleanup(tmp); }
+});

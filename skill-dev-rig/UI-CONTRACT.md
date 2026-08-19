@@ -11,6 +11,32 @@ page, the human works in the page, and the process ends by itself on one of
 three independent end-conditions — then the agent reads a machine-parseable
 account of what the human did. Guaranteed termination is the whole point.
 
+## The call
+
+```js
+import { serveUI } from './local-ui.mjs';
+
+await serveUI({
+  name: 'MY_SKILL',            // marker prefix; upper-snake of the CONSUMING skill's name
+  html,                        // string; the engine substitutes __TOKEN__ and injects the ping
+  routes: {                    // keys are "<METHOD> <path>", path must start with /api/
+    'GET /api/list':  async (req, ctx) => ({ items: [] }),
+    'POST /api/save': async (req, ctx) => { /* ...write... */ return { ok: true }; },
+  },
+  enders: { done: true, close: true, clock: 540 },
+  onSummary: () => ({ lines: ['2 edited, 1 deleted'], data: { edited: 2, deleted: 1 } }),
+  resultFile,                  // optional; the engine picks a temp path otherwise
+  port: 0,                     // 0 = ephemeral
+  open: true,
+});
+```
+
+Route keys are `"<METHOD> <path>"` and the path must live under `/api/`; anything else is
+rejected at registration rather than at request time, so a typo fails at launch instead of
+silently 404-ing later. Handlers receive `(req, ctx)`; `ctx.end(reason)` ends the run through
+the same serialized shutdown every other ender uses, so a handler that finishes the session
+cannot race the watchdog or the clock.
+
 ## Markers (stdout — the agent parses ONE stream)
 
 `<NAME>` is the marker prefix derived from the **consuming skill's** name

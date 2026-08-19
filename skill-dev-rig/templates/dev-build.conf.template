@@ -1,5 +1,5 @@
 # dev-build configuration — copy to your repo root as .dev-build.conf and edit.
-# Read by the dev-build skill and dev-build-check.sh. Plain sh KEY="value".
+# Read by /skill-ops and dev-build-check.sh. Plain sh KEY="value".
 
 # Directory holding your skill folders: "." for skills at repo root,
 # "skills" for a skills/ subdirectory.

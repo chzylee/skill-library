@@ -31,15 +31,19 @@ or setup are not — this library is standalone-only.
 Work in progress never shadows a stable skill. While developing:
 
 1. Edit the skill on the `dev` branch — the branch is the only editable home.
-2. `/dev-build deploy <skill>` installs it as `<skill>-dev` — a separate, explicitly
+2. `/skill-ops deploy <skill>` installs it as `<skill>-dev` — a separate, explicitly
    invoked skill you can test side by side with the stable version.
-3. When it's ready: `/dev-build promote <skill>` moves it to `main`, updates the
+3. When it's ready: `/skill-ops promote <skill>` moves it to `main`, updates the
    plugin manifest, README row, and desktop bundle, and removes the `-dev` build.
 
-`/dev-build status` shows what's deployed, what's stale, and what's ahead of main.
-The dev-build skill lives in its own repo — [chzylee/dev-build](https://github.com/chzylee/dev-build)
-(the pattern was born here, then extracted) — and installs from that marketplace;
-maintainers and forkers only.
+`/skill-ops status` shows what's deployed, what's stale, and what's ahead of main.
+
+The tooling lives in this repo: [`skill-ops`](skill-ops/README.md) runs the workflow above, and
+[`skill-dev-rig`](skill-dev-rig/README.md) sets a repo or a skill up for it. Maintainers and
+forkers only; library users never need either.
+
+*(The pattern was born here, was briefly extracted to `chzylee/dev-build`, and has come back. If
+you installed that plugin, remove it — its trigger phrases collide with `skill-ops`.)*
 
 ## The session-start hook (what you're approving when you clone)
 

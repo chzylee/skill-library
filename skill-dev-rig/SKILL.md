@@ -138,9 +138,15 @@ the same repo skips it.
 ### npx installer
 
 Copy `templates/install.mjs` to the **repo root** and add a `bin` entry pointing
-at it in the repo's `package.json` (create the file if absent; `"type":
-"module"` is required). Nothing is published to npm — `npx github:<owner>/<repo>
-<skill>` runs it straight from the git host.
+at it in the repo's `package.json` (create the file if absent). Nothing is
+published to npm — `npx github:<owner>/<repo> <skill>` runs it straight from the
+git host.
+
+**Do NOT add `"type": "module"`.** It is not needed — `install.mjs` is `.mjs`,
+which Node treats as ESM by extension no matter what the nearest `package.json`
+says — and adding it silently reclassifies every `.js` file in that repo as ESM,
+which breaks any CommonJS script already there. This repo's own root
+`package.json` omits it deliberately and says so in its `description`.
 
 **Per-repo and skill-agnostic.** It takes any folder that contains a `SKILL.md`,
 so it needs no per-skill registration and rigging another skill later does not

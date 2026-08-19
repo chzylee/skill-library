@@ -41,11 +41,18 @@ does it, as one of the three parts it can rig, using the templates that ship
 in its `templates/` (`dev-build.conf.template`, `dev-build-check.sh`,
 `settings.snippet.json`).
 
-> **History.** This skill was published briefly as `dev-build` in its own repo,
-> and carried a `rig` verb. Both are gone: two things called "rig" at different
-> scopes — a repo versus a skill — was a naming collision, and the skill-level
-> one subsumes the repo-level one. If you have `/dev-build rig` in muscle
-> memory, use `/skill-dev-rig` and answer yes to the dev/prod part.
+> **History, and a collision to clear.** This skill was published briefly as
+> `dev-build` in its own repo (`chzylee/dev-build`) and carried a `rig` verb.
+> Neither exists *here* any more — but a rename cannot uninstall anything from
+> your machine.
+>
+> **If you installed that plugin, remove it.** The two answer to the same
+> phrases: `dev-build` triggers on "deploy a dev build of X", "dev build
+> status" and "promote X to main/stable", which are exactly the phrases this
+> skill is meant to catch. With both installed, which one responds is not
+> something you can predict, and this skill cannot detect the other to warn
+> you. Once it is gone, `/dev-build rig` becomes `/skill-dev-rig` (answer yes
+> to the dev/prod part) and every other verb keeps its name.
 
 ## `/skill-ops deploy <skill>`
 
