@@ -44,7 +44,7 @@ produced a guide too large to read.
 
 ## Row schema (shared)
 
-One JSON object per line. Field names exactly as below. 14 fields.
+One JSON object per line. Field names exactly as below.
 
 ```json
 {
