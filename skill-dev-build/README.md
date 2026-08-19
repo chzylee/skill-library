@@ -15,9 +15,10 @@ can never shadow the stable version. When it's ready, promote it and the dev bui
 ### Claude Code (personal)
 
 ```bash
-git clone https://github.com/chzylee/skill-library.git
-cp -r skill-library/skill-dev-build ~/.claude/skills/skill-dev-build
+npx github:chzylee/skill-library#skill-dev-rig skill-dev-build
 ```
+
+The `#skill-dev-rig` suffix is the branch; it drops away once this is promoted to `main`.
 
 ## What it does
 

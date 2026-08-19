@@ -1,8 +1,8 @@
 # skill-dev-rig
 
-**Rig one Claude Code skill for further development** — a local browser UI, a config form, and
-dev/prod build separation. The three are **independent**: take one, two, or all three, now or
-later. Works on a skill you're starting or one you already shipped, and adds only what's missing.
+**Rig one Claude Code skill for further development** — a local browser UI, a config form,
+dev/prod build separation, and a one-line npx installer. The four are **independent**: take one,
+or all four, now or later. Works on a skill you're starting or one you already shipped, and adds only what's missing.
 
 ```
 /skill-dev-rig
@@ -19,9 +19,10 @@ Rigging: my-skill
   1. Local browser UI?      [yes — it writes to ~/.claude/… and the user should see it first]
   2. Config form?           [no  — no user-editable settings found]
   3. Dev/prod separation?   [yes — .dev-build.conf not present]
+  4. npx installer?         [yes — README currently says git clone + cp -r]
 ```
 
-Three confirmations in the normal case. Say no to a part and it's skipped, and nothing about the
+Four confirmations in the normal case. Say no to a part and it's skipped, and nothing about the
 other parts changes. Say no to all three and it tells you nothing needed rigging.
 
 ## Install
@@ -29,9 +30,11 @@ other parts changes. Say no to all three and it tells you nothing needed rigging
 ### Claude Code (personal)
 
 ```bash
-git clone https://github.com/chzylee/skill-library.git
-cp -r skill-library/skill-dev-rig ~/.claude/skills/skill-dev-rig
+npx github:chzylee/skill-library#skill-dev-rig skill-dev-rig
 ```
+
+Or list what the repo offers with `npx github:chzylee/skill-library#skill-dev-rig --list`. The
+`#skill-dev-rig` suffix is the branch; it drops away once this is promoted to `main`.
 
 ## What it does
 
@@ -51,6 +54,14 @@ verb so your skill's settings are a web form instead of a hand-edited file.
 **Dev/prod separation.** Sets the repo up so work-in-progress deploys as a separate `<skill>-dev`
 build that can never shadow the stable one. Day-to-day operations after that are
 [`skill-dev-build`](../skill-dev-build/README.md).
+
+**npx installer.** Scaffolds `install.mjs` and a `bin` entry so a stranger installs your skill with
+one line instead of cloning a repo and copying a folder by hand. Nothing is published to npm — npx
+runs it straight from the git host. It takes any folder containing a `SKILL.md`, so it needs no
+per-skill registration, and it reads `skills_root` from `.dev-build.conf` when present.
+
+Dev/prod and the installer are **per-repo**; the UI and config form are **per-skill**. Rigging a
+second skill in the same repo skips the per-repo parts.
 
 **And it writes your skill's SKILL.md run section**, from a fixed template — the markers, the
 instruction to read the summary back, and the blocking-Bash ceiling (a blocking call dies at about
