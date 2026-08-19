@@ -13,7 +13,7 @@
 // Exit codes: 0 installed or listed · 2 bad args or precondition.
 
 import { existsSync, readdirSync, readFileSync, statSync, cpSync, renameSync, mkdirSync } from 'node:fs';
-import { join, dirname, resolve } from 'node:path';
+import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 
@@ -87,12 +87,19 @@ if (existsSync(dest)) {
 }
 
 mkdirSync(targetDir, { recursive: true });
+// Dev-only weight stays behind: a skill's test/, fixtures/ and docs/ trees serve
+// the repo, not the installed copy. Top level of the skill only — a nested
+// directory that happens to share one of the names still installs.
+const DEV_ONLY_DIRS = new Set(['test', 'fixtures', 'docs']);
 cpSync(src, dest, {
   recursive: true,
   dereference: true,
   filter: (s) => {
     const base = s.split(/[\\/]/).pop();
-    return base !== '.git' && base !== 'node_modules';
+    if (base === '.git' || base === 'node_modules') return false;
+    const rel = relative(src, s);
+    if (DEV_ONLY_DIRS.has(rel) && statSync(s).isDirectory()) return false;
+    return true;
   },
 });
 

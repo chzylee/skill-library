@@ -95,6 +95,36 @@ test('rejects an unknown skill and path traversal, exit 2 either way', () => {
   }
 });
 
+test('dev-only trees (test/, fixtures/, docs/) stay behind; runtime dirs install', () => {
+  const repo = fakeRepo();
+  const root = join(repo, 'alpha');
+  for (const d of ['test', 'fixtures', 'docs']) {
+    mkdirSync(join(root, d), { recursive: true });
+    writeFileSync(join(root, d, 'weight.txt'), 'repo-only\n');
+  }
+  // runtime dirs must survive, including a NESTED dir named like a dev-only one
+  mkdirSync(join(root, 'templates', 'docs'), { recursive: true });
+  writeFileSync(join(root, 'templates', 'docs', 'keep.md'), 'runtime content\n');
+  mkdirSync(join(root, 'examples'), { recursive: true });
+  writeFileSync(join(root, 'examples', 'keep.json'), '{}\n');
+
+  const dest = mkdtempSync(join(tmpdir(), 'rig-dest-'));
+  assert.equal(run(repo, ['alpha', '--dir', dest]).code, 0);
+  for (const d of ['test', 'fixtures', 'docs']) {
+    assert.ok(!existsSync(join(dest, 'alpha', d)), `${d}/ is dev weight and must not install`);
+  }
+  assert.ok(existsSync(join(dest, 'alpha', 'templates', 'docs', 'keep.md')),
+    'a nested dir sharing a dev-only name still installs — the cut is top-level only');
+  assert.ok(existsSync(join(dest, 'alpha', 'examples', 'keep.json')));
+});
+
+test('the repo-root installer has not drifted from the template', (t) => {
+  const rootCopy = fileURLToPath(new URL('../../install.mjs', import.meta.url));
+  if (!existsSync(rootCopy)) return t.skip('no repo-root install.mjs here');
+  assert.equal(readFileSync(rootCopy, 'utf8'), readFileSync(TEMPLATE, 'utf8'),
+    'install.mjs at the repo root must stay byte-identical to the template');
+});
+
 test('honours skills_root from .dev-build.conf, and works without the file', () => {
   const nested = fakeRepo({ skillsRoot: 'skills' });
   const listed = run(nested, ['--list']);

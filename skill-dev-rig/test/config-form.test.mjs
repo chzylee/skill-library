@@ -84,6 +84,35 @@ test('missing --schema/--out is a precondition failure: _ERROR on stdout, exit 2
   cleanup(tmp);
 });
 
+// A bare `--timeout` parses as boolean true, and Number(true) === 1 — a silent
+// one-second clock that killed the form before the browser even opened. Same
+// family: a non-numeric value, and a path flag with no value.
+test('malformed flags fail loudly at the door, never as a 1-second clock', async () => {
+  const { startExpectingExit } = await import('../helpers.mjs');
+  const base = ['--schema', SCHEMA, '--out', '/dev/null'];
+  for (const bad of [
+    [...base, '--timeout'],           // bare flag -> true -> Number(true) === 1
+    [...base, '--timeout', 'soon'],   // NaN
+    [...base, '--timeout', '-5'],     // negative
+    [...base, '--port'],              // bare numeric flag
+    ['--schema', SCHEMA, '--out'],    // bare path flag
+  ]) {
+    const { code, stdout } = await startExpectingExit(CONFIG_FORM, bad);
+    assert.equal(code, 2, `${bad.join(' ')} must exit 2`);
+    assert.match(stdout, /CONFIG_FORM_ERROR /, `${bad.join(' ')} must print _ERROR on stdout`);
+  }
+});
+
+test('--timeout 0 is the deliberate clock opt-out, not an error', async () => {
+  const tmp = makeTmp();
+  const { srv: srvP } = launch(tmp, ['--timeout', '0']);
+  const srv = await srvP;
+  try {
+    await new Promise((r) => setTimeout(r, 1500));
+    assert.equal(srv.child.exitCode, null, 'no clock: still alive well past a 1s misparse');
+  } finally { srv.child.kill('SIGKILL'); cleanup(tmp); }
+});
+
 // `provides` pairs a task with the setting it would fill in. SCHEMA.md documents it;
 // nothing pinned it until now, so a rewrite of renderTask could silently drop the
 // pairing and every test would still pass.

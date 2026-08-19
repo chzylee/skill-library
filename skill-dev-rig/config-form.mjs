@@ -59,6 +59,26 @@ const readJson = (p, fallback, label = null) => {
 };
 const die = (msg) => { process.stdout.write(`CONFIG_FORM_ERROR ${msg}\n`); process.exit(2); };
 
+// Numeric flags must be validated at the door. A bare `--timeout` parses as the
+// boolean true, and Number(true) === 1 — a silent one-second clock that kills
+// the form before the browser even opens. Fail loudly instead.
+const numFlag = (key) => {
+  if (!(key in args)) return undefined;
+  const raw = args[key];
+  const n = Number(raw);
+  if (raw === true || !Number.isFinite(n) || n < 0) {
+    die(`--${key} needs a non-negative number${raw === true ? ' (flag given with no value)' : ` (got ${JSON.stringify(raw)})`}`);
+  }
+  return n;
+};
+const timeoutSec = numFlag('timeout'); // undefined -> engine default 540; 0 -> clock off
+const port = numFlag('port') ?? 0;
+
+// Path flags must carry a value — a bare `--out` is boolean true, which would
+// only blow up later, inside the save handler the user is waiting on.
+for (const key of ['schema', 'out', 'values', 'status', 'tasks-out', 'result', 'title']) {
+  if (args[key] === true) die(`--${key} needs a value`);
+}
 if (!args.schema || !args.out) die('--schema and --out are required');
 const schema = readJson(args.schema, null);
 if (!schema) die('could not read schema');
@@ -227,7 +247,7 @@ await serveUI({
   enders: {
     done: true,
     close: false,
-    clock: args.timeout !== undefined ? Number(args.timeout) : undefined, // engine default: 540
+    clock: timeoutSec, // undefined -> engine default 540; explicit 0 -> disabled
   },
   onSummary: () => ({
     lines: saved
@@ -236,6 +256,6 @@ await serveUI({
     data: { saved, out: outPath, tasks: tasksOutPath },
   }),
   resultFile: args.result ? expand(args.result) : undefined,
-  port: Number(args.port || 0),
+  port,
   open: Boolean(args.open),
 });
