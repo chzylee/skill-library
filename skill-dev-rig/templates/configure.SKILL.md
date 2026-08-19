@@ -28,7 +28,7 @@ form hands back.
 2. **‹ADAPT› Compute task status.** For each task in the schema, use your
    tools to check whether it's done, and write `status.json` as
    `{ taskId: { "done": bool, "detail": "..." } }`. Examples:
-   - `install-block` → is the marked block present and current in `~/.claude/CLAUDE.md`?
+   - `install-standard` → is the marked block present and current in `~/.claude/CLAUDE.md`?
    - `create-audit-results` → does the configured `audit_results_url` resolve to a real page?
    - `register-audit-job` → is a schedule registered at the configured cadence?
 

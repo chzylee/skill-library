@@ -33,9 +33,9 @@ prefixes derive from the consuming skill's name, nothing else.
 ## Step 1 — Look at the skill before asking anything
 
 Read the skill's `SKILL.md` and list its directory. The point is that every
-question in step 2 arrives already answered, with a reason. Three
-confirmations should be the normal path; the interview exists for the cases
-where you are wrong.
+question in step 2 arrives already answered, with a reason. Four confirmations
+should be the normal path; the interview exists for the cases where you are
+wrong.
 
 Look for, per part:
 

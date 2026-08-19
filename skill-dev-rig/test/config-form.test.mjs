@@ -129,11 +129,17 @@ test('provides renders a task inline under the visible field it fills, and still
     assert.match(page.text, /data-provides="audit_results_url"/, 'paired task carries data-provides');
     assert.match(page.text, /class="tasks inline"/, 'paired task renders inline under its field');
 
-    // install-standard provides registry_url, which is NOT a visible setting: it must
-    // still render rather than vanish.
-    assert.match(page.text, /data-provides="registry_url"/, 'unpaired-but-providing task still renders');
+    // install-standard provides registry_url, which is NOT a visible setting, AND the
+    // status fixture marks it done. It must still RENDER — the task, its label and its
+    // badge — even though a done+unpaired task offers no checkbox and therefore carries
+    // no data-provides attribute. Assert the task, not the attribute: this assertion
+    // used to check data-provides and passed only because the status fixture's key
+    // (`install-block`) did not match the schema's id, so the task looked not-done.
+    // Fixing that drift is what exposed the assertion as testing the wrong marker.
+    assert.match(page.text, /Install the standard on this machine/, 'unpaired task still renders');
+    assert.match(page.text, /badge ok">done/, 'and shows its done badge from the status file');
 
-    // With no value yet, the offer reads "set up now" for both.
+    // create-audit-results has no value yet and is not done, so it still offers to run.
     assert.match(page.text, /set up now/);
     assert.doesNotMatch(page.text, /create a new one instead/);
   } finally { srv.child.kill('SIGKILL'); cleanup(tmp); }
