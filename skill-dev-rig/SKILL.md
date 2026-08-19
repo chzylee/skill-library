@@ -52,7 +52,7 @@ recommendation.
 
 ## Step 2 — One question per part
 
-Ask all three at once, each with its recommendation and a one-line reason:
+Ask all four at once, each with its recommendation and a one-line reason:
 
 ```
 Rigging: <skill>

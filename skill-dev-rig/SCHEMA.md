@@ -100,6 +100,11 @@ is the whole design: engine = form + values; skill = task execution.
     legacy `CONFIG_FORM_SAVED out=<p> tasks=<p>` line is kept inside the fence.
   - `CONFIG_FORM_TIMEOUT` — no submit before `--timeout` (default 540); exits 3.
   - `CONFIG_FORM_ERROR <msg>` — bad args or unreadable schema; exits 2.
+  - `CONFIG_FORM_WARN <msg>` — an existing `--values` or `--status` file could not be
+    parsed, so the form rendered from defaults. **Relay this one to the user before
+    they submit.** Saving writes only what the form carries, so any key that lived in
+    the unreadable file is about to be dropped — this warning is the only notice
+    anyone gets, and it prints at launch rather than at exit.
 
 ## The flow, one line
 

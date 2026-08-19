@@ -1,4 +1,5 @@
-// The strict posture from §6.4 — no dials, so every gate must actually gate.
+// The strict posture from UI-CONTRACT.md "Security posture — strict, no dials":
+// no dials, so every gate must actually gate.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

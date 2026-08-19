@@ -23,7 +23,7 @@ Rigging: my-skill
 ```
 
 Four confirmations in the normal case. Say no to a part and it's skipped, and nothing about the
-other parts changes. Say no to all three and it tells you nothing needed rigging.
+other parts changes. Say no to all four and it tells you nothing needed rigging.
 
 ## Install
 

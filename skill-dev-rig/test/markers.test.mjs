@@ -37,7 +37,7 @@ test('RESULT defaults to a tmpdir path when the consumer passes none', async () 
   } finally { srv.child.kill('SIGKILL'); }
 });
 
-test('run record shape matches §6.3', async () => {
+test('run record shape matches UI-CONTRACT.md "The run record"', async () => {
   const tmp = makeTmp();
   const result = join(tmp, 'run.json');
   const srv = await start(WRITER, 'WRITER', ['--result', result]);

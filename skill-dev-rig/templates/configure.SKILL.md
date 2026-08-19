@@ -41,7 +41,9 @@ form hands back.
      --out <configPath> --tasks-out tasks.json --title "<skill>" --open
    ```
    Parse `CONFIG_FORM_URL=…` from stdout and show it to the user in case the
-   browser didn't open. On exit, read the `CONFIG_FORM_SUMMARY … CONFIG_FORM_DONE`
+   browser didn't open. If a `CONFIG_FORM_WARN` line appears, **tell the user
+   before they fill the form**: their existing config could not be read, the
+   form is showing defaults, and saving will drop whatever was in that file. On exit, read the `CONFIG_FORM_SUMMARY … CONFIG_FORM_DONE`
    fence and report it. If there's no browser/display, fall back to asking the
    schema's fields as plain questions and writing the config file yourself
    (same shape).
