@@ -76,22 +76,24 @@ grading its own homework.
 
 ```
 ~/.claude/study/
-├── rows.jsonl              ← every row, every topic, append-only
-├── runs/<run-id>/          ← raw sub-agent returns + the run retro
-└── guides/<run-id>.html    ← the guide: one self-contained file, works offline
+├── data/rows.jsonl         ← every row, every topic, append-only
+├── index.html              ← the navigator, built by /study-read
+└── runs/<run-id>/
+    ├── guide.html          ← the guide: one self-contained file, works offline
+    └── data/               ← this run's rows, plus its self-check and guide metadata
 ```
 
-`rows.jsonl` is append-only, so nothing is ever destroyed — a row the audit killed stays in the
-file with its reason, and the guide is a filter over the whole. Query across every topic you have
-ever studied with [DuckDB](https://duckdb.org), no setup required:
+`data/rows.jsonl` is append-only, so nothing is ever destroyed — a row the audit killed stays in
+the file with its reason, and the guide is a filter over the whole. Query across every topic you
+have ever studied with [DuckDB](https://duckdb.org), no setup required:
 
 ```bash
-duckdb -c "select topic, subject from read_json_auto('~/.claude/study/rows.jsonl') where depth = 'judgment'"
+duckdb -c "select topic, subject from read_json_auto('~/.claude/study/data/rows.jsonl') where depth = 'judgment'"
 ```
 
 ## Status
 
-**v0.1 — development mode.** The row schema is not locked, and every run ends with a short retro
+**Development mode.** The row schema is not locked, and every run ends with a short retro
 recording what the schema could not hold and whether the audit pass earned its cost. Expect the
 schema to change; `schema_version` is on every row so old rows stay readable.
 
