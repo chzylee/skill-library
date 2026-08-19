@@ -1,6 +1,7 @@
 // The strict posture from §6.4 — no dials, so every gate must actually gate.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FIXTURES, makeTmp, cleanup, start, api, raw } from '../helpers.mjs';
 
@@ -95,4 +96,39 @@ test('unknown paths 403 without a token, 404 with one', async () => {
     assert.equal((await raw(srv, '/does-not-exist')).status, 403);
     assert.equal((await raw(srv, `/does-not-exist?token=${srv.token}`)).status, 404);
   });
+});
+
+// A multibyte character straddling a stream-chunk boundary used to decode to two
+// replacement characters — and because U+FFFD is valid JSON, the save "succeeded"
+// while writing mojibake to the user's file. Silent corruption, 200 OK.
+test('a large non-ASCII body survives chunk boundaries intact', async () => {
+  const tmp = makeTmp();
+  const log = join(tmp, 'store.jsonl');
+  const srv = await start(FIXTURES + 'writer.mjs', 'WRITER', ['--log', log]);
+  try {
+    // Comfortably past the ~64KB chunk size, with 4-byte, 2-byte and 3-byte characters.
+    const text = '😀é中'.repeat(40000);
+    const res = await api(srv, '/api/append', { method: 'POST', body: JSON.stringify({ text }) });
+    assert.equal(res.status, 200);
+    const written = readFileSync(log, 'utf8').trim().split('\n').pop();
+    assert.equal(JSON.parse(written).text, text, 'round-trips byte-for-byte');
+    assert.doesNotMatch(written, /�/, 'no replacement characters');
+  } finally { srv.child.kill('SIGKILL'); cleanup(tmp); }
+});
+
+// spawn ENOENT arrives as an async 'error' event, so the try/catch around the
+// browser launch never saw it. Unhandled, it killed the server AFTER it had
+// already printed its URL — every run on a headless box, since --open is the default.
+test('a machine with no browser opener still serves and shuts down cleanly', async () => {
+  const tmp = makeTmp();
+  const log = join(tmp, 'store.jsonl');
+  // PATH='' makes `open`/`xdg-open`/`cmd` unresolvable, exactly like a bare container.
+  const srv = await start(FIXTURES + 'writer.mjs', 'WRITER', ['--log', log, '--open'], { PATH: '' });
+  try {
+    const res = await api(srv, '/api/append', { method: 'POST', body: JSON.stringify({ text: 'still alive' }) });
+    assert.equal(res.status, 200, 'server survived the failed browser launch');
+    await api(srv, '/api/done', { method: 'POST', body: '{}' });
+    assert.equal(await srv.exited, 0, 'clean exit, not a crash');
+    assert.match(srv.stdout(), /WRITER_SUMMARY/, 'the fence still printed');
+  } finally { srv.child.kill('SIGKILL'); cleanup(tmp); }
 });

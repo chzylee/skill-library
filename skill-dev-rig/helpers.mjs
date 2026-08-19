@@ -25,9 +25,12 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // Spawn a script and resolve once `<PREFIX>_URL=` appears on stdout.
 // Resolves { child, origin, token, resultFile, stdout(), exited } like
 // memory-manager's startServer, plus the run-record path from `<PREFIX>_RESULT=`.
-export function start(script, prefix, args = []) {
+export function start(script, prefix, args = [], env = null) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [script, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [script, ...args], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      ...(env ? { env: { ...process.env, ...env } } : {}),
+    });
     let out = '';
     let err = '';
     const timer = setTimeout(() => {

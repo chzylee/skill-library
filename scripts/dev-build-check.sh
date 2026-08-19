@@ -10,7 +10,20 @@ SKILLS_DIR="$HOME/.claude/skills"
 skills_root="."
 stable_branch="main"
 dev_branch="dev"
-[ -f "$REPO/.dev-build.conf" ] && . "$REPO/.dev-build.conf"
+
+# Parse the conf; never `.` it. Sourcing EXECUTES command substitution and
+# backticks inside double-quoted values, and `release_steps` is documented as a
+# PROSE list — prose is exactly where a $(...) or a backtick shows up innocently.
+# A cloned repo's conf would then run arbitrary commands under the approval the
+# user gave for "run dev-build-check.sh". install.mjs already reads it this way.
+conf_get() {
+  sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*\"\([^\"]*\)\".*/\1/p" "$2" 2>/dev/null | head -1
+}
+if [ -f "$REPO/.dev-build.conf" ]; then
+  _v=$(conf_get skills_root   "$REPO/.dev-build.conf"); [ -n "$_v" ] && skills_root="$_v"
+  _v=$(conf_get stable_branch "$REPO/.dev-build.conf"); [ -n "$_v" ] && stable_branch="$_v"
+  _v=$(conf_get dev_branch    "$REPO/.dev-build.conf"); [ -n "$_v" ] && dev_branch="$_v"
+fi
 
 prefix=""
 [ "$skills_root" != "." ] && prefix="$skills_root/"

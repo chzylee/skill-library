@@ -32,7 +32,7 @@
 // The save button ends the run from inside the save handler — there is no
 // second "done" fetch for a closing tab to lose.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { serveUI } from './local-ui.mjs';
 
@@ -47,14 +47,23 @@ for (let i = 2; i < process.argv.length; i++) {
   }
 }
 const expand = (p) => (typeof p === 'string' && p.startsWith('~') ? homedir() + p.slice(1) : p);
-const readJson = (p, fallback) => { try { return JSON.parse(readFileSync(expand(p), 'utf8')); } catch { return fallback; } };
+const readJson = (p, fallback, label = null) => {
+  try { return JSON.parse(readFileSync(expand(p), 'utf8')); } catch (e) {
+    // An existing-but-unreadable config must not vanish silently: the form would
+    // render blank and the save would drop every key the form does not carry.
+    if (label && p && existsSync(expand(p))) {
+      process.stdout.write(`CONFIG_FORM_WARN could not read ${label} at ${expand(p)} (${e.message}); continuing with defaults — saving will not preserve its contents\n`);
+    }
+    return fallback;
+  }
+};
 const die = (msg) => { process.stdout.write(`CONFIG_FORM_ERROR ${msg}\n`); process.exit(2); };
 
 if (!args.schema || !args.out) die('--schema and --out are required');
 const schema = readJson(args.schema, null);
 if (!schema) die('could not read schema');
-const values = readJson(args.values, {});
-const status = readJson(args.status, {}); // { taskId: { done: bool, detail: str } }
+const values = readJson(args.values, {}, 'values');
+const status = readJson(args.status, {}, 'status'); // { taskId: { done: bool, detail: str } }
 const title = args.title || schema.title || 'Configuration';
 const outPath = expand(args.out);
 const tasksOutPath = args['tasks-out'] ? expand(args['tasks-out']) : null;

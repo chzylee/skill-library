@@ -87,8 +87,9 @@ schema is [`SCHEMA.md`](SCHEMA.md).
 cd skill-dev-rig && node --test
 ```
 
-38 tests against three fixture consumers and the installer, covering the marker contract, the security posture, and
-the shutdown races.
+Three fixture consumers and the installer, covering the marker contract, the security posture, the
+shutdown races, and the body-decoding and browser-launch failure paths. The count is deliberately
+not quoted here — it drifted twice already; run the command and read it.
 
 ## Status
 

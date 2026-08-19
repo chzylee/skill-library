@@ -75,8 +75,13 @@ if (existsSync(dest)) {
   if (!flags.has('--force')) {
     die(`${dest} already exists — pass --force to replace it (the old copy is kept as a backup)`);
   }
-  // Replace, but never destroy: the previous install moves aside rather than being deleted.
-  const backup = `${dest}.backup-${Date.now()}`;
+  // Replace, but never destroy: the previous install moves aside rather than being
+  // deleted. It goes in a DOT-directory, not beside the skill — a backup named
+  // `<skill>.backup-<ts>` still holds a SKILL.md inside the directory Claude Code
+  // scans, which is the same-name shadow this whole pattern exists to prevent.
+  const backupRoot = join(targetDir, '.skill-backups');
+  mkdirSync(backupRoot, { recursive: true });
+  const backup = join(backupRoot, `${skill}-${Date.now()}`);
   renameSync(dest, backup);
   process.stdout.write(`  previous install moved to ${backup}\n`);
 }

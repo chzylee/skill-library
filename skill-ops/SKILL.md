@@ -104,8 +104,16 @@ other unfinished dev skills to main.
 
 1. Working tree must be clean on the stable branch (stash nothing silently — if dirty,
    stop and say what's in the way).
-2. `git checkout <dev_branch> -- <skills_root>/<skill>/` and commit on the stable
-   branch ("Promote <skill> from dev").
+2. Remove the folder first, then take the dev version, then commit on the stable
+   branch ("Promote <skill> from dev"):
+
+       git rm -r --quiet <skills_root>/<skill>
+       git checkout <dev_branch> -- <skills_root>/<skill>/
+
+   The `git rm` is not optional. A bare path checkout **overlays** — it copies dev's
+   files over stable's and never deletes anything, so a file the skill dropped during
+   development would ship to stable anyway, silently. Skip the `git rm` on a skill
+   that has never been promoted (there is nothing to remove).
 3. Execute the repo's `release_steps` from `.dev-build.conf` — e.g. for skill-library:
    add `"./<skill>"` to the `skills` array in `.claude-plugin/plugin.json`; draft the
    README catalog row (shown for the maintainer's edit before inserting); build

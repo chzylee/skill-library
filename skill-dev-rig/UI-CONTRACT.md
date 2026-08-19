@@ -20,8 +20,8 @@ await serveUI({
   name: 'MY_SKILL',            // marker prefix; upper-snake of the CONSUMING skill's name
   html,                        // string; the engine substitutes __TOKEN__ and injects the ping
   routes: {                    // keys are "<METHOD> <path>", path must start with /api/
-    'GET /api/list':  async (req, ctx) => ({ items: [] }),
-    'POST /api/save': async (req, ctx) => { /* ...write... */ return { ok: true }; },
+    'GET /api/list':  async (body, ctx) => ({ items: [] }),
+    'POST /api/save': async (body, ctx) => { /* ...write... */ return { ok: true }; },
   },
   enders: { done: true, close: true, clock: 540 },
   onSummary: () => ({ lines: ['2 edited, 1 deleted'], data: { edited: 2, deleted: 1 } }),
@@ -33,7 +33,9 @@ await serveUI({
 
 Route keys are `"<METHOD> <path>"` and the path must live under `/api/`; anything else is
 rejected at registration rather than at request time, so a typo fails at launch instead of
-silently 404-ing later. Handlers receive `(req, ctx)`; `ctx.end(reason)` ends the run through
+silently 404-ing later. Handlers receive `(body, ctx)` — **`body` is the already-parsed JSON**,
+not the raw request; the `IncomingMessage` is at `ctx.req` if you need it, alongside `ctx.res` and
+`ctx.url`. Return a value and the engine sends it as JSON. `ctx.end(reason)` ends the run through
 the same serialized shutdown every other ender uses, so a handler that finishes the session
 cannot race the watchdog or the clock.
 

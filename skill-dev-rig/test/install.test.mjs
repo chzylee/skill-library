@@ -62,16 +62,25 @@ test('refuses to clobber an existing install without --force', () => {
   assert.match(out, /--force/);
 });
 
-test('--force moves the old copy aside rather than deleting it', () => {
+test('--force keeps the old copy, and keeps it OUT of the skills directory', () => {
   const repo = fakeRepo();
   const dest = mkdtempSync(join(tmpdir(), 'rig-dest-'));
   run(repo, ['alpha', '--dir', dest]);
   writeFileSync(join(dest, 'alpha', 'MINE.md'), 'user edit worth not losing\n');
   const { code } = run(repo, ['alpha', '--dir', dest, '--force']);
   assert.equal(code, 0);
-  const backup = readdirSync(dest).find((d) => d.startsWith('alpha.backup-'));
-  assert.ok(backup, 'a backup directory should exist');
-  assert.ok(existsSync(join(dest, backup, 'MINE.md')), 'the edit survives in the backup');
+
+  const backups = join(dest, '.skill-backups');
+  const kept = readdirSync(backups).find((d) => d.startsWith('alpha-'));
+  assert.ok(kept, 'the previous install is kept');
+  assert.ok(existsSync(join(backups, kept, 'MINE.md')), 'the user edit survives in it');
+
+  // The point of the dot-directory: a backup still contains a SKILL.md with the
+  // original `name:`, so leaving it beside the skill would create exactly the
+  // same-name shadow this tooling exists to prevent.
+  assert.ok(existsSync(join(backups, kept, 'SKILL.md')), 'backup really does carry a SKILL.md');
+  const scannable = readdirSync(dest).filter((d) => !d.startsWith('.'));
+  assert.deepEqual(scannable, ['alpha'], 'nothing but the skill itself is visible to a scanner');
 });
 
 test('rejects an unknown skill and path traversal, exit 2 either way', () => {

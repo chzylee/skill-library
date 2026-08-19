@@ -79,15 +79,22 @@ function send(res, code, obj) {
 // the cap rather than after it.
 function readBody(req) {
   return new Promise((resolve, reject) => {
-    let s = '';
+    const chunks = [];
+    let bytes = 0;
     let failed = false;
     req.on('data', (c) => {
       if (failed) return;
-      s += c;
-      if (s.length > 5e6) { failed = true; s = ''; }
+      bytes += c.length;                       // bytes, not UTF-16 code units
+      if (bytes > 5e6) { failed = true; chunks.length = 0; return; }
+      chunks.push(c);
     });
     req.on('end', () => {
       if (failed) return reject(Object.assign(new Error('body too large'), { statusCode: 413 }));
+      // Decode ONCE over the whole buffer. Stringifying each chunk as it arrives
+      // (`s += c`) splits any multibyte character that straddles a chunk boundary
+      // into two replacement characters — and because U+FFFD is valid JSON, the
+      // save then "succeeds" while writing mojibake to the user's file.
+      const s = Buffer.concat(chunks).toString('utf8');
       try { resolve(s ? JSON.parse(s) : {}); } catch (e) { reject(Object.assign(e, { statusCode: 400 })); }
     });
     req.on('error', reject);
@@ -101,14 +108,17 @@ function readBody(req) {
 // cmd metacharacter can appear in it. This fixes the quoting hazard of
 // memory-manager.mjs:870 without leaving stdlib.
 function openBrowser(url) {
+  const [cmd, args] = process.platform === 'darwin' ? ['open', [url]]
+    : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+    : ['xdg-open', [url]];
   try {
-    if (process.platform === 'darwin') {
-      spawn('open', [url], { stdio: 'ignore', detached: true }).unref();
-    } else if (process.platform === 'win32') {
-      spawn('cmd', ['/c', 'start', '', url], { stdio: 'ignore', detached: true }).unref();
-    } else {
-      spawn('xdg-open', [url], { stdio: 'ignore', detached: true }).unref();
-    }
+    const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
+    // A missing opener (headless Linux, containers, WSL without xdg-utils) surfaces
+    // as an ASYNC 'error' event, not a throw — the catch below never fires, and an
+    // unhandled 'error' takes the whole server down after it has already printed
+    // its URL. Swallow it: the URL is on stdout regardless, which is the promise.
+    child.on('error', () => {});
+    child.unref();
   } catch { /* the URL is on stdout regardless */ }
 }
 
