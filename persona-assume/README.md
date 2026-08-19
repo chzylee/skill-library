@@ -48,8 +48,9 @@ Copy-Item -Recurse skill-library/persona-assume "$HOME/.claude/skills/persona-as
 ## Invoke
 
 - **"assume the [name] persona"** / **"be my [name]"** / **"load the [name] persona"** /
-  **"put on the [name] persona"** — resolves the registry, adopts that persona's Profile block,
-  announces the stance in one line, and (if the persona has modes) asks which mode.
+  **"put on the [name] persona"** / **"bring in [name]"** — resolves the registry, adopts that
+  persona's Profile block, announces the stance in one line, and (if the persona has modes)
+  asks which mode.
 - **"assume a persona"** / **"who's on my team?"** — lists your Active personas and asks which
   to assume; never picks for you.
 - **"give me the block for a subagent as [name]"** — outputs the Profile block verbatim as a
