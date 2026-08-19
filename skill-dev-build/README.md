@@ -1,0 +1,48 @@
+# skill-dev-build
+
+**Work on a skill without breaking the copy you use every day.** A skill under development deploys
+as a *separate* installed skill named `<skill>-dev`, generated from your repo's dev branch, so it
+can never shadow the stable version. When it's ready, promote it and the dev build is torn down.
+
+```
+/skill-dev-build deploy my-skill
+/skill-dev-build status
+/skill-dev-build promote my-skill
+```
+
+## Install
+
+### Claude Code (personal)
+
+```bash
+git clone https://github.com/chzylee/skill-library.git
+cp -r skill-library/skill-dev-build ~/.claude/skills/skill-dev-build
+```
+
+## What it does
+
+**`deploy <skill>`** generates `~/.claude/skills/<skill>-dev` from the dev branch, marked
+`disable-model-invocation` so it only ever answers an explicit `/<skill>-dev` call and never wins
+auto-routing against the stable version.
+
+**`status`** reports what's deployed and whether it's current, stale, or an orphan; what's ahead of
+stable and therefore a promotion candidate; and any `*-dev` directories it doesn't manage.
+
+**`promote <skill>`** moves one skill to the stable branch and runs your repo's release steps, then
+deletes the dev build. Deliberately per-skill — promoting one thing never drags other unfinished
+work along with it.
+
+Two invariants it exists to protect: in git a skill has **one name** (the `-dev` suffix exists only
+in the deployed copy, so promotion is a plain merge of content), and a deployed build is an
+**artifact, never a workbench** (edit on the dev branch and regenerate).
+
+**Setting a repo up for this is [`skill-dev-rig`](../skill-dev-rig/README.md)**, where it's one of
+the parts you can opt into. This skill operates on a repo that's already rigged.
+
+## Status
+
+On the `dev` branch, not yet promoted to `main`. Fetch with `--branch dev`.
+
+## License
+
+MIT — see [LICENSE](../LICENSE).

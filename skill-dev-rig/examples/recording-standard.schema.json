@@ -1,0 +1,52 @@
+{
+  "title": "recording-standard",
+  "configPath": "~/.claude/recording-standard.local.json",
+  "groups": [
+    {
+      "name": "Install",
+      "help": "One-time setup on this machine.",
+      "tasks": [
+        { "id": "install-standard", "label": "Install the standard on this machine", "help": "Installs the rules block + hooks and creates your page index (the Notion database the audit uses to catalog your pages). One-time. The page index has a required structure, so the standard creates it — it's never a pasted link.", "optional": false, "provides": "registry_url" }
+      ]
+    },
+    {
+      "name": "Locations",
+      "help": "The Notion pages the tool uses. Paste a link if you have one, or use the create option under a field to make one.",
+      "settings": [
+        { "key": "miscellaneous_home", "label": "Catch-all page", "type": "url", "required": true, "help": "Where a page goes when it doesn't clearly belong anywhere else — your safe default (for example a general Notes or Projects space)." },
+        { "key": "audit_results_url", "label": "Audit results page", "type": "url", "required": false, "help": "Where a scheduled audit posts its findings. Not needed if you only run the audit by hand." },
+        {
+          "key": "mode_hubs",
+          "label": "Default home per page type",
+          "type": "table",
+          "help": "Optional — skip if unsure. The page types are the six modes from your Recording Standard. For a given type, set the default place a new page of that type goes when it has no obvious parent: pick the type and paste the home page's link.",
+          "columns": [
+            { "key": "mode", "label": "Page type", "type": "select", "options": ["1 Reference", "2 Living documentation", "3 Operational surface", "4 Standard/contract", "5 Log/archive", "6 Plan"] },
+            { "key": "hub_url", "label": "Home page (link)", "type": "url" }
+          ]
+        },
+        {
+          "key": "custom_routing_rules",
+          "label": "Custom routing rules",
+          "type": "textarea",
+          "help": "Optional. Plain-English rules, one per line, for where your own pages should go — for example: 'When an idea gets a design doc, move it to Project Wikis.' Stored as text in your config; the audit job reads and applies them on each run. Leave blank for none."
+        }
+      ],
+      "tasks": [
+        { "id": "create-audit-results", "label": "Create the audit results page", "help": "Makes the page and fills this in.", "optional": true, "provides": "audit_results_url" }
+      ]
+    },
+    {
+      "name": "Audit",
+      "help": "How the automatic audit behaves.",
+      "settings": [
+        { "key": "cadence_days", "label": "How often to audit (days)", "type": "number", "default": 2, "help": "Number of days between automatic audits." },
+        { "key": "scope", "label": "What to check", "type": "select", "options": ["incremental", "full"], "default": "incremental", "help": "'incremental' checks only pages changed since the last audit (cheaper); 'full' checks every page." },
+        { "key": "autofix", "label": "How much to fix automatically", "type": "select", "options": ["structural + egregious-semantic", "structural only", "propose everything"], "default": "structural + egregious-semantic", "help": "What the audit changes on its own versus only suggests. It never deletes, and always logs what it changed." }
+      ],
+      "tasks": [
+        { "id": "register-audit-job", "label": "Schedule the audit to run automatically", "help": "Sets up the recurring audit at the cadence above. Skip this if you prefer to run the audit by hand.", "optional": true }
+      ]
+    }
+  ]
+}
