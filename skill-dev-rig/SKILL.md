@@ -1,6 +1,6 @@
 ---
 name: skill-dev-rig
-description: 'Rig ONE Claude Code skill for further development — new or existing — with any combination of four parts: a local browser UI, a config form, dev/prod build separation, and an npx-callable installer. Each part is independently opt-in. Looks at the skill first, then asks one yes/no question per part with a recommended answer and a reason, so the common case is four confirmations; answering no to a part skips it entirely. Vendors the local-ui engine (and the config-form engine if asked), scaffolds the schema, wires the repo for dev/prod, scaffolds a one-line npx installer, and writes the consuming skill''s SKILL.md run section from a fixed template so the markers, the summary read-back, and the blocking-Bash ceiling are correct without editing. Triggers on "/skill-dev-rig", "rig this skill", "rig <skill> for development", "add a UI to my skill", "give this skill a config form", "set up a local UI for X", "set this skill up for development". Rigging only — ongoing dev-build operations (deploy, status, promote) are /skill-dev-build.'
+description: 'Rig ONE Claude Code skill for further development — new or existing — with any combination of four parts: a local browser UI, a config form, dev/prod build separation, and an npx-callable installer. Each part is independently opt-in. Looks at the skill first, then asks one yes/no question per part with a recommended answer and a reason, so the common case is four confirmations; answering no to a part skips it entirely. Vendors the local-ui engine (and the config-form engine if asked), scaffolds the schema, wires the repo for dev/prod, scaffolds a one-line npx installer, and writes the consuming skill''s SKILL.md run section from a fixed template so the markers, the summary read-back, and the blocking-Bash ceiling are correct without editing. Triggers on "/skill-dev-rig", "rig this skill", "rig <skill> for development", "add a UI to my skill", "give this skill a config form", "set up a local UI for X", "set this skill up for development". Rigging only — ongoing dev-build operations (deploy, status, promote) are /skill-ops.'
 ---
 
 # /skill-dev-rig — rig a skill for further development
@@ -26,7 +26,7 @@ skill's directory; the **marker name** is the skill's name upper-snake-cased
 prefixes derive from the consuming skill's name, nothing else.
 
 **This skill does rigging only.** `deploy`, `status` and `promote` are
-`/skill-dev-build`.
+`/skill-ops`.
 
 ---
 
@@ -130,7 +130,7 @@ Run the dev/prod setup using the templates in `templates/`
 write `.dev-build.conf` at the repo root, copy the check script to
 `scripts/dev-build-check.sh`, merge the SessionStart entry into
 `.claude/settings.json`, and create the dev branch. Ongoing operations on a
-rigged repo are `/skill-dev-build`.
+rigged repo are `/skill-ops`.
 **Idempotent:** if `.dev-build.conf` already exists the repo is rigged — say so
 and move on, never re-write it. This is per-repo, so rigging a second skill in
 the same repo skips it.

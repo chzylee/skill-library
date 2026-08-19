@@ -53,7 +53,7 @@ verb so your skill's settings are a web form instead of a hand-edited file.
 
 **Dev/prod separation.** Sets the repo up so work-in-progress deploys as a separate `<skill>-dev`
 build that can never shadow the stable one. Day-to-day operations after that are
-[`skill-dev-build`](../skill-dev-build/README.md).
+[`skill-ops`](../skill-ops/README.md).
 
 **npx installer.** Scaffolds `install.mjs` and a `bin` entry so a stranger installs your skill with
 one line instead of cloning a repo and copying a folder by hand. Nothing is published to npm — npx

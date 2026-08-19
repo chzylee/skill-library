@@ -1,9 +1,9 @@
 ---
-name: skill-dev-build
-description: 'Dev-vs-prod lifecycle tooling for Claude Code skill repos: manage dev builds — the *-dev skills deployed from the repo''s dev branch — and promote finished skills to the stable branch. Three operations: "/skill-dev-build deploy <skill>" (generate/refresh a dev build into ~/.claude/skills/<skill>-dev), "/skill-dev-build status" (deployed builds, staleness, orphans, ahead-of-stable), "/skill-dev-build promote <skill>" (per-skill promotion: folder + the repo''s release steps, then tear down the dev build). Triggers on "skill-dev-build", "deploy a dev build of X", "dev build status", "promote X to main/stable", or /skill-dev-build. All three require a rigged repo (.dev-build.conf present); refuse plainly elsewhere and offer /skill-dev-rig, which does the rigging.'
+name: skill-ops
+description: 'Day-to-day operations on a Claude Code skill you are developing, in a repo already rigged for dev/prod. Three operations: "/skill-ops deploy <skill>" (generate or refresh a dev build into ~/.claude/skills/<skill>-dev, explicit-call-only so it can never shadow the stable version), "/skill-ops status" (what is deployed, whether it is current, stale or an orphan, and what is ahead of stable), "/skill-ops promote <skill>" (move one skill to the stable branch, run the repo''s release steps, tear the dev build down). Triggers on "/skill-ops", "skill ops", "deploy a dev build of X", "dev build status", "what dev builds do I have", "promote X to main", "promote X to stable". Operations only, on an already-rigged repo: SETTING a repo or skill up is /skill-dev-rig. All three refuse plainly when .dev-build.conf is absent and point you there.'
 ---
 
-# skill-dev-build — deploy · status · promote
+# skill-ops — deploy · status · promote
 
 Lifecycle tooling for the dev-build pattern: a skill under active development is
 deployed as a **separate installed skill** named `<skill>-dev`, generated from the
@@ -47,12 +47,12 @@ in its `templates/` (`dev-build.conf.template`, `dev-build-check.sh`,
 > one subsumes the repo-level one. If you have `/dev-build rig` in muscle
 > memory, use `/skill-dev-rig` and answer yes to the dev/prod part.
 
-## `/skill-dev-build deploy <skill>`
+## `/skill-ops deploy <skill>`
 
 Generate or refresh the dev build for one skill.
 
 1. Verify `<skill>/` exists on the `dev` branch (`git cat-file -e dev:<skill>/SKILL.md`).
-   Missing → say so and stop; suggest `/skill-dev-build status` for what's available.
+   Missing → say so and stop; suggest `/skill-ops status` for what's available.
 2. Read the dev-branch version of the folder (`git show dev:<path>` per file — do NOT
    check branches out; the working tree may be on main with uncommitted work).
 3. Write it to `~/.claude/skills/<skill>-dev/` as a **real directory** (no junctions or
@@ -67,7 +67,7 @@ Generate or refresh the dev build for one skill.
 5. Report: skill, target path, source sha, and a reminder to restart or open a new
    session so the build loads.
 
-## `/skill-dev-build status`
+## `/skill-ops status`
 
 Read-only. Report three lists:
 
@@ -81,7 +81,7 @@ Read-only. Report three lists:
 - **Strays** — `*-dev` directories in `~/.claude/skills/` *without* the
   `generated-by: dev-build` marker: flag them as unmanaged, do not touch them.
 
-## `/skill-dev-build promote <skill>`
+## `/skill-ops promote <skill>`
 
 Per-skill promotion `dev` → `main`. **Show the full plan and get a yes before step 1.**
 This is deliberately NOT a whole-branch merge — promoting one skill must never drag

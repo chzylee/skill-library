@@ -1,21 +1,26 @@
-# skill-dev-build
+# skill-ops
 
 **Work on a skill without breaking the copy you use every day.** A skill under development deploys
 as a *separate* installed skill named `<skill>-dev`, generated from your repo's dev branch, so it
 can never shadow the stable version. When it's ready, promote it and the dev build is torn down.
 
 ```
-/skill-dev-build deploy my-skill
-/skill-dev-build status
-/skill-dev-build promote my-skill
+/skill-ops deploy my-skill
+/skill-ops status
+/skill-ops promote my-skill
 ```
+
+**What "ops" covers here:** the dev-build lifecycle and nothing else — deploy, status, promote. It
+does not install skills, update them, or delete them. Installing is
+`npx github:chzylee/skill-library <skill>`; setting a repo or skill up is
+[`skill-dev-rig`](../skill-dev-rig/README.md).
 
 ## Install
 
 ### Claude Code (personal)
 
 ```bash
-npx github:chzylee/skill-library#skill-dev-rig skill-dev-build
+npx github:chzylee/skill-library#skill-dev-rig skill-ops
 ```
 
 The `#skill-dev-rig` suffix is the branch; it drops away once this is promoted to `main`.
