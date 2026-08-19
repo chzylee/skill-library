@@ -12,9 +12,14 @@
 
   /* ---------- utilities ---------- */
 
+  // Every value that comes out of the store goes through this before reaching innerHTML —
+  // including numbers and enum-looking fields. The store is JSONL on disk that a person or
+  // a half-finished run can write, so "this field is always one of four words" is a
+  // convention, not a guarantee. Escaping uniformly means no future edit has to decide
+  // which values are safe.
   function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
@@ -215,13 +220,13 @@
   function runCard(r) {
     var tag = (r.g.match(/\(([^)]+)\)$/) || [])[1]; // disambiguator, e.g. "v02"
     return '<article class="card"><h3>' + esc(r.topics.join(" · ") + (tag ? " (" + tag + ")" : "")) + "</h3>" +
-      '<div class="cmeta"><span>' + esc(r.date) + "</span><span>" + r.n + " items</span>" +
-      "<span>" + r.mins + "m reading</span>" +
+      '<div class="cmeta"><span>' + esc(r.date) + "</span><span>" + esc(r.n) + " items</span>" +
+      "<span>" + esc(r.mins) + "m reading</span>" +
       '<span class="muted">schema v' + esc(r.sv) + "</span></div>" +
       '<div class="flags">' +
-      (r.unver ? '<span class="flag warn">' + r.unver + " unverified source" + (r.unver === 1 ? "" : "s") + "</span>" : "") +
-      (r.wounded ? '<span class="flag warn">' + r.wounded + " wounded</span>" : "") +
-      (r.shelved ? '<span class="flag">' + r.shelved + " shelved</span>" : "") +
+      (r.unver ? '<span class="flag warn">' + esc(r.unver) + " unverified source" + (r.unver === 1 ? "" : "s") + "</span>" : "") +
+      (r.wounded ? '<span class="flag warn">' + esc(r.wounded) + " wounded</span>" : "") +
+      (r.shelved ? '<span class="flag">' + esc(r.shelved) + " shelved</span>" : "") +
       "</div></article>";
   }
 
@@ -240,11 +245,11 @@
       : '<span class="subject">' + highlight(r.subject, t) + "</span>";
     return '<div class="hit">' + title +
       "<p>" + highlight(r.d, t) + "</p>" +
-      '<div class="hmeta"><span class="tag">' + r.type + "</span>" +
-      '<span class="tag">' + r.depth + "</span>" +
-      (r.ev !== "re-opened" ? '<span class="tag w">' + r.ev + "</span>" : "") +
-      (r.grade !== "viable" ? '<span class="tag w">' + r.grade + "</span>" : "") +
-      "<span>" + r.t + 'm</span><span class="muted">' + esc(r.topic) + "</span></div></div>";
+      '<div class="hmeta"><span class="tag">' + esc(r.type) + "</span>" +
+      '<span class="tag">' + esc(r.depth) + "</span>" +
+      (r.ev !== "re-opened" ? '<span class="tag w">' + esc(r.ev) + "</span>" : "") +
+      (r.grade !== "viable" ? '<span class="tag w">' + esc(r.grade) + "</span>" : "") +
+      "<span>" + esc(r.t) + 'm</span><span class="muted">' + esc(r.topic) + "</span></div></div>";
   }
 
   function showOverview() {
