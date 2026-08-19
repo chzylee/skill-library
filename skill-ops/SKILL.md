@@ -30,7 +30,12 @@ repo's root — a plain sh `KEY="value"` file:
   the folder (manifests, catalog rows, bundles). Default: nothing beyond the commit.
 
 No `.dev-build.conf` → this repo isn't rigged; for deploy/status/promote say so, stop,
-and offer `/skill-dev-rig`, which does the rigging. All paths below mean `<skills_root>/<skill>`; all branch
+and offer `/skill-dev-rig`, which does the rigging. **If they do not have it**, give them the
+command rather than the name — this skill cannot rig anything itself:
+
+    npx github:chzylee/skill-library#skill-dev-rig skill-dev-rig
+
+ All paths below mean `<skills_root>/<skill>`; all branch
 names mean the configured ones. Never force-push. Never touch any repo other than the
 current project.
 
