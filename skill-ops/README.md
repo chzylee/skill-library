@@ -12,7 +12,7 @@ can never shadow the stable version. When it's ready, promote it and the dev bui
 
 **What "ops" covers here:** the dev-build lifecycle and nothing else — deploy, status, promote. It
 does not install skills, update them, or delete them. Installing is
-`npx github:chzylee/skill-library <skill>`; setting a repo or skill up is
+`npx github:chzylee/skill-library#skill-dev-rig <skill>`; setting a repo or skill up is
 [`skill-dev-rig`](../skill-dev-rig/README.md).
 
 ## Install
@@ -24,6 +24,16 @@ npx github:chzylee/skill-library#skill-dev-rig skill-ops
 ```
 
 The `#skill-dev-rig` suffix is the branch; it drops away once this is promoted to `main`.
+
+**Manual install** (fallback — if you would rather not run `npx` against a repo you have not read):
+
+```bash
+git clone --branch skill-dev-rig https://github.com/chzylee/skill-library.git
+cp -r skill-library/skill-ops ~/.claude/skills/skill-ops
+```
+
+Both paths do the same thing: copy the folder to `~/.claude/skills/skill-ops`. Restart Claude Code,
+or open a new session, to load it.
 
 ## What it does
 
@@ -43,11 +53,24 @@ in the deployed copy, so promotion is a plain merge of content), and a deployed 
 **artifact, never a workbench** (edit on the dev branch and regenerate).
 
 **Setting a repo up for this is [`skill-dev-rig`](../skill-dev-rig/README.md)**, where it's one of
-the parts you can opt into. This skill operates on a repo that's already rigged.
+the parts you can opt into. This skill operates on a repo that's already rigged — all three verbs
+refuse politely if `.dev-build.conf` is missing from the repo root, and point you there.
+
+If you installed only this skill, you don't have it yet:
+
+```bash
+npx github:chzylee/skill-library#skill-dev-rig skill-dev-rig
+```
 
 ## Status
 
-On the `dev` branch, not yet promoted to `main`. Fetch with `--branch dev`.
+On the `skill-dev-rig` branch, not yet promoted to `main` — and never on `dev`. That is why every
+install command here carries the `#skill-dev-rig` fragment, which pins npx to this branch. Once
+promoted, drop it:
+
+```bash
+npx github:chzylee/skill-library skill-ops
+```
 
 ## License
 

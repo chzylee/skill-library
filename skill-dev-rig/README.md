@@ -36,6 +36,16 @@ npx github:chzylee/skill-library#skill-dev-rig skill-dev-rig
 Or list what the repo offers with `npx github:chzylee/skill-library#skill-dev-rig --list`. The
 `#skill-dev-rig` suffix is the branch; it drops away once this is promoted to `main`.
 
+**Manual install** (fallback — if you would rather not run `npx` against a repo you have not read):
+
+```bash
+git clone --branch skill-dev-rig https://github.com/chzylee/skill-library.git
+cp -r skill-library/skill-dev-rig ~/.claude/skills/skill-dev-rig
+```
+
+Both paths do the same thing: copy the folder to `~/.claude/skills/skill-dev-rig`. Restart Claude
+Code, or open a new session, to load it.
+
 ## What it does
 
 **Local browser UI.** Vendors `local-ui.mjs` into your skill and writes the consumer script. The
@@ -77,12 +87,18 @@ schema is [`SCHEMA.md`](SCHEMA.md).
 cd skill-dev-rig && node --test
 ```
 
-32 tests against three fixture consumers, covering the marker contract, the security posture, and
+38 tests against three fixture consumers and the installer, covering the marker contract, the security posture, and
 the shutdown races.
 
 ## Status
 
-On the `dev` branch, not yet promoted to `main`. Fetch with `--branch dev`.
+On the `skill-dev-rig` branch, not yet promoted to `main`. That is why the install command above
+carries the `#skill-dev-rig` fragment — it pins npx to this branch. Once this is promoted, drop the
+fragment:
+
+```bash
+npx github:chzylee/skill-library skill-dev-rig
+```
 
 ## License
 

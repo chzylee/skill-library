@@ -63,7 +63,10 @@ Generate or refresh the dev build for one skill.
    - `disable-model-invocation: true`  (dev builds answer only explicit `/<skill>-dev`
      calls — they must never win auto-routing over the stable version)
    - `generated-from: <full sha of dev HEAD>`
-   - `generated-by: dev-build`
+   - `generated-by: dev-build` — **deliberately still the old name.** This string is a
+     contract, not a label: `status` matches on it to tell builds it manages from strays
+     it must not touch. Changing it would make every already-deployed build on every
+     machine read as an unmanaged stray. It is not residue from the rename; leave it.
 5. Report: skill, target path, source sha, and a reminder to restart or open a new
    session so the build loads.
 

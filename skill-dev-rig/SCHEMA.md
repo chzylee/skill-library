@@ -74,6 +74,9 @@ is the whole design: engine = form + values; skill = task execution.
   the skill computes these with its tools before launching.
 - `--out <path>` (required) — where the engine writes the merged values (JSON).
 - `--tasks-out <path>` — where the engine writes the requested task ids (JSON array).
+- `--result <path>` — where the engine writes the JSON run record (reason, exit code, timestamps,
+  summary data). Optional; the engine picks a temp path and always prints `CONFIG_FORM_RESULT=`
+  either way, so a backgrounded run always has somewhere to leave its answer.
 - `--title`, `--port` (0 = ephemeral), `--timeout` (seconds), `--open` (auto-open browser).
 
 ## What the skill reads OUT
