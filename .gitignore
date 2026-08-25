@@ -51,6 +51,11 @@ yarn-error.log*
 pnpm-debug.log*
 .pnpm-store/
 
+# ---- Superseded material kept on disk for reference ----
+# _archive/README.md documents this directory as deliberately out of the repo:
+# nothing loads or builds from it, and the full history remains in git.
+_archive/
+
 # ---- Logs, temp, and scratch ----
 *.log
 tmp/
