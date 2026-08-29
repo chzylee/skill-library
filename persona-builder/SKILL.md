@@ -41,6 +41,11 @@ floors below hold in every mode.
   a concrete scenario; run the same-person test aloud on any proposed mode. Sternness means
   less implicit trust — conflicts get named firmly, with reasons — never a blocked door.
 
+**Rigor is scrutiny, never pace.** A higher rigor mode raises the challenge per field; it
+never licenses moving faster or covering more ground per turn. Executive search should
+produce **more** turns than Standard, not fewer — more challenge per field, not more fields
+per turn.
+
 ## Resolve the registry — plug in, don't impose
 
 The best tools plug into a setup rather than imposing a framework. Resolution order:
@@ -94,12 +99,22 @@ CREATE TABLE ("Name" TITLE, "When to assume" RICH_TEXT, "Declared bias" RICH_TEX
 Run as a conversation, one phase at a time. Never adopt the persona while building it — you
 are the recruiter, not the hire. Guidance rules, all phases:
 
+- **One question at a time — hard rule.** Never batch questions, and never put two decisions
+  in one turn. Ask, stop, read the answer, then ask the next. This is what makes the session
+  feel like turns rather than a form, and it is what gives the user a turn to *shape* a field
+  before ruling on it.
+- **Stop and wait between phases — a gate, not guidance.** Each phase ends by reporting what
+  it established and stopping. Do not answer the prior phase, report a synthesis, and open
+  the next phase in the same turn; the user gets a turn between every phase.
 - **Keep suggestions generic on the spine.** People lean toward predictions when given them,
   so for the required fields — name, when-to-assume, the bias, the directives — guidance is
   probing questions plus **generic cross-domain examples only** (building an engineering
   persona? illustrate with a content coach: teaches the shape, unstealable for content).
-  Do not draft their spine content for them. Exceptions: Quick hire (the user explicitly
-  opted into proposals), and gaps the user has clearly handed to you.
+  Do not draft their spine content for them. **A menu of drafts is still drafting:**
+  presenting drafted spine content as options to pick from produces the model's directives
+  with the user's approval, not the user's directives — the exact substitution this rule
+  exists to prevent. Exceptions: Quick hire (the user explicitly opted into proposals), and
+  gaps the user has clearly handed to you.
 - **Specific proposals are welcome on the vague optional fields** — cognitive patterns,
   grounding, and especially known flaws — where leaning on a prediction is acceptable or
   even the point.
@@ -113,6 +128,9 @@ The phases:
 1. **The person.** "Describe the person you want to work with — their role, what they're
    like, when you'd go to them." Derive the **Name** (self-describing title, never a bare
    codename) and **When to assume** (the situations where the user should reach for them).
+   Also derive their **output contract** — one line on what their work product *is* ("the
+   output is a better plan, not a document about the plan"); it lands in the identity
+   paragraph and anchors the persona against producing commentary when the user needed work.
 2. **The bias.** What should this person favor — **at the expense of what?** A bias without a
    stated cost is decoration, not a declaration. At Standard, challenge the cost once; at
    Executive search, question whether the bias actually serves the stated purpose — firmly,
@@ -123,12 +141,50 @@ The phases:
    changing behavior. At Executive search, stress-test each against a concrete scenario.
 4. **Modes (optional).** Only if the same person genuinely has distinct working moods. Run the
    same-person test; each mode gets its directive selection, tie-breaks, and defaults.
+   Mode guidance (distilled from the office-hours mode analysis — see Notes):
+   - **Modes are goal-indexed.** A mode's when-to-use is a condition on the *user's* goal,
+     not the persona's disposition. Elicit the situations that select each mode in the
+     user's own terms; many situations may map to one mode — the mapping is the persona's
+     job, never a menu of internal mode names.
+   - **Each mode names its currency** — the one thing that counts as evidence of value in
+     that mode ("specificity is the only currency" / "delight is the currency"); downstream
+     behavior derives from it. Crisper than a bare priority order.
+   - **Allowed variance:** a mode may vary the currency, register, question/directive
+     selection, and output contract — identity, process discipline, and sovereignty stay
+     fixed. Needs its own patterns, grounding, or purpose → new persona (same-person test).
+   - **Mode-shift protocol:** name the goal-change signals per mode. On hearing one, the
+     persona proposes the switch in character and the user confirms — announced, never
+     silent, never inferred from one offhand mention. Cover both directions (no ratchet),
+     and never rank modes as more or less serious.
+   - **Guard every mode against its own failure mode** — an enthusiastic mode needs a check
+     on unwarranted excitement just as a rigorous mode needs an anti-sycophancy rule.
 5. **Patterns and grounding (optional).** Known-to-work moves the person reaches for — each
    grounded with a source (including anything researched mid-interview) or flagged unverified.
+   Quality bar for a pattern entry (distilled from the gstack case study — see Notes):
+   - **Perception, not procedure.** A pattern is what the persona *notices* before it opines
+     ("edge case paranoia: what if the name is 47 chars? zero results?"), not a step to
+     execute — steps are directives. If it reads as a checklist item, convert it or cut it.
+   - **Shape: name → gloss → when-it-fires.** Bind each pattern to the moment it activates
+     ("when assessing timeline, apply speed calibration"). An unbound pattern is decoration;
+     the binding is what survives a busy context.
+   - **Anchor to a named source where one exists.** "Bezos two-way doors" loads more judgment
+     per token than any paraphrase — name plus a one-line gloss that pins the intended
+     reading; the citation itself lands in Grounding.
+   - **Model the counterpart too.** Some of the strongest patterns describe how the people
+     the persona serves behave ("users scan, they don't read" — Krug), not how the expert
+     thinks.
+   - **Calibration anchor when the persona scores things.** If the job includes rating or
+     ranking, elicit worded tiers plus 1–2 gold-standard exemplars ("9–10 = Stripe tier").
+     Uncalibrated scales inflate.
+   - **Few and sharp.** Patterns compete for attention; stop when an added pattern stops
+     changing behavior — the same stop rule as directives.
 6. **Known flaws.** This field grows with observed failures, so don't pressure the user to
    populate it now — instead **offer a prediction**: derive 1–2 likely failure modes from the
    declared bias (the stated cost is the flaw vector) and propose them labeled
-   *(predicted — not yet observed)*. The user accepts, edits, or skips.
+   *(predicted — not yet observed)*. The user accepts, edits, or skips. Write each flaw as
+   **the trap, not the prohibition** — name the specific self-deception so the persona can
+   recognize itself mid-failure ("feeling done after writing prose *about* the work" beats
+   "don't stop early").
 
 ## Sign off, then write
 
@@ -157,16 +213,23 @@ how they compensate for being research-backed rather than lived-experience-backe
 **Declared bias:** you favor <X> over <Y> — at the expense of <cost>. <One line on
 how the bias shows up in behavior.>
 
-**Modes** — the user picks one at launch and may switch any time; if none is stated,
-ask, never assume:  <omit section if no modes>
-- **<Mode>** — priority order: <A over B>. Tie-break: when <A> conflicts with <B>,
-  favor <winner> and say so.
+**Modes** — at launch, ask the user's goal in their own terms and map it to a mode,
+saying which you picked; never present internal mode names as the question. Once
+picked, commit — no silent drift to another mode or back to neutral-assistant
+posture. If you hear a mode's shift signal, propose the switch in character and let
+the user rule:  <omit section if no modes>
+- **<Mode>** — for when the user's goal is <goal condition>. Currency: <what counts
+  as evidence of value here>. Priority order: <A over B>. Tie-break: when <A>
+  conflicts with <B>, favor <winner> and say so. Shift signal: <what the user says
+  that suggests another mode> → propose, don't assume.
 
 **Directives** (trigger → needs-to-know → how-to-find-out):
 1. <Trigger> → <what must be established> → <ask the user / research at runtime /
    consult grounding / derive from context> — <one clause on why>.
 
-**Cognitive patterns:** <the moves this person reaches for; short clauses>.
+**Cognitive patterns** (perception instincts, not checklist items — each bound to
+its moment): <name — gloss — when it fires; one line each>. Judgments that flow
+from a pattern must name it: never "this feels off" without the broken principle.
 
 **Grounding:** <sources backing the patterns — including anything researched during
 the interview — or the runtime-research rule that substitutes; flag the unverified>.
@@ -191,3 +254,16 @@ version when a change merits shipping.
 
 - If the user's registry has extra columns beyond the v1 schema, preserve and fill them where
   the interview naturally covered them; this skill owns the persona's spine, not their table.
+- The pattern quality bar, trap-writing rule, mode-commitment line, calibration anchor, and
+  output contract derive from the [Cognitive Patterns Case Study](https://app.notion.com/p/3a276356d6fe8185a129d445887f6a49)
+  (analysis of the gstack plan-review personas, 2026-07-19). The mode guidance (goal-indexed
+  modes, currency line, allowed variance, shift protocol, symmetric failure-mode guards)
+  derives from Part 2 of the same study (gstack /office-hours mode mechanism).
+
+## Changelog
+
+- **v1.1.0 — 2026-07-22.** From the design-doc architect build (observed failures, same day):
+  added the one-question-at-a-time hard rule; made the between-phases stop an explicit gate
+  rather than guidance; named the menu-of-drafts loophole under the spine-drafting rule; and
+  stated that rigor raises scrutiny, never pace (Executive search yields more turns, not fewer).
+- **v1.0.0** — initial skill.

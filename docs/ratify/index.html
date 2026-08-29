@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ratify — owning the work you do with AI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <article class="sheet">
+    <p class="eyebrow"><span class="dot"></span><a href="https://github.com/chzylee/ship-pipeline">Ship Pipeline</a> · <a href="https://github.com/chzylee/skill-library/tree/main/ratify">ratify</a><span class="muted"> · updated 2026-07-19</span></p>
+    <h1>Own the decisions your AI makes.</h1>
+    <p class="lede">
+      Ask an agent to write code and you get a black box. You have to read all of it back to know what's going on in detail.
+    </p>
+    <p class="lede">
+      <strong>/ratify</strong> is a Claude Code skill that has the agent walk you through the code around core design elements. You give your expected behavior, it tells you what it chose, and you author the final call.
+    </p>
+    <p class="lede">
+      The final result is yours to own, not just approve.
+    </p>
+
+    <section>
+      <p class="label">What it solves</p>
+      <h2>No more massive PR reviews</h2>
+      <p>
+        Everyone wants to build faster with AI-generated code, but it often costs more time than it saves. Research shows code reviews are a rising cost:
+      </p>
+        <div class="note">
+          <ul>
+            <li>"When developers are allowed to use AI tools, they <strong>take 19% longer to complete issues</strong>—a significant slowdown that goes against developer beliefs and expert forecasts" (<a href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/">METR, 2025</a>).</li>
+            <li>"<strong>Bugs per developer are up 54%</strong>. The incidents-to-PR ratio has more than tripled. Median review time has increased 5X. <strong>31% more PRs are merging without any review</strong>" (<a href="https://pages.faros.ai/hubfs/AI_Engineering_Report_2026_The_Acceleration_Whiplash_Faros.pdf">Faros AI, 2026</a>).</li>
+            <li>"We found that using AI assistance led to a statistically significant decrease in mastery... participants in the AI group <strong>scored 17% lower</strong> than those who coded by hand" (<a href="https://www.anthropic.com/research/AI-assistance-coding-skills">Anthropic, 2026</a>).</li>
+          </ul>
+        </div>
+        <p style="margin-top:16px">
+          <strong>AI work can outpace the people answering for it</strong>. /ratify is built to help close that gap by improving ownership over increments of work.
+        </p>
+    </section>
+
+    <section>
+      <p class="label">What it does</p>
+      <h2>Open the black box & examine its parts</h2>
+      <p>
+        Like a handoff meeting, the AI agent steps through each decision with you one at a time: <strong>it lays out the work or code at the core of that decision</strong>, shares the context around it, then asks what you'd expect before it reveals what it actually thought. <br />
+        Where the two diverge, <strong>you decide what the actual behavior should be</strong>. You own judgement on the final design decisions before pushing.
+      </p>
+      <div class="note">
+        <ul>
+          <li><strong>Predict before reveal</strong> — you have to predict code behavior before seeing what AI wanted it to do.</li>
+          <li><strong>You make the final call</strong> — AI won't move past a design decision without your approval, so you sign off before committing.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <p class="label">The data · five systems</p>
+      <h2>Misalignment is not a miss</h2>
+      <p>
+        Across development work on 5 different projects — this includes non-code systems like skills — I made predictions on 31 core decisions:
+
+      </p>
+      <div class="readout">
+        <div class="tile p"><div class="n">24<small>/31</small></div><div class="k">Predicted cold</div></div>
+        <div class="tile a"><div class="n">100<small>%</small></div><div class="k">Steered</div></div>
+        <div class="tile o"><div class="n">0</div><div class="k">Blind spots</div></div>
+      </div>
+      <p class="readcap">most foreseen before the reveal · steered on every divergence · none slipped through</p>
+      <p style="margin-top:16px">
+        77% of decisions were built as I intended from seeing the code around it. On any misaligned prediction, I changed or cut the AI's proposal. I improved or corrected 6 times the AI didn't match the behavior I intended, and demoted one decision AI generated on its own as out of scope. <strong>There were 0 decisions where I had no idea and left the final choice to AI</strong>.
+      </p>
+      <p style="margin:26px 0 8px">Each misaligned prediction had a visible cause:</p>
+      <div class="readout">
+        <div class="tile p"><div class="n">2</div><div class="k">Authored</div></div>
+        <div class="tile o"><div class="n">5</div><div class="k">Missing-info</div></div>
+        <div class="tile s"><div class="n">0</div><div class="k">Judgment</div></div>
+      </div>
+      <p class="readcap">authored a better call · needed specific knowledge to be certain · did not misjudge what the code should do</p>
+      <p>
+        2 times the AI and I differed, I had a better understanding of how code should behave. The AI fell short, so I authored the outcomes. For 5 decisions, I needed more domain knowledge or deeper tool knowledge, but these weren't failed quizzes. After learning what I needed, I ruled on what was committed in the end.<br />
+        0 times did I misjudge how the system should behave, and AI never committed before I could approve it myself. Even if something breaks, I'd know where to look.
+      </p>
+    </section>
+
+    <section>
+      <p class="label">Three examples</p>
+      <h2>Where ownership made a difference</h2>
+      <p>
+        <strong>/ratify's</strong> first run was Runway (an app I'm building) where I cold-predicted code behavior in 21/23 cases and overrode 2 AI choices to make sure v0 worked as I intended. I've run it on non-code systems I'm buliding too for my AI workflow, and here's where my authorship made a difference:
+      </p>
+      <div class="moments">
+        <div class="moment">
+          <h3>Building the full desired scope</h3>
+          <p class="vs"><span class="tag">non-code</span>persona-library</p>
+          <p>
+            The AI recommended deferring a feature when it judged the demand wasn't real yet. It didn't know I had already been using a rough version of that feature, repeatedly. I overrode it and built the feature in. Misaligned prediction, but I called out AI on something I knew and it didn't. Logged as authorship, not a miss.
+          </p>
+        </div>
+        <div class="moment">
+          <h3>Clearly defining my data schema</h3>
+          <p class="vs"><span class="tag">non-code</span>ratify-schema-v2</p>
+          <p>
+            When knowledge difference between me and AI causes disagreement, the AI wanted to categorize both as "missing-info" in /ratify's schema. I decided it was better to distinguish that from "authored" because there are 2 distinct cases here. Sometimes I need more info to make a confident choice, but sometimes I have info the AI is missing. Patterns will show where users need to document or research better.
+          </p>
+        </div>
+        <div class="moment">
+          <h3>Verify important features before committing</h3>
+          <p class="vs"><span class="tag">code</span>Runway</p>
+          <p>
+            Upon revisiting a feature, I noticed a sharper way to design it using domain knowledge I didn't have before. Refactoring broke tests and gave me the chance to redesign, rebuild, test, and approve before calling this done. Review gave me a chance to verify something that looked right at a glance but didn't actually fully meet my design needs.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="status">
+      <p class="label">Honest status</p>
+      <p>
+        <strong>An early record, not a study.</strong> 31 logged decisions across five delegated systems, plus the original code build that proved it first. One person, a handful of sittings. It's proof /ratify can help increase work ownership while still leveraging AI to move faster, but it hasn't been tested at scale.
+      </p>
+      <p>
+        <strong>What's hard evidence, and what isn't.</strong> I've been iterating on /ratify by using it and improving as I go. About two-thirds of these records were typed retrospectively after updating the schema based on patterns noticed in my own decision logs, so not all data was caught live. The log is append-only; every number here is recomputed from raw entries when you read it.
+      </p>
+      <details class="disclose">
+        <summary>Future testing and use in daily work</summary>
+        <div class="body">
+        <p>
+          <a href="https://github.com/chzylee/ship-pipeline">"Ship Pipeline"</a> is a pipeline of skills I'm working on to bake ownership into the development process, and /ratify is one of the core pieces. It's a process for being intentional about building <em>documentation, testing, and trust</em> into AI-assisted development workflows to mitigate excess review time.<br />
+          Build around documented design, <strong> ratify the actual implementation</strong>,  and hone your mastery as you go.
+        </p>
+        </div>
+      </details>
+      <br />
+      <p class="kicker">The whole point is a "done" you earned, not one you claimed.</p>
+    </section>
+
+    <section>
+      <p class="label">Try it yourself</p>
+      <h2>Run /ratify on your own work</h2>
+      <p>
+        You can try this skill with Claude Code right now. In the full Ship Pipeline skill set, it runs in /finish-build when there is a possible decision fork. Install it and run it on work you're finishing. Say <em>"ratify this spec"</em>, <em>"walk me through ratifying these,"</em>, just <em>/ratify</em>, or let a pipeline stage invoke it at its stop gate.
+      </p>
+      <p><a href="https://github.com/chzylee/skill-library">github.com/chzylee/skill-library</a> — install /ratify on its own; <a href="https://github.com/chzylee/ship-pipeline">github.com/chzylee/ship-pipeline</a> — the full pipeline it anchors.</p>
+      <details class="disclose">
+        <summary>What /ratify operates on</summary>
+        <div class="body">
+          <p>
+            A run ratifies the <strong>functional decisions for a unit of work</strong>: a spec, a design doc, a decision list, a build increment. If you're building on something, it checks that your build respects the design doc.
+          </p>
+          <p>
+            It starts by naming that artifact, <strong>explaining what you sign off on</strong>, and listing its decisions. Then it walks through them, asking what you predict before each reveal.
+          </p>
+          <p>
+            Name the decisions clearly going in, and the record comes out sharp. You predict before AI reveals so you can think in tandem with it without its influence appearing first.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <footer>
+      <p class="stamp">ratify v0.3.0<span class="sep">·</span>Ship Pipeline<span class="sep">·</span>as of 2026-07-20</p>
+      <div class="record"><code>{<span class="kk">"schema_version"</span>:2, <span class="kk">"pre_confidence"</span>:<span class="vp">"high"</span>, <span class="kk">"prediction_outcome"</span>:<span class="vs2">"surprised"</span>, <span class="kk">"decision_origin"</span>:<span class="vp">"human"</span>, <span class="kk">"gap"</span>:<span class="vp">"authored"</span>, <span class="kk">"decision_type"</span>:<span class="vp">"amend"</span>}</code></div>
+    </footer>
+  </article>
+</div>
+<a href="https://github.com/chzylee/ship-pipeline" target="_blank" rel="noopener" class="gh-fab" id="ghFab" aria-label="Open ship-pipeline on GitHub" title="GitHub">
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
+</a>
+</body>
+</html>
