@@ -1,0 +1,14 @@
+{
+  "install-standard": {
+    "done": true,
+    "detail": "block v2026-07-18 present in ~/.claude/CLAUDE.md"
+  },
+  "create-audit-results": {
+    "done": false,
+    "detail": "audit_results_url not set yet"
+  },
+  "register-audit-job": {
+    "done": false,
+    "detail": "no schedule registered"
+  }
+}

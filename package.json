@@ -1,0 +1,12 @@
+{
+  "name": "chzylee-skill-library",
+  "version": "0.1.0",
+  "description": "Installer for the skills in this repo. Run it with npx; nothing is published to npm. No \"type\" field on purpose \u2014 the bin is .mjs, which is ESM by extension, so no .js file in this repo is reclassified.",
+  "bin": {
+    "chzylee-skill-library": "./install.mjs"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

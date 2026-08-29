@@ -137,18 +137,18 @@ Each skill folder is installable on its own — no cross-skill dependencies, no 
 
 Skills are developed on the `dev` branch and tested as **dev builds** — separate
 `<skill>-dev` skills that never shadow the stable versions — then promoted to `main`.
-The tooling is the [dev-build pattern](https://github.com/chzylee/dev-build), which
-started life in this repo and now lives in its own:
+The tooling lives in this repo — [`skill-ops`](skill-ops/README.md) for the workflow,
+[`skill-dev-rig`](skill-dev-rig/README.md) to set a repo or skill up for it:
 
 ```text
-/dev-build deploy <skill>    # test a dev-branch skill as <skill>-dev, side by side
-/dev-build status            # what's deployed, stale, or ahead of main
-/dev-build promote <skill>   # move it to main: folder + plugin + README row + bundle
+/skill-ops deploy <skill>    # test a dev-branch skill as <skill>-dev, side by side
+/skill-ops status            # what's deployed, stale, or ahead of main
+/skill-ops promote <skill>   # move it to main: folder + plugin + README row + bundle
 ```
 
-This repo is rigged for it (`.dev-build.conf` + `scripts/dev-build-check.sh`); install
-the skill from `chzylee/dev-build` — maintainers and forkers only; library users never
-need it.
+This repo is rigged for it (`.dev-build.conf` + `scripts/dev-build-check.sh`). Maintainers and
+forkers only; library users never need it. If you installed the old `chzylee/dev-build` plugin,
+remove it — its trigger phrases collide with `skill-ops`.
 
 **If you clone this repo:** Claude Code will ask you to approve one hook —
 [`scripts/dev-build-check.sh`](scripts/dev-build-check.sh), a short read-only script

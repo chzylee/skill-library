@@ -1,0 +1,14 @@
+# dev-build configuration — copy to your repo root as .dev-build.conf and edit.
+# Read by /skill-ops and dev-build-check.sh. Plain sh KEY="value".
+
+# Directory holding your skill folders: "." for skills at repo root,
+# "skills" for a skills/ subdirectory.
+skills_root="."
+
+# Branch names.
+stable_branch="main"
+dev_branch="dev"
+
+# What promotion must update in THIS repo beyond moving the skill folder to the
+# stable branch (manifests, catalog rows, bundles). Prose; empty = nothing.
+release_steps=""
