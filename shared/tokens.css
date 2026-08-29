@@ -1,0 +1,128 @@
+/* ============================================================================
+   skill-library — shared visual tokens
+   ============================================================================
+
+   WHAT THIS IS
+   Every viewer in this library (study guides, the study index, the Life Ledger
+   viewer) had independently converged on the same palette, type stacks, and
+   geometry. This file is that convergence written down once. It invents nothing.
+   Values are lifted verbatim from:
+
+     study/references/guide.css
+     study-read/references/index.css
+     life-ledger/scripts/build_viewer.py
+
+   WHY IT EXISTS
+   Because the fourth viewer re-invented the palette from scratch, including a
+   teal accent where every existing viewer uses warm brown. The system was real
+   and consistent; it just lived in three places and was written in none, so
+   there was nothing to inherit. Now there is.
+
+   HOW TO USE IT
+   Viewers here are self-contained single files with no external requests, so
+   build scripts INLINE this file at build time rather than linking it:
+
+       tokens = open(SHARED / "tokens.css").read()
+       ... f"<style>\n{tokens}\n{page_css}\n" + "</" + "style>"
+
+   Do not add a <link> to it. That would break the no-external-requests rule
+   every viewer in this repo holds.
+
+   NOTE the split string above, and do not undo it. An HTML parser ends a
+   <style> element at the first literal "</style" in its text, comment or not.
+   This file used to spell that tag out here, which silently terminated the
+   stylesheet of every page that inlined it: the tokens loaded, and everything
+   after them rendered as body text. build_index.py now neutralises the
+   sequence at build time as well, but other build scripts inline this file
+   too, so it must not reappear in the source.
+
+   HOUSE RULES THAT COME WITH THE TOKENS
+   - --accent means "this leaves for an external source". Not emphasis, not
+     decoration. If it is used for anything else the signal is gone.
+   - Reading prose uses --font-reading. Chrome, labels, and metadata use
+     --font-ui. Contrast axis (serif vs sans), never two similar sans.
+   - Text contrast floor is 4.5:1 against its own background, including
+     metadata, badges, and input placeholders. --muted is the lightest value
+     that clears it; do not invent anything lighter for text.
+   - Grouping comes from typography and whitespace, not containers. --card and
+     --chip exist for genuine interaction boundaries, not for decorating lists.
+   ============================================================================ */
+
+:root {
+  /* ---- color: light ---- */
+  --bg: #fbfaf8;         /* page background */
+  --fg: #1f1d1a;         /* body text            ~15.8:1 on --bg */
+  --muted: #6b6862;      /* metadata, labels      ~5.3:1 on --bg */
+  --rule: #e3e0da;       /* 1px rules only, never text */
+  --card: #ffffff;       /* raised surface, sparingly */
+  --side: #f5f2ed;       /* sidebars, rails */
+  --chip: #f2efe9;       /* tags, quiet panels */
+  --accent: #7a4b2a;     /* outbound links ONLY   ~7.4:1 on --bg */
+  --accent-ink: #fbfaf8; /* text placed on --accent */
+  --warn: #8a3d2e;       /* dead sources, failures */
+  --ok: #2f6b4f;         /* verified, confirmed */
+
+  /* ---- type ----
+     The font stacks are the whole contract: everything consumes them. The size
+     steps below are NOT the topic view's scale and do not claim to be —
+     study-read/references/index.css sets that surface's sizes per element,
+     deliberately: a dense reading page uses ~11 distinct sizes, and forcing
+     them through a seven-step scale either changes what renders or turns this
+     file into a mirror of one stylesheet. What each step actually feeds:
+
+       --fs-xs           tags, chips, badges — consumed wherever those appear
+       --fs-m            UI text (the search input)
+       --fs-r, --fs-h1/h2/h3   rendered markdown documents (.md blocks), the
+                         one surface that runs on this scale end to end
+
+     --fs-h3 equals --fs-r on purpose: a markdown h3 is body-size, and the sans
+     stack plus heading weight do the differentiating. Do not "fix" them apart.
+     (--fs-s, 0.78rem, once sat here for metadata/captions; nothing in the repo
+     consumed it, so it was deleted rather than left as a published claim
+     nobody exercises.) */
+  --font-ui: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-reading: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --fs-xs: 0.6875rem;    /* tags, flags */
+  --fs-m: 0.875rem;      /* UI text, sidebar */
+  --fs-r: 1.0625rem;     /* reading body */
+  --fs-h3: 1.0625rem;    /* = --fs-r, see above */
+  --fs-h2: 1.3125rem;
+  --fs-h1: 1.75rem;
+
+  /* ---- geometry ---- */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --pill: 999px;
+  --measure: 66ch;       /* reading text width */
+  --pad-main: 2.25rem;
+  --tap: 44px;           /* minimum touch target */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161513;
+    --fg: #eae7e1;
+    --muted: #a19c93;
+    --rule: #2e2c28;
+    --card: #1e1d1a;
+    --side: #1b1a17;
+    --chip: #26241f;
+    --accent: #d8a074;
+    --accent-ink: #161513;
+    --warn: #e08a76;
+    --ok: #7fc2a0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

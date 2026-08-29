@@ -1,0 +1,74 @@
+{
+  "topic": "Kafka consumer mechanics and delivery semantics",
+  "instructions": "For each cluster write a fluent, confident `because` of at least 80 characters that reads like a real governing principle. Do NOT reveal that the rows were grouped by a shared word. Do NOT hedge. This text is a control and is supposed to be persuasive prose over a bad grouping.",
+  "clusters": [
+    {
+      "shared_word": "commit",
+      "members": [
+        "K-018",
+        "K-029",
+        "K-051",
+        "K-056",
+        "K-059"
+      ],
+      "member_text": [
+        {
+          "subject": "Auto-commit timing window",
+          "description": "A widely repeated mistake is assuming auto-commit means 'Kafka safely tracks my progress for me.' In practice, the automatic commit fires on the next call to poll() and commits the offsets returned by the previous poll() -- it is decoupled from whether the consumer actually finished processing those records. If the consumer crashes after poll() returns a batch but before it finishes handling all records in that batch, the next commit (on the following poll or the commit interval, default 5s via auto.commit.interval.ms) may commit offsets past records that were never fully processed, silently dropping them from the at-least-once guarantee people assume auto-commit provides. A related, separately documented race: calling pause() during graceful shutdown while auto-commit is on can seek to stale cached offsets and overwrite correct committed offsets, causing already-processed messages to be reprocessed on restart. [AUDIT viable->wounded: Origin https://github.com/confluentinc/confluent-kafka-javascript/issues/404 is a client-library bug report: pause() seeks to a stale #lastConsumedOffsets entry and commits it immediately under enable.auto.commit=true. That is not the general 'auto-commit commits the offset from the last poll(), not the batch just processed' mechanism the row asserts. Related phenomenon, wrong mechanism. Repoint origin to the KafkaConsumer javadoc, which does support the claim.]"
+        },
+        {
+          "subject": "At-least-once still requires an idempotent consumer, even with careful commit ordering",
+          "description": "The standard at-least-once recipe is enable.auto.commit=false plus a manual commit issued only after the consumer has fully processed a batch's side effects. This closes the message-loss failure mode of auto-commit (never marking a message done before it's actually done) but does not and cannot close the duplicate-processing failure mode: if the process crashes or is rebalanced away after the side effect (e.g. a DB write or downstream publish) succeeds but before the offset commit is acknowledged, the next owner of that partition will start from the last committed offset and reprocess the already-applied message. This is why every at-least-once consumer that has externally visible side effects needs its own idempotency mechanism (dedup key, upsert semantics, idempotent API call) independent of anything Kafka's client does -- the guarantee Kafka gives is about redelivery, not about effects. [AUDIT viable->wounded: Origin https://tarkalabs.com/blogs/kafka-message-duplication/ describes duplicates arising from a poll-timeout eviction and rebalance ('Kafka will assume that the service is dead... the same message will then be assigned to, and processed by, another consumer in the group'), not from 'a crash between finishing processing and committing the offset' as the row asserts. The conclusion (at-least-once needs an idempotent consumer) is right and the article does present that solution; the stated mechanism is not the cited one.]"
+        },
+        {
+          "subject": "Transaction coordinator, transaction log, and commit/abort markers",
+          "description": "KIP-98 describes the three components that make multi-partition atomicity possible: applications need 'the ability to write to several TopicPartitions atomically... either all messages are committed, or none of them are.' Each transactional producer connects to a transaction coordinator, a broker role that assigns PIDs, tracks transaction state, and drives commit/abort. The transaction log is an internal Kafka topic that durably persists this metadata so in-flight transactions can be recovered after a coordinator failure. When the producer calls commitTransaction() or abortTransaction(), the coordinator writes a COMMIT or ABORT marker as a control message to every partition that participated in the transaction; consumers use these markers to decide whether to surface or discard the transactional messages that preceded them."
+        },
+        {
+          "subject": "Trace the loss and duplicate windows for each commit strategy",
+          "description": "Write out a three-column table: auto-commit, sync-commit-after-process, sync-commit-before-process. For each, mark the instant a crash produces loss and the instant it produces a duplicate. The exercise is done when you can state which strategy gives at-most-once and which gives at-least-once without looking it up, and can point at the line of code where the window opens."
+        },
+        {
+          "subject": "Position vs committed position, and the n+1 commit rule",
+          "description": "The KafkaConsumer javadoc is explicit that 'there are actually two notions of position relevant to the user of the consumer: The position of the consumer gives the offset of the next record that will be given out. It will be one larger than the highest offset the consumer has seen in that partition... The committed position is the last offset that has been stored securely. Should the process fail and restart, this is the offset that the consumer will recover to.' It then states the rule that manual-commit code gets wrong: 'Note: The committed offset should always be the offset of the next message that your application will read. Thus, when calling commitSync(offsets) you should use nextRecordToBeProcessed.offset() or if ConsumerRecords is exhausted already ConsumerRecords.nextOffsets() instead.' Committing record.offset() rather than record.offset()+1 does not fail loudly -- it silently reprocesses exactly one record per commit, forever, which is invisible in any test that tolerates at-least-once. The same section adds a second correction to the naive mental model: 'offsets are not guaranteed to be consecutive (such as compacted topic or when records have been produced using transactions)', so code that infers message loss from a gap in offsets is wrong. Added by audit: K-002 establishes that position is a single integer at orientation depth and K-006 covers commitSync vs commitAsync, but no row in the set states what value to commit."
+        }
+      ],
+      "principle": "The commit is Kafka's one true checkpoint, and every consumer guarantee falls out of when it fires",
+      "because": "Auto-commit's silent data loss, the manual-commit duplicate window, the transaction coordinator's durable commit and abort markers, and the off-by-one hiding in committed-position semantics are not five separate issues. Each is the same atomic checkpoint mechanism observed at a different point in its lifecycle: Kafka defines exactly one instant at which 'done' becomes durable truth, and every delivery guarantee is simply a description of what can go wrong on either side of that instant."
+    },
+    {
+      "shared_word": "partition",
+      "members": [
+        "K-004",
+        "K-013",
+        "K-020",
+        "K-047",
+        "K-055"
+      ],
+      "member_text": [
+        {
+          "subject": "Partition-to-consumer exclusivity",
+          "description": "The javadoc states the assignment invariant directly: 'if there is a topic with four partitions, and a consumer group with two processes, each process would consume from two partitions.' This exclusivity is what gives Kafka in-order, non-duplicated delivery per partition within a group -- two members of the same group never read the same partition concurrently. It also caps useful parallelism: a group cannot usefully have more active consumers than the topic has partitions, because the excess consumers will be assigned zero partitions."
+        },
+        {
+          "subject": "Manual partition assignment bypasses group coordination",
+          "description": "The KafkaConsumer javadoc documents assign() as an alternate, lower-level API: it 'disables dynamic partition assignment and consumer group coordination.' A consumer using assign() specifies its partitions directly and does not participate in rebalances, heartbeats, or the group protocol at all -- it is not a member of a consumer group in the coordination sense even if group.id is set. This matters operationally because none of the rebalance-related configuration (session.timeout.ms, ConsumerRebalanceListener, static membership, cooperative assignors) applies to assign()-based consumers."
+        },
+        {
+          "subject": "Poison pill messages block the whole partition",
+          "description": "When a consumer's deserializer cannot parse a record (commonly because a producer changed serialization format, or the consumer is configured with the wrong key/value deserializer), the default behavior is that the exception is thrown before the offset for that record is ever advanced. Because the consumer re-polls and hits the same record again, it enters an infinite retry loop against that one 'poison pill' message, and every other message queued behind it on that partition is starved indefinitely -- this is not a whole-consumer crash, it is a silent partition-level stall that can go unnoticed until lag alarms fire. Confluent's own guidance is to never let deserialization exceptions propagate up to block re-polling; the documented fix (for the Java/Spring stack) is a wrapping ErrorHandlingDeserializer that catches the failure, returns null plus a DeserializationException header, and routes the record to a dead-letter topic via a recoverer, which lets the offset advance past the bad record."
+        },
+        {
+          "subject": "Idempotent producer: producer ID and per-partition sequence numbers",
+          "description": "KIP-98 introduces the mechanism behind enable.idempotence: each producer session gets a unique PID transparently at initialization. For every (PID, TopicPartition) pair the producer maintains a sequence number starting at zero and incrementing by one per message. The broker validates that an incoming message's sequence number is exactly one greater than the last one it committed for that (PID, partition); a duplicate (already-seen) sequence number is silently deduplicated, while a gap (a sequence number skipping ahead) is treated as a fatal error signaling data loss. This is what converts producer-retry-driven duplication -- previously an unavoidable side effect of at-least-once retries -- into effectively-exactly-once writes for a single producer session, without requiring the application to dedupe anything itself."
+        },
+        {
+          "subject": "Re-derive why a poison pill stalls one partition and not the topic",
+          "description": "Reason from the single-integer-offset model rather than from a remembered answer. Then list the exits (skip, dead-letter topic, retry with backoff) and name the guarantee each one costs you."
+        }
+      ],
+      "principle": "The partition, not the topic, is Kafka's atomic unit of ordering, isolation, and sequencing",
+      "because": "Partition-to-consumer exclusivity, the assign() API's bypass of group coordination, a poison pill stalling exactly one partition rather than the whole topic, and the idempotent producer's per-(PID, partition) sequence counter are all expressions of a single design fact: Kafka assigns ownership, sequences writes, and isolates failure at the partition boundary, never at the topic or the consumer boundary."
+    }
+  ]
+}

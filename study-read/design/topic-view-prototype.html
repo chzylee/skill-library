@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kafka consumer groups — Study library</title>
+<style>
+/* ============================================================
+   Study library — topic reading view
+   Served locally by the viewer server (see life-ledger-view for the pattern),
+   rebuilt from the JSONL store on each launch. No external requests: tokens and
+   CSS are inlined at build time. Markup is regular and templatable — every
+   repeated element is a data-driven block a generator can emit N of.
+   ============================================================ */
+/* --- inlined from shared/tokens.css at build time --- */
+:root {
+  /* ---- color: light ---- */
+  --bg: #fbfaf8;         /* page background */
+  --fg: #1f1d1a;         /* body text            ~15.8:1 on --bg */
+  --muted: #6b6862;      /* metadata, labels      ~5.3:1 on --bg */
+  --rule: #e3e0da;       /* 1px rules only, never text */
+  --card: #ffffff;       /* raised surface, sparingly */
+  --side: #f5f2ed;       /* sidebars, rails */
+  --chip: #f2efe9;       /* tags, quiet panels */
+  --accent: #7a4b2a;     /* outbound links ONLY   ~7.4:1 on --bg */
+  --accent-ink: #fbfaf8; /* text placed on --accent */
+  --warn: #8a3d2e;       /* dead sources, failures */
+  --ok: #2f6b4f;         /* verified, confirmed */
+
+  /* ---- type ---- */
+  --font-ui: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-reading: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --fs-xs: 0.6875rem;    /* tags, flags */
+  --fs-s: 0.78rem;       /* metadata, captions */
+  --fs-m: 0.875rem;      /* UI text, sidebar */
+  --fs-r: 1.0625rem;     /* reading body */
+  --fs-h3: 1.0625rem;
+  --fs-h2: 1.3125rem;
+  --fs-h1: 1.75rem;
+
+  /* ---- geometry ---- */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --pill: 999px;
+  --measure: 66ch;       /* reading text width */
+  --pad-main: 2.25rem;
+  --tap: 44px;           /* minimum touch target */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161513;
+    --fg: #eae7e1;
+    --muted: #a19c93;
+    --rule: #2e2c28;
+    --card: #1e1d1a;
+    --side: #1b1a17;
+    --chip: #26241f;
+    --accent: #d8a074;
+    --accent-ink: #161513;
+    --warn: #e08a76;
+    --ok: #7fc2a0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* --- end shared tokens --- */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:1rem/1.55 var(--font-reading);
+  -webkit-font-smoothing:antialiased;
+}
+/* Serif for reading, sans for chrome. Contrast axis, not two similar sans. */
+.ui{font-family:var(--font-ui)}
+
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+.wrap{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
+
+/* ---------- library rail ---------- */
+aside{
+  border-right:1px solid var(--rule); padding:22px 18px;
+  position:sticky; top:0; height:100vh; overflow:auto;
+}
+.rail-h{font-family:var(--font-ui);font-size:.75rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  font-weight:650;margin:0 0 14px}
+.search{
+  width:100%; min-height:var(--tap); padding:8px 10px;
+  border:1px solid var(--rule); border-radius:3px; background:var(--card); color:var(--fg);
+  font:.875rem/1.4 var(--font-ui); margin-bottom:6px;
+}
+.search::placeholder{color:var(--muted)}       /* 5.0:1, not the default wash */
+.search-hint{font-family:var(--font-ui);font-size:.6875rem;
+  color:var(--muted);margin:0 0 18px}
+.shelf{font-family:var(--font-ui);font-size:.6875rem;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px}
+.rail-item{
+  display:block;text-decoration:none;color:var(--muted);font-size:.9375rem;
+  padding:7px 0;line-height:1.3;border-bottom:1px solid transparent;
+  transition:color 160ms cubic-bezier(.22,1,.36,1);
+}
+.rail-item:hover{color:var(--fg)}
+.rail-item[aria-current="page"]{color:var(--fg);font-weight:650}
+.rail-item .sub{display:block;font-family:var(--font-ui);
+  font-size:.75rem;color:var(--muted);font-weight:400;margin-top:1px}
+
+/* ---------- main ---------- */
+main{padding:38px 44px 120px;max-width:calc(var(--measure) + 230px)}
+.crumb{font-family:var(--font-ui);font-size:.75rem;
+  color:var(--muted);margin:0 0 16px}
+.crumb a{color:var(--muted)}
+h1{font-size:1.9rem;line-height:1.2;margin:0 0 9px;font-weight:650;
+  letter-spacing:-.015em;text-wrap:balance}
+.boundary{color:var(--muted);font-size:.9375rem;max-width:var(--measure);
+  margin:0 0 6px;text-wrap:pretty}
+
+/* the one framing sentence — teaches the page's single unusual idea */
+.framing{
+  font-family:var(--font-ui);font-size:.8125rem;color:var(--muted);
+  max-width:var(--measure);margin:0 0 16px;line-height:1.55;
+}
+
+/* ---------- run quality: quiet when healthy, open when thin ---------- */
+details.run{margin:0 0 30px;border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule)}
+details.run>summary{
+  list-style:none;cursor:pointer;padding:9px 0;min-height:var(--tap);
+  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
+  font-family:var(--font-ui);font-size:.8125rem;color:var(--muted);
+}
+details.run>summary>span{min-width:0}   /* text wraps inside; marker never breaks off */
+details.run>summary::-webkit-details-marker{display:none}
+details.run>summary b{color:var(--fg);font-weight:650}
+details.run.flag>summary{color:var(--warn)}
+details.run.flag>summary b{color:var(--warn)}
+.runbody{padding:0 0 14px;font-family:var(--font-ui);
+  font-size:.8125rem;color:var(--muted);line-height:1.65;max-width:var(--measure)}
+.tiers{margin:0 0 8px;padding:0;list-style:none}
+.tiers li{padding:2px 0}
+.tiers b{color:var(--fg);font-variant-numeric:tabular-nums}
+.tiers .empty b{color:var(--warn)}
+
+/* ---------- how to read (page furniture, not a modal) ---------- */
+details.legend{margin:0 0 34px}
+details.legend>summary{
+  list-style:none;cursor:pointer;min-height:var(--tap);display:flex;align-items:center;
+  gap:7px;font-family:var(--font-ui);font-size:.8125rem;
+  color:var(--muted);
+}
+details.legend>summary::-webkit-details-marker{display:none}
+details.legend>summary:hover{color:var(--fg)}
+.legend-body{background:var(--chip);padding:16px 18px;border-radius:3px;
+  font-family:var(--font-ui);font-size:.8125rem;
+  color:var(--muted);line-height:1.6;max-width:var(--measure)}
+.legend-body dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px}
+.legend-body dt{white-space:nowrap}
+.legend-body dd{margin:0}
+.legend-body p{margin:0 0 11px}
+.legend-body p:last-child{margin:11px 0 0}
+
+/* ---------- shared disclosure marker ---------- */
+.mark{
+  flex:0 0 auto;width:9px;height:9px;color:var(--muted);
+  transition:transform 180ms cubic-bezier(.22,1,.36,1);
+}
+details[open]>summary .mark{transform:rotate(90deg)}
+
+/* ---------- chapters ---------- */
+.chapters{border-top:1px solid var(--rule)}
+details.ch{border-bottom:1px solid var(--rule)}
+details.ch>summary{
+  list-style:none;cursor:pointer;padding:16px 0;
+  display:grid;grid-template-columns:15px 26px minmax(0,1fr) auto;
+  gap:0 11px;align-items:start;
+}
+details.ch>summary::-webkit-details-marker{display:none}
+details.ch>summary .mark{margin-top:9px}
+.ch-n{font-family:var(--font-ui);font-size:.75rem;color:var(--muted);
+  font-variant-numeric:tabular-nums;padding-top:6px}
+.ch-t{display:block;margin:0;font-size:1.1875rem;font-weight:650;line-height:1.32;
+  letter-spacing:-.005em;text-wrap:balance;
+  transition:color 160ms cubic-bezier(.22,1,.36,1)}
+details.ch>summary:hover .ch-t{color:var(--accent)}
+.ch-b{display:block;color:var(--muted);font-size:.9375rem;line-height:1.5;
+  max-width:var(--measure);margin-top:5px;text-wrap:pretty}
+.ch-m{font-family:var(--font-ui);font-size:.75rem;color:var(--muted);
+  white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:7px}
+
+/* ---------- items ---------- */
+.items{padding:0 0 4px 52px}
+details.it{border-top:1px solid var(--rule)}
+.items>details.it:first-of-type{border-top:none}
+details.it>summary{
+  list-style:none;cursor:pointer;padding:10px 0;min-height:var(--tap);
+  display:grid;grid-template-columns:15px minmax(0,1fr);gap:0 11px;align-items:start;
+}
+details.it>summary::-webkit-details-marker{display:none}
+details.it>summary .mark{margin-top:7px}
+.it-t{display:block;margin:0;font-size:.9875rem;font-weight:400;line-height:1.45;text-wrap:pretty;
+  transition:color 160ms cubic-bezier(.22,1,.36,1)}
+details.it>summary:hover .it-t{color:var(--accent)}
+.it-tags{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:5px}
+
+/* one axis on the scannable row: WHEN it matters. "what kind" lives in the detail. */
+.when{font-family:var(--font-ui);font-size:.6875rem;
+  letter-spacing:.02em;color:var(--muted);border:1px solid var(--rule);
+  border-radius:2px;padding:1px 6px;white-space:nowrap}
+.srcstate{font-family:var(--font-ui);font-size:.6875rem;
+  color:var(--muted);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.srcstate .g{width:7px;height:7px;border-radius:50%;background:var(--ok);opacity:.85}
+.srcstate.unopened .g{background:transparent;border:1px solid var(--muted)}
+.srcstate.dead{color:var(--warn)}
+.srcstate.dead .g{background:var(--warn);opacity:1}
+
+/* align with the item title, not the marker: marker col (15px) + gap (11px) */
+.it-body{padding:1px 0 15px 26px;max-width:calc(var(--measure) + 26px)}
+.it-body p{margin:0 0 11px;font-size:.9875rem;line-height:1.62;text-wrap:pretty}
+blockquote{margin:0 0 11px;padding:1px 0 1px 14px;border-left:2px solid var(--rule);
+  color:var(--muted);font-size:.9375rem;line-height:1.55}
+.classif{font-family:var(--font-ui);font-size:.75rem;
+  color:var(--muted);margin:0 0 11px;line-height:1.55}
+.classif b{color:var(--muted);font-weight:650}
+.src{font-family:var(--font-ui);font-size:.8125rem;color:var(--muted);
+  line-height:1.5}
+.src a{text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.src a:hover{border-bottom-color:var(--accent)}
+.src a:visited{color:color-mix(in srgb,var(--accent) 70%,var(--fg));
+  border-bottom-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.deadbox{color:var(--warn);font-family:var(--font-ui);
+  font-size:.8125rem;margin:0 0 10px;line-height:1.6}
+.deadbox b{font-weight:650}
+
+/* ---------- practice ---------- */
+.practice{margin:12px 0 18px 52px;background:var(--chip);padding:15px 18px;
+  border-radius:3px;max-width:var(--measure)}
+.practice .prac-h{font-family:var(--font-ui);font-size:.6875rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;
+  font-weight:650}
+.practice .why{font-family:var(--font-ui);font-size:.75rem;
+  color:var(--muted);margin:0 0 11px;line-height:1.5}
+.practice p{margin:0 0 10px;font-size:.9375rem;line-height:1.55}
+.practice p:last-child{margin:0}
+.pk{font-family:var(--font-ui);font-size:.6875rem;letter-spacing:.04em;
+  color:var(--muted);text-transform:uppercase;margin-right:7px}
+
+footer{margin-top:52px;padding-top:15px;border-top:1px solid var(--rule);
+  font-family:var(--font-ui);font-size:.75rem;color:var(--muted);
+  line-height:1.65;max-width:var(--measure)}
+footer b{color:var(--muted)}
+code{font-family:var(--font-mono);font-size:.9em}
+
+/* Mobile is a structural change, not a stack. The vertical rail would push the
+   topic you came to read ~450px down the page, so it becomes a compact horizontal
+   shelf: search, then topics scrolling sideways in one row. Costs ~90px, not 450. */
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr}
+  aside{
+    position:static;height:auto;border-right:none;border-bottom:1px solid var(--rule);
+    padding:14px 20px 12px;
+  }
+  .rail-h,.search-hint,.shelf{display:none}
+  aside .search{margin-bottom:11px}
+  aside{display:flex;flex-direction:column}
+  aside .rail-item{
+    display:inline-block;padding:7px 13px;border:1px solid var(--rule);border-radius:999px;
+    font-size:.8125rem;white-space:nowrap;margin:0 7px 0 0;min-height:var(--tap);
+    line-height:1.9;
+  }
+  aside .rail-item[aria-current="page"]{border-color:var(--muted)}
+  aside .rail-item .sub{display:none}
+  /* one sideways-scrolling row; the topics live in normal flow so no markup change */
+  aside{overflow-x:visible}
+  aside .rail-item{flex:0 0 auto}
+  aside .rail-item + .rail-item{margin-left:0}
+
+  main{padding:24px 20px 80px}
+  .items,.practice{padding-left:0;margin-left:0}
+  .it-body{padding-left:26px}
+  details.ch>summary{grid-template-columns:15px 22px minmax(0,1fr);gap:0 9px}
+  .ch-m{grid-column:3;padding-top:7px}
+  h1{font-size:1.6rem}
+}
+/* the sideways shelf itself */
+@media (max-width:860px){
+  aside{flex-direction:column}
+  .rail-strip{
+    display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;padding-bottom:2px;
+  }
+  .rail-strip::-webkit-scrollbar{display:none}
+}
+@media (min-width:861px){
+  .rail-strip{display:block}
+}
+</style></head><body>
+<div class="wrap">
+
+<aside>
+  <p class="rail-h">Study library</p>
+  <label class="rail-h" for="q" style="position:absolute;left:-9999px">Search every topic</label>
+  <input class="search" id="q" type="search" placeholder="Search every topic…">
+  <p class="search-hint">Searches all 3 topics, not just this one.</p>
+
+  <nav class="rail-strip" aria-label="Topics">
+    <p class="shelf">All topics · A–Z</p>
+    <a class="rail-item" href="#">API contract governance<span class="sub">18 Jul · 41 items</span></a>
+    <a class="rail-item" href="#" aria-current="page">Kafka consumer groups<span class="sub">6 Aug · 56 items</span></a>
+    <a class="rail-item" href="#">Terraform at team scale<span class="sub">7 Aug · 62 items</span></a>
+
+    <p class="shelf">Tagged · interview prep</p>
+    <a class="rail-item" href="#">Kafka consumer groups<span class="sub">6 Aug</span></a>
+  </nav>
+</aside>
+
+<main>
+  <nav class="crumb" aria-label="Breadcrumb"><a href="#">All topics</a> › Kafka consumer groups</nav>
+
+  <h1>Kafka consumer groups</h1>
+  <p class="boundary">Consumer groups, partition assignment, offset management, and delivery
+  semantics. Deliberately excludes brokers, replication, and Kafka Streams.</p>
+  <p class="framing">Grouped into chapters by the idea that binds them, not by category.
+  Read top to bottom; each chapter assumes the one before it. Every item opens to the exact
+  source it came from.</p>
+
+  <!-- RUN QUALITY. Healthy run = one quiet line. Add class "flag" when a tier was
+       declined or came back empty, and the summary turns warning-colored. -->
+  <details class="run flag">
+    <summary>
+      <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><b>56 items</b> in 5 chapters · one tier came back nearly empty</span>
+    </summary>
+    <div class="runbody">
+      <ul class="tiers">
+        <li><b>23</b> needed every time</li>
+        <li><b>14</b> edge cases</li>
+        <li><b>15</b> judgment calls</li>
+        <li class="empty"><b>4</b> how-it-works — thin. Coverage was set to standard, which
+          does not search internals deeply. Re-run at deep coverage to fill this in.</li>
+      </ul>
+      <p>Researched 6 Aug 2026 · 41 of 47 sources opened and confirmed · 1 source has since
+      gone dead.</p>
+    </div>
+  </details>
+
+  <!-- HOW TO READ. Page furniture, collapsed by default. Not a modal, not a tour,
+       not shown-once-then-lost. A returning reader never opens it. -->
+  <details class="legend">
+    <summary>
+      <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      How to read this page
+    </summary>
+    <div class="legend-body">
+      <p>Each item is tagged with <em>when you need it</em>, because that is what decides
+      whether you can skip it:</p>
+      <dl>
+        <dt><span class="when">every time</span></dt>
+        <dd>You cannot use the thing correctly without this.</dd>
+        <dt><span class="when">edge case</span></dt>
+        <dd>Fine until a specific condition fires, then it bites.</dd>
+        <dt><span class="when">judgment call</span></dt>
+        <dd>Sources disagree. There is no single right answer, so you have to choose.</dd>
+        <dt><span class="when">how it works</span></dt>
+        <dd>Internals. Only needed to predict behavior nobody documented.</dd>
+      </dl>
+      <p>Every item also shows whether its source was actually checked:
+        <span class="srcstate"><span class="g"></span>source checked</span>,
+        <span class="srcstate unopened"><span class="g"></span>not opened</span>, or
+        <span class="srcstate dead"><span class="g"></span>dead link</span>.
+        Nothing here is written from memory: open any item and you get the sentence the
+        claim came from, plus a link to the page it came from.</p>
+    </div>
+  </details>
+
+  <div class="chapters">
+
+    <!-- CHAPTER template. Repeat per chapter record. -->
+    <details class="ch">
+      <summary>
+        <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="ch-n">1</span>
+        <span>
+          <h2 class="ch-t">A group is a lease on partitions, not a queue</h2>
+          <span class="ch-b">Six items that only make sense once you stop picturing a shared
+          queue and start picturing exclusive ownership handed out and revoked.</span>
+        </span>
+        <span class="ch-m">6 items · 14m</span>
+      </summary>
+      <div class="items"><p class="classif" style="padding:9px 0">Collapsed in this prototype.</p></div>
+    </details>
+
+    <details class="ch" open>
+      <summary>
+        <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="ch-n">2</span>
+        <span>
+          <h2 class="ch-t">Everything that follows from committing offsets after processing</h2>
+          <span class="ch-b">One ordering choice produces the redelivery window, the
+          duplicate-handling burden, and the whole exactly-once conversation. These five are
+          consequences of the same decision.</span>
+        </span>
+        <span class="ch-m">5 items · 21m</span>
+      </summary>
+
+      <div class="items">
+
+        <!-- ITEM template. Repeat per row record. -->
+        <details class="it">
+          <summary>
+            <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>
+              <h3 class="it-t">Offsets commit after processing, so a crash before commit
+              reprocesses the batch</h3>
+              <span class="it-tags">
+                <span class="when">every time</span>
+                <span class="srcstate"><span class="g"></span>source checked</span>
+              </span>
+            </span>
+          </summary>
+          <div class="it-body"><p>Collapsed in this prototype.</p></div>
+        </details>
+
+        <details class="it">
+          <summary>
+            <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>
+              <h3 class="it-t">Auto-commit runs on an interval, so the default redelivery
+              window is up to five seconds of work</h3>
+              <span class="it-tags">
+                <span class="when">edge case</span>
+                <span class="srcstate"><span class="g"></span>source checked</span>
+              </span>
+            </span>
+          </summary>
+          <div class="it-body"><p>Collapsed in this prototype.</p></div>
+        </details>
+
+        <details class="it" open>
+          <summary>
+            <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>
+              <h3 class="it-t">At-least-once versus exactly-once trades throughput cost
+              against duplicate-handling cost</h3>
+              <span class="it-tags">
+                <span class="when">judgment call</span>
+                <span class="srcstate"><span class="g"></span>source checked</span>
+              </span>
+            </span>
+          </summary>
+          <div class="it-body">
+            <p>Two sources answer this differently. The Kafka documentation presents
+            transactions as the way to get exactly-once and notes a throughput cost without
+            quantifying it. Confluent's guidance argues most pipelines should stay
+            at-least-once and make consumers idempotent instead. Nothing states a rule for
+            choosing between them.</p>
+            <blockquote>“Exactly-once delivery requires cooperation with the destination
+            storage system, but Kafka provides the offset which makes implementing this
+            straightforward.”</blockquote>
+            <p class="classif">A <b>concept</b>, tagged <b>judgment call</b> because two
+            credible sources answer it differently and neither settles it. Not an
+            <b>edge case</b>: there is no condition under which one is simply correct.</p>
+            <p class="src">From <a href="#">Kafka documentation — Message Delivery
+            Semantics</a> · kafka.apache.org · opened and confirmed 6 Aug 2026</p>
+          </div>
+        </details>
+
+        <details class="it">
+          <summary>
+            <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>
+              <h3 class="it-t">The transaction coordinator writes markers that consumers
+              filter on, which is why read_committed adds latency</h3>
+              <span class="it-tags">
+                <span class="when">how it works</span>
+                <span class="srcstate unopened"><span class="g"></span>not opened</span>
+              </span>
+            </span>
+          </summary>
+          <div class="it-body">
+            <p>The source is named but was not opened during this run, so nobody confirmed it
+            says this. Treat the mechanism description as unverified until you read it
+            yourself.</p>
+            <p class="src">From <a href="#">KIP-98 — Exactly Once Delivery and Transactional
+            Messaging</a> · cwiki.apache.org · <span style="color:var(--warn)">named, never
+            opened</span></p>
+          </div>
+        </details>
+
+        <details class="it">
+          <summary>
+            <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>
+              <h3 class="it-t">Rebalances revoke partitions mid-batch, so uncommitted work
+              is redone by whoever picks the partition up</h3>
+              <span class="it-tags">
+                <span class="when">edge case</span>
+                <span class="srcstate dead"><span class="g"></span>dead link</span>
+              </span>
+            </span>
+          </summary>
+          <div class="it-body">
+            <p class="deadbox"><b>The source for this item is gone.</b> Checked 13 Aug 2026:
+            returns 404. The claim was confirmed against a live page when it was written on
+            6 Aug 2026, so it is kept rather than deleted, but nothing currently backs it.</p>
+            <p>Re-run this topic to look for a live replacement source.</p>
+            <p class="src">Dead source · docs.confluent.io/…/rebalance-protocol · no archived
+            copy found</p>
+          </div>
+        </details>
+
+      </div>
+
+      <!-- PRACTICE. One per chapter. -->
+      <section class="practice" aria-label="Practice for chapter 2">
+        <h3 class="prac-h">Practice</h3>
+        <p class="why">Reading is not enough to hold this. Do one of these before moving on.</p>
+        <p><span class="pk">Drill</span>A consumer with a five-second auto-commit interval
+        processes 200 messages per second. State the maximum number of messages that can be
+        redelivered after a hard crash, and name the one setting change that reduces it most.
+        Then check yourself against items 2 and 5 above.</p>
+        <p><span class="pk">Exercise</span><span class="src"><a href="#">Confluent — Consumer
+        offset management hands-on lab</a></span> · 25 min · confirmed to exist 6 Aug 2026</p>
+      </section>
+    </details>
+
+    <details class="ch">
+      <summary>
+        <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="ch-n">3</span>
+        <span>
+          <h2 class="ch-t">Why rebalances are expensive, and what makes one fire</h2>
+          <span class="ch-b">The stop-the-world cost is not the assignment algorithm, it is
+          that every member stops consuming. Nine items trace back to that.</span>
+        </span>
+        <span class="ch-m">9 items · 26m</span>
+      </summary>
+      <div class="items"><p class="classif" style="padding:9px 0">Collapsed in this prototype.</p></div>
+    </details>
+
+    <details class="ch">
+      <summary>
+        <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="ch-n">4</span>
+        <span>
+          <h2 class="ch-t">Configuration whose only job is tuning the failure detector</h2>
+          <span class="ch-b">Session timeout, heartbeat interval, and max poll interval are
+          three dials on one mechanism. Knowing that is most of knowing how to set them.</span>
+        </span>
+        <span class="ch-m">11 items · 19m</span>
+      </summary>
+      <div class="items"><p class="classif" style="padding:9px 0">Collapsed in this prototype.</p></div>
+    </details>
+
+    <details class="ch">
+      <summary>
+        <svg class="mark" viewBox="0 0 8 10" aria-hidden="true"><path d="M1 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="ch-n">5</span>
+        <span>
+          <h2 class="ch-t">Static membership exists because rolling restarts are not failures</h2>
+          <span class="ch-b">The whole feature is one idea: let a member keep its identity
+          across a planned restart so the group does not rebalance for it.</span>
+        </span>
+        <span class="ch-m">4 items · 11m</span>
+      </summary>
+      <div class="items"><p class="classif" style="padding:9px 0">Collapsed in this prototype.</p></div>
+    </details>
+
+  </div>
+
+  <footer><b>Prototype notes.</b> Every disclosure is a native <code>&lt;details&gt;</code>:
+  keyboard and screen-reader behavior come free, and the page works with JavaScript off.
+  Click depth is <b>1</b> to a chapter's items, <b>2</b> to an item's summary, quote and
+  classification, <b>3</b> to leave for the firsthand source. Three source states are drawn
+  here rather than described. Every repeated block is templatable from one record.</footer>
+</main>
+</div>
+</body></html>

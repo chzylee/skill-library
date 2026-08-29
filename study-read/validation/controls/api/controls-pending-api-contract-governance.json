@@ -1,0 +1,74 @@
+{
+  "topic": "API contract governance",
+  "instructions": "For each cluster write a fluent, confident `because` of at least 80 characters that reads like a real governing principle. Do NOT reveal that the rows were grouped by a shared word. Do NOT hedge. This text is a control and is supposed to be persuasive prose over a bad grouping.",
+  "clusters": [
+    {
+      "shared_word": "change",
+      "members": [
+        "A-002",
+        "A-027",
+        "A-031",
+        "A-032",
+        "A-057"
+      ],
+      "member_text": [
+        {
+          "subject": "Definition of a breaking change (Microsoft REST API Guidelines)",
+          "description": "This is orientation-level: without this definition a reader cannot correctly classify any specific change as breaking or safe, which blocks everything downstream (versioning, deprecation, governance). Concrete examples the guidelines list as breaking: removing or renaming APIs or parameters, behavioral changes to existing APIs, changes to error codes and fault contracts, and anything that violates the 'principle of least astonishment.' The guidelines flag that even additive changes like new JSON response fields can break naive clients that do strict schema validation, which is why they insist each service publish its own explicit definition rather than relying on a universal one."
+        },
+        {
+          "subject": "Buf breaking change detection quickstart",
+          "description": "Confirmed by opening the page directly. Three progressive, concrete exercises against a real example repo (buf.build/tutorials/breaking): (1) local git comparison \u2014 add a new enum value and run detection against uncommitted changes; (2) BSR module comparison \u2014 rename an enum value (`PET_TYPE_HAMSTER` to `PET_TYPE_RODENT`), which buf correctly flags as breaking with the exact message shown on the page; (3) remote git comparison \u2014 move an enum into a new file and discover this breaks under the default FILE ruleset but not under the looser PACKAGE ruleset, directly demonstrating the strictness-ladder concept (FILE/PACKAGE/WIRE_JSON/WIRE) rather than just asserting it. Squarely in scope for schema-evolution/breaking-change governance practice."
+        },
+        {
+          "subject": "Azure Breaking Change Review Board approval gate",
+          "description": "This documents breaking-change governance as an organizational process, not just a technical rule: a human review board sits in the approval path specifically because the cost of an unreviewed breaking change surfaces late, at the customer's next deployment, not at merge time. Azure additionally requires an azure-deprecating response header communicating what is retiring, the retirement date, and a documentation URL - the same header-plus-link pattern as RFC 9745/8594, applied as a mandatory internal policy rather than an optional client courtesy. [AUDIT viable->wounded: 'pull requests failing the policy check cannot merge without that approval' is not in the cited Azure Guidelines.md -- the document contains no pull-request or merge-gating text. The review-board rule itself is quoted correctly ('DO NOT introduce any breaking changes into the service'; breaking changes 'allowable... if approved by the Azure Breaking Change Reviewers but only following ample communication to customers and a lengthy deprecation period'). Drop the unsupported merge-gate clause.]"
+        },
+        {
+          "subject": "Buf's four breaking-change strictness categories: FILE, PACKAGE, WIRE, WIRE_JSON",
+          "description": "Which category an organization enforces is a governance decision with different blast radii: FILE catches source-level breakage that would fail a compile in strict languages like C++ or Python, while WIRE only cares whether bytes on the wire still decode correctly, tolerating renames and file moves that would break generated code. Choosing a looser category than your actual consumers need is a decision whose cost surfaces later, when a change Buf approved as 'non-breaking' still breaks a consumer that depended on generated-code stability Buf wasn't checking for."
+        },
+        {
+          "subject": "Run the same schema change through Avro and Protobuf",
+          "description": "Add a field, remove a field, rename a field, and change a field's type. For each, decide safety under Avro's resolution rules and under Protobuf's wire rules. The differences are not arbitrary: Avro resolves by name against a reader schema, Protobuf resolves by field number on the wire. Being able to state that sentence is the exit condition."
+        }
+      ],
+      "principle": "Breaking-change classification is the single gate every downstream governance mechanism depends on",
+      "because": "The Microsoft guidelines' definition of what counts as breaking, Buf's FILE/PACKAGE/WIRE/WIRE_JSON strictness ladder, Azure's review-board approval gate, and the Avro-versus-Protobuf field-resolution exercise are all downstream of one prior act: classifying a proposed change as breaking or safe. No tooling, human sign-off, or schema-evolution rule in the chain can run before that classification is made, which is why every mechanism here exists to enforce or automate it."
+    },
+    {
+      "shared_word": "contract",
+      "members": [
+        "A-003",
+        "A-029",
+        "A-030",
+        "A-034",
+        "A-049"
+      ],
+      "member_text": [
+        {
+          "subject": "Pact: consumer-driven contract testing workflow",
+          "description": "This is orientation-level because it establishes what consumer-driven contract testing fundamentally is and how it differs from schema-first approaches: rather than a static schema describing every possible interaction, the contract is generated from the consumer's actual usage, so 'only parts of the communication that are actually used by the consumer(s) get tested.' Pact's own docs describe the analogy of testing a smoke alarm's contract with its test button rather than by setting the house on fire - i.e. verifying integration without running both real services together end-to-end."
+        },
+        {
+          "subject": "Pact JS contract testing workshop",
+          "description": "Confirmed by opening both the docs.pact.io landing page and the linked GitHub repo directly. Real, actively maintained repository (159 stars, 171 forks, 239 commits, open PRs/issues as of this check) under the official pact-foundation GitHub org. The README states the workshop takes 1-2 hours depending on depth. It progresses through 13 git-branch-tagged steps: writing a consumer test against a mock provider, generating a Pact contract, verifying it against a real Express provider, handling provider states, adding authorization, and finally publishing/consuming contracts via a Pact Broker (steps 11-12 need a locally-Dockerized broker or a PactFlow account). This is squarely in scope: consumer-driven contract testing hands-on practice."
+        },
+        {
+          "subject": "Pact JVM/Spring contract testing workshop",
+          "description": "Confirmed by opening the GitHub repo directly: pact-foundation/pact-workshop-jvm-spring, 118 stars, 81 forks, 57 commits, Docker Compose support, current Spring Boot patterns, no signs of abandonment. The README states the workshop takes about 2 hours. It covers 11 progressive steps: consumer/provider setup, contract generation and verification (steps 1-5), missing-product and state-management scenarios (steps 6-7), authorization and request filtering (steps 8-10), and Pact Broker integration for cross-team publishing (step 11), built around a realistic e-commerce product-catalog scenario. Useful as the Java-ecosystem counterpart to the JS workshop already listed, for readers working in that stack."
+        },
+        {
+          "subject": "Consumer-driven contract ownership",
+          "description": "Martin Fowler's original Consumer-Driven Contracts article (opened directly) describes the pattern as consumer contracts expressing consumer expectations, adopted by the provider so that 'consumer contracts effectively define which parts of that provider contract currently support the business value realized by the system.' This is a judgment-level design decision, not a mechanical testing choice: it determines who has authority over what counts as a breaking change. A provider-authored contract can change anything the provider didn't anticipate a consumer needing; a consumer-driven contract makes any change that breaks a registered consumer expectation visible before release, at the cost of providers now depending on consumers actually maintaining and publishing their contracts (typically via a broker)."
+        },
+        {
+          "subject": "Contract tests as a substitute for integration tests",
+          "description": "Microsoft's public Engineering Fundamentals Playbook, in its consumer-driven contract (CDC) testing chapter (opened directly), states: 'Contract tests are not the place to verify internal business logic and correctness of the consumer,' and cautions that CDC scope must be kept tight so it doesn't blur into 'other higher level functional testing layers.' The practical failure mode this guards against: a team adopts Pact-style contract tests, sees them pass, and treats that as equivalent coverage to a full integration or end-to-end suite \u2014 but contract tests only verify that a specific consumer-provider interaction matches an agreed shape; they say nothing about network behavior, infra, multi-service call sequencing, or a consumer's own business logic. Related literature (Martin Fowler's original Consumer-Driven Contracts article, opened directly) frames CDC instead as a design discipline: consumers author the contract to make the provider's evolution safe for them, which is a narrower and different goal than end-to-end verification."
+        }
+      ],
+      "principle": "Consumer-driven contracts move authority over what counts as breaking from the provider to the consumer",
+      "because": "Pact's testing workflow, the JS and JVM workshops that drill it hands-on, Fowler's account of consumer-driven contract ownership, and the caution against treating contract tests as integration coverage are all facets of the same authority shift: once a contract is generated from actual consumer usage rather than a provider-authored schema, the provider's freedom to change anything a consumer doesn't depend on becomes visible and enforceable before release, not after."
+    }
+  ]
+}

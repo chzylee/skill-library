@@ -1,0 +1,380 @@
+{
+  "X001": {
+    "control": "shuffled",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-10",
+    "declared_kind": "principle"
+  },
+  "X002": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-06",
+    "declared_kind": "principle"
+  },
+  "X003": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-08",
+    "declared_kind": "principle"
+  },
+  "X004": {
+    "control": "shuffled",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-03",
+    "declared_kind": "principle"
+  },
+  "X005": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-10",
+    "declared_kind": "principle"
+  },
+  "X006": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-09",
+    "declared_kind": "principle"
+  },
+  "X007": {
+    "control": "shuffled",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-10",
+    "declared_kind": "principle"
+  },
+  "X008": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-05",
+    "declared_kind": "principle"
+  },
+  "X009": {
+    "control": "surface",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X010": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-03",
+    "declared_kind": "principle"
+  },
+  "X011": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-05",
+    "declared_kind": "principle"
+  },
+  "X012": {
+    "control": "shuffled",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-04",
+    "declared_kind": "principle"
+  },
+  "X013": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-06",
+    "declared_kind": "principle"
+  },
+  "X014": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-08",
+    "declared_kind": "principle"
+  },
+  "X015": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-01",
+    "declared_kind": "principle"
+  },
+  "X016": {
+    "control": "shuffled",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-08",
+    "declared_kind": "principle"
+  },
+  "X017": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-08",
+    "declared_kind": "principle"
+  },
+  "X018": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-13",
+    "declared_kind": "reference"
+  },
+  "X019": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-11",
+    "declared_kind": "principle"
+  },
+  "X020": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-11",
+    "declared_kind": "principle"
+  },
+  "X021": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-06",
+    "declared_kind": "principle"
+  },
+  "X022": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-05",
+    "declared_kind": "principle"
+  },
+  "X023": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-11",
+    "declared_kind": "principle"
+  },
+  "X024": {
+    "control": "shuffled",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-03",
+    "declared_kind": "principle"
+  },
+  "X025": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-01",
+    "declared_kind": "principle"
+  },
+  "X026": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-14",
+    "declared_kind": "principle"
+  },
+  "X027": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-02",
+    "declared_kind": "principle"
+  },
+  "X028": {
+    "control": "surface",
+    "topic": "API contract governance",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X029": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-10",
+    "declared_kind": "principle"
+  },
+  "X030": {
+    "control": "surface",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X031": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-12",
+    "declared_kind": "principle"
+  },
+  "X032": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-04",
+    "declared_kind": "principle"
+  },
+  "X033": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-09",
+    "declared_kind": "principle"
+  },
+  "X034": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-06",
+    "declared_kind": "principle"
+  },
+  "X035": {
+    "control": "surface",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X036": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-04",
+    "declared_kind": "principle"
+  },
+  "X037": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-07",
+    "declared_kind": "principle"
+  },
+  "X038": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-02",
+    "declared_kind": "principle"
+  },
+  "X039": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-01",
+    "declared_kind": "principle"
+  },
+  "X040": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-05",
+    "declared_kind": "principle"
+  },
+  "X041": {
+    "control": "shuffled",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-05",
+    "declared_kind": "principle"
+  },
+  "X042": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-09",
+    "declared_kind": "principle"
+  },
+  "X043": {
+    "control": "none",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-02",
+    "declared_kind": "principle"
+  },
+  "X044": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-07",
+    "declared_kind": "principle"
+  },
+  "X045": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-08",
+    "declared_kind": "principle"
+  },
+  "X046": {
+    "control": "shuffled",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": "ch-01",
+    "declared_kind": "principle"
+  },
+  "X047": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-10",
+    "declared_kind": "principle"
+  },
+  "X048": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-07",
+    "declared_kind": "principle"
+  },
+  "X049": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-03",
+    "declared_kind": "principle"
+  },
+  "X050": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-04",
+    "declared_kind": "principle"
+  },
+  "X051": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-02",
+    "declared_kind": "principle"
+  },
+  "X052": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-07",
+    "declared_kind": "principle"
+  },
+  "X053": {
+    "control": "surface",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X054": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-12",
+    "declared_kind": "principle"
+  },
+  "X055": {
+    "control": "surface",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X056": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-03",
+    "declared_kind": "principle"
+  },
+  "X057": {
+    "control": "none",
+    "topic": "API contract governance",
+    "origin_chapter_id": "ch-03",
+    "declared_kind": "principle"
+  },
+  "X058": {
+    "control": "surface",
+    "topic": "API contract governance",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X059": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-13",
+    "declared_kind": "principle"
+  },
+  "X060": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-04",
+    "declared_kind": "principle"
+  },
+  "X061": {
+    "control": "surface",
+    "topic": "Kafka consumer mechanics and delivery semantics",
+    "origin_chapter_id": null,
+    "declared_kind": "principle"
+  },
+  "X062": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-01",
+    "declared_kind": "principle"
+  },
+  "X063": {
+    "control": "none",
+    "topic": "Terraform at team scale",
+    "origin_chapter_id": "ch-12",
+    "declared_kind": "reference"
+  }
+}
