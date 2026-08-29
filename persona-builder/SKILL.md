@@ -83,6 +83,14 @@ CREATE TABLE ("Name" TITLE, "When to assume" RICH_TEXT, "Declared bias" RICH_TEX
 - **Directive shape:** trigger → needs-to-know → how-to-find-out. The how-to-find-out draws
   from a closed set: **ask the user · research at runtime · consult grounding sources ·
   derive from session context**.
+- **Layers carry different force: directives are procedural, cognitive patterns are
+  advisory.** Anything that *must actually happen* — a check, a gate, a spend rule, a
+  policy — must be written as a directive with a trigger. Written as a pattern, it reads as
+  flavor and gets skipped under load (observed 2026-08-24: a persona carried a multi-agent
+  spend rule in its patterns layer that fired "when structuring multi-agent spend," then
+  structured multi-agent spend and did the opposite). During the interview, test each
+  proposed pattern: if skipping it would make a run nonconforming rather than merely less
+  perceptive, it is a directive wearing a pattern's clothes — promote it.
 - **Directives are per-persona, by value.** To reuse another persona's directive, copy it.
   Divergence after copying is legitimate — a builder and a reviewer *should* drift.
 - **Mode = a named selection over this persona's directive/pattern pool + its tie-breaks +
@@ -164,6 +172,9 @@ The phases:
    - **Perception, not procedure.** A pattern is what the persona *notices* before it opines
      ("edge case paranoia: what if the name is 47 chars? zero results?"), not a step to
      execute — steps are directives. If it reads as a checklist item, convert it or cut it.
+     The force runs both ways: a must-happen rule parked in the patterns layer is advisory
+     and will be skipped under load — promote it to a directive with a trigger (see the
+     layer-force schema floor).
    - **Shape: name → gloss → when-it-fires.** Bind each pattern to the moment it activates
      ("when assessing timeline, apply speed calibration"). An unbound pattern is decoration;
      the binding is what survives a busy context.
@@ -262,6 +273,10 @@ version when a change merits shipping.
 
 ## Changelog
 
+- **v1.2.0 — 2026-08-24.** From the Lead researcher persona's first evaluation run
+  (observed failure, 2026-08-24): added the layer-force schema floor — directives are
+  procedural, cognitive patterns are advisory; anything that must happen becomes a
+  directive with a trigger — plus the promote-don't-park test in the pattern quality bar.
 - **v1.1.0 — 2026-07-22.** From the design-doc architect build (observed failures, same day):
   added the one-question-at-a-time hard rule; made the between-phases stop an explicit gate
   rather than guidance; named the menu-of-drafts loophole under the spine-drafting rule; and
